@@ -1,8 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' as intl;
-import 'package:intl/date_symbol_data_local.dart' as intl_local; // ایمپورت برای initializeDateFormatting
+import 'package:intl/date_symbol_data_local.dart' as intl_local;
 
-// شبیه‌سازی سرویس API (بدون تغییر نسبت به قبل)
+// شبیه‌سازی سرویس API (بدون تغییر)
 class BookingApiService {
   Future<Map<String, dynamic>> fetchBookingPreviewDetails(String hotelId) async {
     print('API Call: fetchBookingPreviewDetails for hotelId: $hotelId');
@@ -12,8 +13,7 @@ class BookingApiService {
       'hotelAddress': 'آدرس دقیق هتل در حالت طولانی قرار می‌گیرد',
       'hotelRating': 4.5,
       'hotelStarRatingVisual': 4,
-      'hotelImageUrl': 'https://picsum.photos/seed/hotel_booking_figma_local_init/800/300',
-      'remainingTime': '11:48',
+      'hotelImageUrl': 'https://picsum.photos/seed/hotel_booking_timer_fixed/800/300',
       'checkInDate': "2026-03-15T00:00:00.000Z",
       'checkOutDate': "2026-03-18T00:00:00.000Z",
       'roomInfo': '1 اتاق به مدت 3 شب',
@@ -28,11 +28,9 @@ class BookingApiService {
     return true;
   }
 }
-// پایان شبیه‌سازی سرویس API
 
 class ReservationDetailPage extends StatefulWidget {
   final String hotelId;
-
   const ReservationDetailPage({Key? key, required this.hotelId}) : super(key: key);
 
   @override
@@ -42,95 +40,149 @@ class ReservationDetailPage extends StatefulWidget {
 class _ReservationDetailPageState extends State<ReservationDetailPage> {
   final BookingApiService _apiService = BookingApiService();
   Map<String, dynamic>? _bookingPageData;
-  bool _isLoading = true; // برای بارگذاری داده‌های اصلی صفحه
-  bool _isIntlInitialized = false; // وضعیت جدید برای مقداردهی اولیه intl
+  bool _isLoading = true;
+  bool _isIntlInitialized = false;
   String? _errorMessage;
 
   late List<Map<String, TextEditingController>> _guestFormControllers;
   bool _termsAndConditionsAccepted = false;
 
+  Timer? _timer;
+  final int _initialTimerSeconds = 15 * 60;
+  late int _remainingSeconds;
+  bool _isTimerActive = false;
+
   @override
   void initState() {
     super.initState();
     _guestFormControllers = [];
-    _initializeDependencies(); // ابتدا وابستگی‌ها (شامل intl) را مقداردهی اولیه می‌کنیم
+    _remainingSeconds = _initialTimerSeconds;
+    _initializeDependencies();
   }
 
   Future<void> _initializeDependencies() async {
     try {
-      // مقداردهی اولیه intl برای لوکال فارسی
       await intl_local.initializeDateFormatting('fa_IR', null);
       if (mounted) {
         setState(() {
           _isIntlInitialized = true;
         });
-        // پس از مقداردهی اولیه موفقیت آمیز intl، داده‌های اصلی صفحه را بارگذاری کنید
         _loadBookingPageData();
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _errorMessage = "خطا در آماده‌سازی اطلاعات زبان: $e";
-          _isLoading = false; // چون بارگذاری اصلی شروع نشده، این را false می‌کنیم
-          _isIntlInitialized = true; // اجازه می‌دهیم UI خطا را نمایش دهد
+          _isLoading = false;
+          _isIntlInitialized = true;
         });
       }
     }
   }
 
   Future<void> _loadBookingPageData() async {
-    if (!mounted) return;
-    // اطمینان از اینکه intl مقداردهی اولیه شده است
-    if (!_isIntlInitialized) {
-      // این حالت نباید رخ دهد اگر _initializeDependencies به درستی کار کند
-      print("Warning: _loadBookingPageData called before intl initialization.");
-      return;
-    }
+    if (!mounted || !_isIntlInitialized) return;
     setState(() {
-      _isLoading = true; // شروع بارگذاری داده‌های اصلی
+      _isLoading = true;
       _errorMessage = null;
     });
     try {
       final data = await _apiService.fetchBookingPreviewDetails(widget.hotelId);
-      if (!mounted) return;
-      setState(() {
-        _bookingPageData = data;
-        _guestFormControllers = List.generate(
-          (_bookingPageData?['numberOfAdults'] as int?) ?? 1,
-              (index) => {
-            'firstName': TextEditingController(),
-            'lastName': TextEditingController(),
-            'nationalCode': TextEditingController(),
-            'gender': TextEditingController(),
-          },
-        );
-        _isLoading = false; // پایان بارگذاری داده‌های اصلی
-      });
+      if (mounted) {
+        setState(() {
+          _bookingPageData = data;
+          _guestFormControllers = List.generate(
+            (_bookingPageData?['numberOfAdults'] as int?) ?? 1,
+                (index) => {
+              'firstName': TextEditingController(),
+              'lastName': TextEditingController(),
+              'nationalCode': TextEditingController(),
+              'gender': TextEditingController(),
+            },
+          );
+          _isLoading = false;
+          _startTimer();
+        });
+      }
     } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _errorMessage = 'خطا در بارگذاری اطلاعات صفحه: $e';
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'خطا در بارگذاری اطلاعات صفحه: $e';
+          _isLoading = false;
+        });
+      }
     }
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    if (_remainingSeconds <= 0) {
+      setState(() {
+        _isTimerActive = false;
+      });
+      return;
+    }
+    setState(() {
+      _isTimerActive = true;
+    });
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        if (_remainingSeconds > 0) {
+          _remainingSeconds--;
+        } else {
+          _isTimerActive = false;
+          timer.cancel();
+          if (mounted) { // بررسی mounted قبل از نمایش SnackBar
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar( // ایجاد ویجت SnackBar
+                content: Text('زمان شما برای تکمیل رزرو به پایان رسید.', textDirection: TextDirection.rtl),
+                backgroundColor: Colors.orangeAccent,
+              ),
+            );
+          }
+        }
+      });
+    });
   }
 
   @override
   void dispose() {
+    _timer?.cancel();
     for (var controllersMap in _guestFormControllers) {
       controllersMap.forEach((key, controller) => controller.dispose());
     }
     super.dispose();
   }
 
+  String _formatTimer(int totalSeconds) {
+    final duration = Duration(seconds: totalSeconds);
+    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
   Future<void> _handleBookingSubmission() async {
-    // این تابع بدون تغییر باقی می‌ماند
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final currentTheme = Theme.of(context);
 
+    if (!_isTimerActive) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar( // ایجاد ویجت SnackBar
+          content: Text('زمان شما برای تکمیل رزرو به پایان رسیده است.',
+              style: currentTheme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
     if (!_termsAndConditionsAccepted) {
       scaffoldMessenger.showSnackBar(
-        SnackBar(
+        SnackBar( // ایجاد ویجت SnackBar
           content: Text('لطفاً قوانین و مقررات رزرو را مطالعه و تأیید نمایید.',
               style: currentTheme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
           backgroundColor: Colors.redAccent,
@@ -146,7 +198,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
           _guestFormControllers[i]['nationalCode']!.text.trim().isEmpty) {
         formIsValid = false;
         scaffoldMessenger.showSnackBar(
-          SnackBar(
+          SnackBar( // ایجاد ویجت SnackBar
             content: Text('لطفاً اطلاعات مسافر ${i + 1} را به صورت کامل وارد کنید.',
                 style: currentTheme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
             backgroundColor: Colors.redAccent,
@@ -178,12 +230,12 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
 
     if (mounted) {
       showDialog(
-        context: context,
+        context: context, // پارامتر context اضافه شد
         barrierDismissible: false,
-        builder: (BuildContext context) {
+        builder: (BuildContext dialogContext) { // پارامتر builder اضافه شد و نام context به dialogContext تغییر کرد تا با context اصلی تداخل نداشته باشد
           return Dialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            child: Padding(
+            child: Padding( // پارامتر padding اضافه شد
               padding: const EdgeInsets.all(20.0),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -201,28 +253,29 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
 
     try {
       bool submissionSuccess = await _apiService.submitHotelBooking(bookingPayload);
-      if (mounted) Navigator.pop(context);
+      if (mounted) Navigator.pop(context); // بستن دیالوگ
 
       if (submissionSuccess) {
+        _timer?.cancel();
+        setState(() { _isTimerActive = false; });
         scaffoldMessenger.showSnackBar(
-          SnackBar(
+          SnackBar( // ایجاد ویجت SnackBar
               content: Text('رزرو شما با موفقیت ثبت شد!',
                   style: currentTheme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
               backgroundColor: Colors.green),
         );
-        // TODO: هدایت به صفحه تایید
       } else {
         scaffoldMessenger.showSnackBar(
-          SnackBar(
+          SnackBar( // ایجاد ویجت SnackBar
               content: Text('خطا در ثبت رزرو. لطفاً مجدداً تلاش فرمایید.',
                   style: currentTheme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
               backgroundColor: Colors.redAccent),
         );
       }
     } catch (e) {
-      if (mounted) Navigator.pop(context);
+      if (mounted) Navigator.pop(context); // بستن دیالوگ در صورت خطا
       scaffoldMessenger.showSnackBar(
-        SnackBar(
+        SnackBar( // ایجاد ویجت SnackBar
             content: Text('خطا در ارتباط با سرور: $e',
                 style: currentTheme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
             backgroundColor: Colors.redAccent),
@@ -234,8 +287,8 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
+      textDirection: TextDirection.rtl, // پارامتر textDirection اضافه شد
+      child: Scaffold( // پارامتر child به Directionality پاس داده شد
         appBar: _buildAppBar(),
         body: _buildBody(),
         bottomNavigationBar: !_isIntlInitialized || _isLoading || _errorMessage != null || _bookingPageData == null
@@ -246,7 +299,6 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
   }
 
   AppBar? _buildAppBar() {
-    // اگر intl هنوز مقداردهی اولیه نشده یا در حال بارگذاری داده‌های اصلی هستیم
     if (!_isIntlInitialized || (_isIntlInitialized && _isLoading && _bookingPageData == null)) {
       return AppBar(
         title: Text('بارگذاری اطلاعات...', style: Theme.of(context).textTheme.titleMedium),
@@ -255,7 +307,6 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
         elevation: 0.5,
       );
     }
-    // اگر خطایی وجود دارد (به جز خطای اولیه intl که در بدنه اصلی نمایش داده می‌شود)
     if (_errorMessage != null && _bookingPageData == null) {
       return AppBar(
         title: Text('خطا', style: Theme.of(context).textTheme.titleMedium),
@@ -264,7 +315,6 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
         elevation: 0.5,
       );
     }
-    // اگر داده‌ها با موفقیت بارگذاری شده‌اند
     return AppBar(
       title: Text(_bookingPageData!['hotelName'] ?? 'تکمیل اطلاعات رزرو',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
@@ -277,8 +327,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
   Widget _buildBody() {
     final textTheme = Theme.of(context).textTheme;
 
-    // 1. ابتدا بررسی می‌کنیم که آیا intl مقداردهی اولیه شده است یا نه
-    if (!_isIntlInitialized && _errorMessage == null) { // اگر errorMessage به خاطر خطای intl نباشد
+    if (!_isIntlInitialized && _errorMessage == null) {
       return Center(child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -288,20 +337,17 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
         ],
       ));
     }
-
-    // 2. سپس وضعیت بارگذاری داده‌های اصلی یا خطا را بررسی می‌کنیم
-    if (_isLoading && _isIntlInitialized && _errorMessage == null) { // تنها اگر intl آماده شده، لودینگ اصلی را نشان بده
+    if (_isLoading && _isIntlInitialized && _errorMessage == null) {
       return Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary));
     }
-
     if (_errorMessage != null) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(20.0), // پارامتر padding اضافه شد
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, color: Colors.redAccent, size: 60),
+              const Icon(Icons.error_outline, color: Colors.redAccent, size: 60),
               const SizedBox(height: 16),
               Text(_errorMessage!, style: textTheme.bodyLarge, textAlign: TextAlign.center),
               const SizedBox(height: 24),
@@ -315,12 +361,10 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
         ),
       );
     }
-
-    if (_bookingPageData == null) { // این حالت نباید زیاد اتفاق بیفتد اگر منطق بالا درست باشد
+    if (_bookingPageData == null) {
       return Center(child: Text('اطلاعات مورد نیاز برای نمایش صفحه یافت نشد.', style: textTheme.bodyLarge));
     }
 
-    // --- بقیه کد buildBody بدون تغییر ---
     final intl.DateFormat longPersianDateFormat = intl.DateFormat('EEEE d MMMM yyyy', 'fa_IR');
     final DateTime checkInDate = intl.DateFormat("yyyy-MM-ddTHH:mm:ss.SSS'Z'").parse(_bookingPageData!['checkInDate'], true).toLocal();
     final DateTime checkOutDate = intl.DateFormat("yyyy-MM-ddTHH:mm:ss.SSS'Z'").parse(_bookingPageData!['checkOutDate'], true).toLocal();
@@ -331,9 +375,8 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
         children: [
           _buildHotelImageSection(
             imageUrl: _bookingPageData!['hotelImageUrl'],
-            remainingTime: _bookingPageData!['remainingTime'],
           ),
-          Padding(
+          Padding( // پارامتر padding اضافه شد
             padding: const EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -370,15 +413,10 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
     );
   }
 
-  // --- بقیه توابع _build... بدون تغییر باقی می‌مانند ---
-  // _buildHotelImageSection, _buildHotelInfoSection, _buildReservationDetailsSection,
-  // _buildTravelerNotesSection, _buildGuestFormWidget, _buildFormTextField,
-  // _buildTermsAndPaymentSection
-
-  Widget _buildHotelImageSection({required String imageUrl, required String remainingTime}) {
+  Widget _buildHotelImageSection({required String imageUrl}) {
     return Stack(
       children: [
-        Image.network(
+        Image.network( // آرگومان imageUrl به عنوان اولین پارامتر (positional)
           imageUrl,
           width: double.infinity,
           height: 200,
@@ -404,25 +442,31 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
             );
           },
         ),
-        Positioned(
-          bottom: 10,
-          right: 10,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.6),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              'زمان باقی مانده: $remainingTime',
-              style: TextStyle(
-                fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily,
-                color: Colors.white,
-                fontSize: 11,
+        if (_isTimerActive || _remainingSeconds > 0 || !_isTimerActive && _remainingSeconds == 0)
+          Positioned(
+            bottom: 10,
+            right: 10,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: _isTimerActive && _remainingSeconds > 0
+                    ? Colors.black.withOpacity(0.6)
+                    : Colors.red.withOpacity(0.8),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                _isTimerActive && _remainingSeconds > 0
+                    ? 'زمان باقی مانده: ${_formatTimer(_remainingSeconds)}'
+                    : 'زمان به پایان رسید',
+                style: TextStyle(
+                  fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily,
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: _isTimerActive && _remainingSeconds > 0 ? FontWeight.normal : FontWeight.bold,
+                ),
               ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -434,7 +478,6 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
   }) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -479,7 +522,6 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
     required int adults,
   }) {
     final textTheme = Theme.of(context).textTheme;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -527,7 +569,6 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
       'بعد از رزرواسیون امکان تغییر نام مسافرین وجود ندارد.',
       'در صورت رزرو اتاق برای اتباع غیرایرانی، مطابق با قوانین هتل ممکن است در زمان ورود مابه التفاوت به هتل پرداخت نمائید.',
     ];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -587,7 +628,6 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
     if (isSupervisor) {
       title += ' - سرپرست';
     }
-
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
@@ -701,7 +741,6 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
             children: [
               Text('مبلغ قابل پرداخت:', style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
               Text(
-                // اطمینان از اینکه _bookingPageData و totalPrice نال نیستند
                 _bookingPageData != null && _bookingPageData!['totalPrice'] != null
                     ? "${currencyFormatter.format(_bookingPageData!['totalPrice'])} تومان"
                     : "محاسبه...",
@@ -713,13 +752,13 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: _handleBookingSubmission,
+              onPressed: _isTimerActive ? _handleBookingSubmission : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: colorScheme.primary,
+                backgroundColor: _isTimerActive ? colorScheme.primary : Colors.grey,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 textStyle: textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
               ),
-              child: const Text('تایید و ادامه'),
+              child: Text(_isTimerActive ? 'تایید و ادامه' : 'زمان به پایان رسید'),
             ),
           ),
         ],
