@@ -264,7 +264,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildHotelImage(hotel.imageUrl),
+                  _buildHotelImage(hotel.imageUrl,hotel.rating),
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
@@ -305,7 +305,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
     );
   }
 
-  Widget _buildHotelImage(String imageUrl) {
+  Widget _buildHotelImage(String imageUrl, double rating) {
     double screenWidth = MediaQuery.of(context).size.width;
     return Stack(
       children: [
@@ -337,13 +337,13 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
           },
         ),
         Positioned(
-          top: 16,
+          bottom: 16,
           left: 16,
           child: Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               color: Color(0xFFEEEEEE),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(100),
             ),
             child: IconButton(
               icon: Icon(
@@ -351,6 +351,43 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                 color: _isFavorite ? Color(0xFF542545) : Color(0xFF542545),
               ),
               onPressed: _toggleFavorite,
+            ),
+          ),
+        ),
+        Positioned(
+          top: 16,
+          left: 16,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+                color: Color(0xFFEEEEEE),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 3,
+                    offset: const Offset(0, 1),
+                  )
+                ]
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  rating.toStringAsFixed(1),
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Icon(
+                  Icons.thumb_up,
+                  color: Color(0xFF542545),
+                  size: 18,
+                ),
+              ],
             ),
           ),
         ),
@@ -535,7 +572,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                       ),
                       Row(
                         children: [
-                          Icon(Icons.thumb_up_alt_outlined, size: 16, color: Color(0xFF542545)),
+                          Icon(Icons.thumb_up_alt, size: 16, color: Color(0xFF542545)),
                           const SizedBox(width: 4),
                           Text(room.rating.toString(), style: Theme.of(context).textTheme.bodySmall),
                         ],
@@ -615,7 +652,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.thumb_up_alt_outlined, size: 18, color: Color(0xFF542545)),
+                Icon(Icons.thumb_up_alt, size: 18, color: Color(0xFF542545)),
                 const SizedBox(width: 4),
                 Text(review.rating.toStringAsFixed(1), style: Theme.of(context).textTheme.bodyMedium),
               ],
