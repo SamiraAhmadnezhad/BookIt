@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' as intl;
 
-// --- Data Models ---
+// --- Data Models --- (Assume these are defined as before)
 class HotelDetails {
   final String id;
   final String name;
@@ -71,7 +71,7 @@ class Review {
   });
 }
 
-// --- Custom Clipper for Top Rounded Corners ---
+// --- Custom Clipper for Top Rounded Corners --- (Assume this is defined as before)
 class TopRoundedCornersClipper extends CustomClipper<Path> {
   final double cornerRadius;
 
@@ -97,7 +97,7 @@ class TopRoundedCornersClipper extends CustomClipper<Path> {
 }
 
 
-// --- API Service Stub ---
+// --- API Service Stub --- (Assume this is defined as before)
 class ApiService {
   Future<HotelDetails> fetchHotelDetails(String hotelId) async {
     await Future.delayed(const Duration(seconds: 1));
@@ -196,13 +196,12 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
   Future<List<Room>>? _roomsFuture;
   Future<List<Review>>? _reviewsFuture;
 
+  double _newReviewRating = 3.0;
   bool _isFavorite = false;
 
-  final _positiveTitleController = TextEditingController();
-  final _positiveDetailController = TextEditingController();
-  final _negativeTitleController = TextEditingController();
-  final _negativeDetailController = TextEditingController();
-  double _newReviewRating = 3.0;
+  Room? _selectedRoomForReview;
+  List<TextEditingController> _positiveFeedbackControllers = [TextEditingController()];
+  List<TextEditingController> _negativeFeedbackControllers = [TextEditingController()];
 
   @override
   void initState() {
@@ -219,22 +218,18 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
       }
       return hotel;
     });
-    setState(() {
-      _roomsFuture = _apiService.fetchHotelRooms(widget.hotelId);
-      _reviewsFuture = _apiService.fetchHotelReviews(widget.hotelId);
-    });
+    _roomsFuture = _apiService.fetchHotelRooms(widget.hotelId);
+    _reviewsFuture = _apiService.fetchHotelReviews(widget.hotelId);
   }
+
 
   Future<void> _toggleFavorite() async {
     bool previousState = _isFavorite;
-
     setState(() {
       _isFavorite = !_isFavorite;
     });
-
     try {
       bool success = await _apiService.toggleFavoriteHotel(widget.hotelId, _isFavorite);
-
       if (!success && mounted) {
         setState(() {
           _isFavorite = previousState;
@@ -263,12 +258,45 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
 
   @override
   void dispose() {
-    _positiveTitleController.dispose();
-    _positiveDetailController.dispose();
-    _negativeTitleController.dispose();
-    _negativeDetailController.dispose();
+    _positiveFeedbackControllers.forEach((controller) => controller.dispose());
+    _negativeFeedbackControllers.forEach((controller) => controller.dispose());
     super.dispose();
   }
+
+  void _addPositiveFeedbackField() {
+    setState(() {
+      _positiveFeedbackControllers.add(TextEditingController());
+    });
+  }
+
+  void _removePositiveFeedbackField(int index) {
+    if (_positiveFeedbackControllers.length > 1) {
+      setState(() {
+        _positiveFeedbackControllers[index].dispose();
+        _positiveFeedbackControllers.removeAt(index);
+      });
+    } else {
+      _positiveFeedbackControllers[index].clear();
+    }
+  }
+
+  void _addNegativeFeedbackField() {
+    setState(() {
+      _negativeFeedbackControllers.add(TextEditingController());
+    });
+  }
+
+  void _removeNegativeFeedbackField(int index) {
+    if (_negativeFeedbackControllers.length > 1) {
+      setState(() {
+        _negativeFeedbackControllers[index].dispose();
+        _negativeFeedbackControllers.removeAt(index);
+      });
+    } else {
+      _negativeFeedbackControllers[index].clear();
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -392,8 +420,8 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
           },
         ),
         Positioned(
-          bottom: 16,
-          left: 16,
+          top: 16,
+          right: 16,
           child: Material(
             color: Colors.white,
             shape: const CircleBorder(),
@@ -499,27 +527,52 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
   }
 
   Widget _buildSectionTitle(String title) {
+    IconData? mainIcon;
+    IconData? secondaryIcon;
+
+    if (title.startsWith("درباره هتل")) {
+      mainIcon = Icons.info_outline;
+    } else if (title == "امکانات و ویژگی ها") {
+      mainIcon = Icons.tune_outlined;
+    } else if (title == "لیست اتاق ها") {
+      mainIcon = Icons.hotel_outlined;
+    } else if (title == "نظرات") {
+      mainIcon = Icons.chat_bubble_outline;
+    } else if (title == "ثبت نظر") {
+      mainIcon = Icons.chat_bubble_outline;
+      secondaryIcon = Icons.info_outline;
+    } else {
+      mainIcon = Icons.circle;
+    }
+
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Container(
-          width: 20,
-          height: 20,
-          margin: const EdgeInsets.only(left: 8),
-          child: Icon(
-            title.startsWith("درباره هتل") ? Icons.info_outline :
-            title == "امکانات و ویژگی ها" ? Icons.tune_outlined :
-            title == "لیست اتاق ها" ? Icons.hotel_outlined :
-            title == "نظرات" ? Icons.chat_bubble_outline :
-            title == "ثبت نظر" ? Icons.edit_note_outlined :
-            Icons.circle,
-            size: 18,
+        Row(
+          children: [
+            if (mainIcon != null)
+              Container(
+                width: 24,
+                height: 24,
+                margin: const EdgeInsets.only(left: 8),
+                child: Icon(
+                  mainIcon,
+                  size: 22,
+                  color: Color(0xFF542545),
+                ),
+              ),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+        if (secondaryIcon != null)
+          Icon(
+            secondaryIcon,
+            size: 22,
             color: Color(0xFF542545),
           ),
-        ),
-        Text(
-          title,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-        ),
       ],
     );
   }
@@ -559,6 +612,15 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
           return const Center(child: Text("اتاقی برای نمایش وجود ندارد.", textDirection: TextDirection.rtl));
         }
         final rooms = snapshot.data!;
+        if (_selectedRoomForReview == null && rooms.isNotEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && _selectedRoomForReview == null) {
+              setState(() {
+                _selectedRoomForReview = rooms.first;
+              });
+            }
+          });
+        }
         return ListView.separated(
           physics: const NeverScrollableScrollPhysics(),
           shrinkWrap: true,
@@ -734,54 +796,114 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
 
   Widget _buildAddReviewForm() {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey[300]!, width: 1),
+      ),
+      color: Colors.white,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            FutureBuilder<List<Room>>(
+              future: _roomsFuture,
+              builder: (context, roomSnapshot) {
+                if (roomSnapshot.connectionState == ConnectionState.waiting && _selectedRoomForReview == null) {
+                  return Center(child: SizedBox(width:20, height:20, child: CircularProgressIndicator(strokeWidth: 2,)));
+                }
+                if (!roomSnapshot.hasData || roomSnapshot.data!.isEmpty) {
+                  return Text("اتاقی برای انتخاب موجود نیست.", style: TextStyle(color: Colors.grey[700]));
+                }
+                final rooms = roomSnapshot.data!;
+                if (_selectedRoomForReview == null && rooms.isNotEmpty) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted && _selectedRoomForReview == null) {
+                      setState(() {
+                        _selectedRoomForReview = rooms.first;
+                      });
+                    }
+                  });
+                }
+                return DropdownButtonFormField<Room>(
+                  decoration: InputDecoration(
+                    contentPadding: EdgeInsets.zero,
+                    border: InputBorder.none,
+                  ),
+                  isExpanded: true,
+                  icon: Icon(Icons.arrow_drop_down, color: Color(0xFF542545)),
+                  hint: Text("انتخاب اتاق محل اقامت", style: TextStyle(color: Colors.grey[700], fontSize: 14)),
+                  value: _selectedRoomForReview,
+                  items: rooms.map((Room room) {
+                    return DropdownMenuItem<Room>(
+                      value: room,
+                      child: Text(room.name, style: TextStyle(fontSize: 14)),
+                    );
+                  }).toList(),
+                  onChanged: (Room? newValue) {
+                    setState(() {
+                      _selectedRoomForReview = newValue;
+                    });
+                  },
+                );
+              },
+            ),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("امتیاز شما:", style: Theme.of(context).textTheme.titleMedium),
-                Row(
-                  children: List.generate(5, (index) {
-                    return IconButton(
-                      icon: Icon(
-                        index < _newReviewRating ? Icons.star : Icons.star_border,
-                        color: Color(0xFF542545),
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _newReviewRating = index + 1.0;
-                        });
-                      },
-                    );
-                  }),
-                ),
+                Text("امتیاز", style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
               ],
             ),
-            const SizedBox(height: 12),
-            _buildReviewTextField(_positiveTitleController, "عنوان نکته مثبت (اختیاری)"),
-            const SizedBox(height: 8),
-            _buildReviewTextField(_positiveDetailController, "نکته مثبت ۱"),
-            const SizedBox(height: 12),
-            _buildReviewTextField(_negativeTitleController, "عنوان نکته منفی (اختیاری)"),
-            const SizedBox(height: 8),
-            _buildReviewTextField(_negativeDetailController, "نکته منفی ۱"),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(5, (index) {
+                return IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: BoxConstraints(),
+                  icon: Icon(
+                    index < _newReviewRating ? Icons.star : Icons.star_border,
+                    color: Color(0xFF542545),
+                    size: 30,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _newReviewRating = index + 1.0;
+                    });
+                  },
+                );
+              }),
+            ),
             const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
+            _buildFeedbackSection(
+              title: "افزودن نکته مثبت",
+              addIcon: Icons.add_circle_outline,
+              removeIcon: Icons.remove_circle_outline,
+              controllers: _positiveFeedbackControllers,
+              onAddField: _addPositiveFeedbackField,
+              onRemoveField: _removePositiveFeedbackField,
+              hintTextPrefix: "نکته مثبت",
+            ),
+            const SizedBox(height: 20),
+            _buildFeedbackSection(
+              title: "افزودن نکته منفی",
+              addIcon: Icons.add_circle_outline,
+              removeIcon: Icons.remove_circle_outline,
+              controllers: _negativeFeedbackControllers,
+              onAddField: _addNegativeFeedbackField,
+              onRemoveField: _removeNegativeFeedbackField,
+              hintTextPrefix: "نکته منفی",
+            ),
+            const SizedBox(height: 24),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: IconButton(
+                icon: Icon(Icons.send_outlined, color: Color(0xFF542545), size: 28),
                 onPressed: _submitReview,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF542545),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                child: const Text("ارسال نظر"),
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints(),
               ),
             ),
           ],
@@ -790,25 +912,95 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
     );
   }
 
-  Widget _buildReviewTextField(TextEditingController controller, String label) {
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      ),
-      minLines: label.contains("عنوان") ? 1 : 2,
-      maxLines: label.contains("عنوان") ? 1 : 3,
-      textDirection: TextDirection.rtl,
+  Widget _buildFeedbackSection({
+    required String title,
+    required IconData addIcon,
+    required IconData removeIcon,
+    required List<TextEditingController> controllers,
+    required VoidCallback onAddField,
+    required Function(int) onRemoveField,
+    required String hintTextPrefix,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            InkWell(
+              onTap: onAddField,
+              child: Icon(addIcon, color: Color(0xFF542545), size: 22),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
+          itemCount: controllers.length,
+          itemBuilder: (context, index) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: controllers[index],
+                      decoration: InputDecoration(
+                        hintText: "$hintTextPrefix ${index + 1}",
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                      minLines: 1,
+                      maxLines: 3,
+                      textDirection: TextDirection.rtl,
+                    ),
+                  ),
+                  if (controllers.length > 1)
+                    IconButton(
+                      icon: Icon(removeIcon, color: Colors.grey[600], size: 20),
+                      onPressed: () => onRemoveField(index),
+                      padding: EdgeInsets.zero,
+                      constraints: BoxConstraints(),
+                    ),
+                ],
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 
   Future<void> _submitReview() async {
-    if (_positiveDetailController.text.isEmpty && _negativeDetailController.text.isEmpty) {
-      if(mounted) {
+    String positiveFeedbacks = _positiveFeedbackControllers
+        .where((c) => c.text.trim().isNotEmpty)
+        .map((c) => c.text.trim())
+        .join("\n");
+
+    String negativeFeedbacks = _negativeFeedbackControllers
+        .where((c) => c.text.trim().isNotEmpty)
+        .map((c) => c.text.trim())
+        .join("\n");
+
+    if (positiveFeedbacks.isEmpty && negativeFeedbacks.isEmpty) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("لطفا حداقل یک نکته مثبت یا منفی وارد کنید.", textDirection: TextDirection.rtl)),
+        );
+      }
+      return;
+    }
+    if (_selectedRoomForReview == null && await _roomsFuture != null && (await _roomsFuture)!.isNotEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("لطفا اتاق محل اقامت خود را انتخاب کنید.", textDirection: TextDirection.rtl)),
         );
       }
       return;
@@ -816,10 +1008,10 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
 
     final reviewData = Review(
       userId: "currentUser",
-      userName: "شما",
+      userName: "شما (اتاق: ${_selectedRoomForReview?.name ?? 'نامشخص'})",
       date: intl.DateFormat('yyyy/MM/dd', 'fa_IR').format(DateTime.now()),
-      positiveFeedback: "${_positiveTitleController.text}: ${_positiveDetailController.text}".trim(),
-      negativeFeedback: "${_negativeTitleController.text}: ${_negativeDetailController.text}".trim(),
+      positiveFeedback: positiveFeedbacks,
+      negativeFeedback: negativeFeedbacks,
       rating: _newReviewRating,
     );
 
@@ -855,14 +1047,38 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("نظر شما با موفقیت ثبت شد.", textDirection: TextDirection.rtl)),
       );
-      _positiveTitleController.clear();
-      _positiveDetailController.clear();
-      _negativeTitleController.clear();
-      _negativeDetailController.clear();
+      _positiveFeedbackControllers.forEach((c) => c.clear());
+      _negativeFeedbackControllers.forEach((c) => c.clear());
+
+      if (_positiveFeedbackControllers.length > 1) {
+        setState(() { _positiveFeedbackControllers = [TextEditingController()]; });
+      }
+      if (_negativeFeedbackControllers.length > 1) {
+        setState(() { _negativeFeedbackControllers = [TextEditingController()]; });
+      }
+
       setState(() {
         _newReviewRating = 3.0;
+        if (_roomsFuture != null) {
+          _roomsFuture!.then((rooms) {
+            if (mounted && rooms.isNotEmpty) {
+              setState(() {
+                _selectedRoomForReview = rooms.first;
+              });
+            } else if (mounted) {
+              setState(() {
+                _selectedRoomForReview = null;
+              });
+            }
+          });
+        } else if (mounted) {
+          setState(() {
+            _selectedRoomForReview = null;
+          });
+        }
         _reviewsFuture = _apiService.fetchHotelReviews(widget.hotelId);
       });
+
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("خطا در ثبت نظر. لطفا دوباره تلاش کنید.", textDirection: TextDirection.rtl)),
