@@ -3,28 +3,34 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:intl/date_symbol_data_local.dart' as intl_local;
 
+// TODO: این کلاس و متدهای آن باید با سرویس واقعی API شما جایگزین شوند.
 class BookingApiService {
+  // TODO: این متد باید داده‌های پیش‌نمایش رزرو را از سرور واقعی شما دریافت کند.
   Future<Map<String, dynamic>> fetchBookingPreviewDetails(String hotelId) async {
-    print('API Call: fetchBookingPreviewDetails for hotelId: $hotelId');
+    print('API Call (Mock): fetchBookingPreviewDetails for hotelId: $hotelId');
     await Future.delayed(const Duration(seconds: 1));
+    // داده‌های نمونه برای شبیه‌سازی پاسخ سرور
     return {
       'hotelName': 'نام هتل در حالت طولانی-',
       'hotelAddress': 'آدرس دقیق هتل در حالت طولانی قرار می‌گیرد',
       'hotelRating': 4.5,
       'hotelStarRatingVisual': 4,
-      'hotelImageUrl': 'https://picsum.photos/seed/hotel_booking_final_v4/800/300',
-      'checkInDate': "2026-03-15T00:00:00.000Z",
-      'checkOutDate': "2026-03-18T00:00:00.000Z",
-      'roomInfo': '1 اتاق به مدت 3 شب',
-      'numberOfAdults': 2,
-      'totalPrice': 3200000,
+      'hotelImageUrl': 'https://picsum.photos/seed/hotel_booking_final_v5_todo/800/300',
+      'checkInDate': "2026-03-15T00:00:00.000Z", // TODO: تاریخ‌ها باید از سرور بیایند
+      'checkOutDate': "2026-03-18T00:00:00.000Z", // TODO: تاریخ‌ها باید از سرور بیایند
+      'roomInfo': '1 اتاق به مدت 3 شب', // TODO: اطلاعات اتاق باید از سرور بیاید
+      'numberOfAdults': 2, // TODO: تعداد بزرگسالان باید از سرور بیاید
+      'totalPrice': 3200000, // TODO: قیمت کل باید از سرور بیاید
+      // 'reservationTimeLimitMinutes': 15, // TODO: (اختیاری) زمان مجاز رزرو می‌تواند از سرور بیاید
     };
   }
 
+  // TODO: این متد باید اطلاعات رزرو نهایی شده را به سرور واقعی شما ارسال کند.
   Future<bool> submitHotelBooking(Map<String, dynamic> bookingData) async {
-    print('API Call: submitHotelBooking with data: $bookingData');
+    print('API Call (Mock): submitHotelBooking with data: $bookingData');
     await Future.delayed(const Duration(seconds: 2));
-    return true;
+    // در دنیای واقعی، پاسخ سرور (موفقیت یا شکست) را برمی‌گردانید
+    return true; // true برای موفقیت، false برای شکست
   }
 }
 
@@ -47,7 +53,8 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
   bool _termsAndConditionsAccepted = false;
 
   Timer? _timer;
-  final int _initialTimerSeconds = 15 * 60;
+  // TODO: مقدار اولیه تایمر می‌تواند از API یا تنظیمات برنامه خوانده شود.
+  final int _initialTimerSeconds = 15 * 60; // 15 دقیقه
   late int _remainingSeconds;
   bool _isTimerActive = false;
   final Color _primaryColor = const Color(0xFF542545);
@@ -88,10 +95,12 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
       _errorMessage = null;
     });
     try {
+      // TODO: فراخوانی متد واقعی API برای دریافت اطلاعات
       final data = await _apiService.fetchBookingPreviewDetails(widget.hotelId);
       if (mounted) {
         setState(() {
           _bookingPageData = data;
+          // TODO: بر اساس داده‌های واقعی سرور، guestFormControllers را مقداردهی کنید
           _guestFormControllers = List.generate(
             (_bookingPageData?['numberOfAdults'] as int?) ?? 1,
                 (index) => {
@@ -216,6 +225,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
       });
     }
 
+    // TODO: داده‌های ارسالی به سرور باید با فرمت مورد انتظار API شما مطابقت داشته باشند.
     Map<String, dynamic> bookingPayload = {
       'hotelId': widget.hotelId,
       'hotelName': _bookingPageData?['hotelName'],
@@ -223,6 +233,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
       'totalPrice': _bookingPageData?['totalPrice'],
       'checkInDate': _bookingPageData?['checkInDate'],
       'checkOutDate': _bookingPageData?['checkOutDate'],
+      // TODO: سایر اطلاعات مورد نیاز API مانند توکن کاربر، شناسه پرداخت و ...
     };
 
     if (mounted) {
@@ -249,6 +260,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
     }
 
     try {
+      // TODO: فراخوانی متد واقعی API برای ارسال اطلاعات
       bool submissionSuccess = await _apiService.submitHotelBooking(bookingPayload);
       if (mounted) Navigator.pop(context);
 
@@ -259,9 +271,12 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
           SnackBar(
               content: Text('رزرو شما با موفقیت ثبت شد!',
                   style: TextStyle(fontFamily: currentTheme.textTheme.bodyMedium?.fontFamily, color: Colors.white)),
-              backgroundColor: Colors.green),
+              backgroundColor: Colors.greenAccent),
         );
+        // TODO: کاربر را به صفحه تایید نهایی یا صفحه دیگری هدایت کنید.
+        // Navigator.of(context).pushReplacementNamed('/booking_confirmation_page');
       } else {
+        // TODO: مدیریت خطای بازگشتی از سرور در صورت عدم موفقیت رزرو (مثلاً اتاق پر شده)
         scaffoldMessenger.showSnackBar(
           SnackBar(
               content: Text('خطا در ثبت رزرو. لطفاً مجدداً تلاش فرمایید.',
@@ -271,6 +286,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
       }
     } catch (e) {
       if (mounted) Navigator.pop(context);
+      // TODO: مدیریت خطاهای شبکه یا سایر خطاهای پیش‌بینی نشده
       scaffoldMessenger.showSnackBar(
         SnackBar(
             content: Text('خطا در ارتباط با سرور: $e',
@@ -308,6 +324,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
         title: Text('خطا', style: appBarTextStyle),
       );
     }
+    // TODO: نام هتل باید از _bookingPageData که از سرور می‌آید خوانده شود.
     return AppBar(
       title: Text(_bookingPageData!['hotelName'] ?? 'تکمیل اطلاعات رزرو', style: appBarTextStyle),
     );
@@ -355,6 +372,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
     }
 
     final intl.DateFormat longPersianDateFormat = intl.DateFormat('EEEE d MMMM yyyy', 'fa_IR');
+    // TODO: تاریخ‌ها باید از فیلدهای صحیح _bookingPageData که از سرور آمده‌اند، parse شوند.
     final DateTime checkInDate = intl.DateFormat("yyyy-MM-ddTHH:mm:ss.SSS'Z'").parse(_bookingPageData!['checkInDate'], true).toLocal();
     final DateTime checkOutDate = intl.DateFormat("yyyy-MM-ddTHH:mm:ss.SSS'Z'").parse(_bookingPageData!['checkOutDate'], true).toLocal();
 
@@ -362,6 +380,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // TODO: URL تصویر هتل باید از _bookingPageData خوانده شود.
           _buildHotelImageSection(
             imageUrl: _bookingPageData!['hotelImageUrl'],
           ),
@@ -370,12 +389,14 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // TODO: اطلاعات هتل (آدرس، امتیاز) باید از _bookingPageData خوانده شوند.
                 _buildHotelInfoSection(
                   address: _bookingPageData!['hotelAddress'],
                   rating: _bookingPageData!['hotelRating'],
                   starRatingVisual: _bookingPageData!['hotelStarRatingVisual'],
                 ),
                 const SizedBox(height: 24),
+                // TODO: اطلاعات رزرو (اتاق، تعداد بزرگسالان) باید از _bookingPageData خوانده شوند.
                 _buildReservationDetailsSection(
                   checkInDateString: longPersianDateFormat.format(checkInDate),
                   checkOutDateString: longPersianDateFormat.format(checkOutDate),
@@ -544,6 +565,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
 
   Widget _buildTravelerNotesSection() {
     final textTheme = Theme.of(context).textTheme;
+    // TODO: این متون می‌توانند از سرور یا منابع محلی خوانده شوند.
     final notes = [
       'کاربر گرامی، لطفا در هنگام وارد کردن اطلاعات به نکات زیر توجه داشته باشید:',
       'لطفا از صحت اطلاعات وارد شده (شماره موبایل و ایمیل) خود اطمینان حاصل فرمائید تا در مواقع ضروری با شما تماس گرفته شود. در صورت عدم صحت اطلاعات وارد شده عواقب ناشی از آن متوجه مشتری است.',
@@ -599,6 +621,8 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
   }
 
   Widget _buildRoomFormsSection() {
+    // TODO: اگر بیش از یک اتاق وجود دارد، باید این بخش را برای هر اتاق تکرار کنید
+    // و عنوان "اتاق ۱" را به صورت داینامیک تنظیم کنید.
     const String roomTitle = "اتاق ۱";
 
     return Column(
@@ -721,7 +745,8 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
   Widget _buildTermsAndPaymentSection() {
     final textTheme = Theme.of(context).textTheme;
     final intl.NumberFormat currencyFormatter = intl.NumberFormat("#,##0", "fa_IR");
-    final String? fontFamily = textTheme.titleMedium?.fontFamily;
+    final String? fontFamilyButtonText = Theme.of(context).elevatedButtonTheme.style?.textStyle?.resolve({})?.fontFamily ?? textTheme.labelLarge?.fontFamily;
+
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 20.0),
@@ -790,6 +815,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
                   ),
                   const SizedBox(height: 2),
                   Text(
+                    // TODO: قیمت کل باید از _bookingPageData که از سرور می‌آید خوانده شود.
                     _bookingPageData != null && _bookingPageData!['totalPrice'] != null
                         ? currencyFormatter.format(_bookingPageData!['totalPrice'])
                         : "...",
@@ -836,7 +862,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
               child: Text(
                 _isTimerActive ? 'تایید و ادامه' : 'زمان به پایان رسید',
                 style: TextStyle(
-                  fontFamily: fontFamily,
+                  fontFamily: fontFamilyButtonText,
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 17,
