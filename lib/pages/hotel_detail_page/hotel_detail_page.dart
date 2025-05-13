@@ -434,7 +434,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                 padding: const EdgeInsets.all(10.0),
                 child: Icon(
                   _isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: _isFavorite ? Color(0xFF542545) : Color(0xFF542545),
+                  color: _isFavorite ? Colors.redAccent[700] : Color(0xFF542545),
                   size: 26,
                 ),
               ),
@@ -489,6 +489,8 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
         Text(
           name,
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          overflow: TextOverflow.ellipsis,
+          maxLines: 2,
         ),
         const SizedBox(height: 4),
         Row(
@@ -518,9 +520,12 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
             size: 20,
           ),
         const SizedBox(width: 8),
-        Text(
-          "$rating از 5 (${intl.NumberFormat("#,###", "fa_IR").format(reviewCount)} نظر)",
-          style: Theme.of(context).textTheme.bodyMedium,
+        Flexible(
+          child: Text(
+            "$rating از 5 (${intl.NumberFormat("#,###", "fa_IR").format(reviewCount)} نظر)",
+            style: Theme.of(context).textTheme.bodyMedium,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );
@@ -548,24 +553,30 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            if (mainIcon != null)
-              Container(
-                width: 24,
-                height: 24,
-                margin: const EdgeInsets.only(left: 8),
-                child: Icon(
-                  mainIcon,
-                  size: 22,
-                  color: Color(0xFF542545),
+        Flexible(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (mainIcon != null)
+                Container(
+                  width: 24,
+                  height: 24,
+                  margin: const EdgeInsets.only(left: 8),
+                  child: Icon(
+                    mainIcon,
+                    size: 22,
+                    color: Color(0xFF542545),
+                  ),
+                ),
+              Flexible(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-            ),
-          ],
+            ],
+          ),
         ),
         if (secondaryIcon != null)
           Icon(
@@ -594,7 +605,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
               child: Icon(amenity.icon, size: 28, color: Color(0xFF542545)),
             ),
             const SizedBox(height: 4),
-            Text(amenity.name, style: Theme.of(context).textTheme.bodySmall),
+            Text(amenity.name, style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center),
           ],
         );
       }).toList(),
@@ -658,15 +669,14 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(room.name, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                  Text(room.name, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis, maxLines: 2),
                   const SizedBox(height: 6),
                   Row(
                     children: [
                       Icon(Icons.people_alt_outlined, size: 16, color:  Color(0xFF542545)),
                       const SizedBox(width: 4),
-                      Text("ظرفیت ${room.capacity} نفر", style: Theme.of(context).textTheme.bodySmall),
+                      Flexible(child: Text("ظرفیت ${room.capacity} نفر", style: Theme.of(context).textTheme.bodySmall, overflow: TextOverflow.ellipsis)),
                     ],
                   ),
                   const SizedBox(height: 4),
@@ -674,22 +684,25 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                     children: [
                       Icon(Icons.restaurant_menu_outlined, size: 16, color: Color(0xFF542545)),
                       const SizedBox(width: 4),
-                      Text(room.breakfastInfo, style: Theme.of(context).textTheme.bodySmall),
+                      Flexible(child: Text(room.breakfastInfo, style: Theme.of(context).textTheme.bodySmall, overflow: TextOverflow.ellipsis)),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("قیمت برای ۳ شب", style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.grey[600])),
-                          Text(
-                            "${_formatPrice(room.pricePerNight)} تومان",
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Color(0xFF542545)),
-                          ),
-                        ],
+                      Flexible(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("قیمت برای ۳ شب", style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.grey[600])),
+                            Text(
+                              "${_formatPrice(room.pricePerNight)} تومان",
+                              style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Color(0xFF542545)),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
                       ),
                       Row(
                         children: [
@@ -761,7 +774,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(review.userName, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                Flexible(child: Text(review.userName, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
                 Text(review.date, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600])),
               ],
             ),
@@ -838,7 +851,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                   items: rooms.map((Room room) {
                     return DropdownMenuItem<Room>(
                       value: room,
-                      child: Text(room.name, style: TextStyle(fontSize: 14)),
+                      child: Text(room.name, style: TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis),
                     );
                   }).toList(),
                   onChanged: (Room? newValue) {
@@ -854,6 +867,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text("امتیاز", style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                Icon(Icons.more_horiz, color: Color(0xFF542545), size: 20),
               ],
             ),
             const SizedBox(height: 4),
@@ -927,7 +941,13 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Flexible(
+              child: Text(
+                title,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
             InkWell(
               onTap: onAddField,
               child: Icon(addIcon, color: Color(0xFF542545), size: 22),
