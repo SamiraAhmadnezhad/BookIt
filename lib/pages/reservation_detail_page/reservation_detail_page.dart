@@ -12,7 +12,7 @@ class BookingApiService {
       'hotelAddress': 'آدرس دقیق هتل در حالت طولانی قرار می‌گیرد',
       'hotelRating': 4.5,
       'hotelStarRatingVisual': 4,
-      'hotelImageUrl': 'https://picsum.photos/seed/hotel_booking_final_v3/800/300',
+      'hotelImageUrl': 'https://picsum.photos/seed/hotel_booking_final_v4/800/300',
       'checkInDate': "2026-03-15T00:00:00.000Z",
       'checkOutDate': "2026-03-18T00:00:00.000Z",
       'roomInfo': '1 اتاق به مدت 3 شب',
@@ -50,6 +50,8 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
   final int _initialTimerSeconds = 15 * 60;
   late int _remainingSeconds;
   bool _isTimerActive = false;
+  final Color _primaryColor = const Color(0xFF542545);
+
 
   @override
   void initState() {
@@ -133,8 +135,8 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
           timer.cancel();
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('زمان شما برای تکمیل رزرو به پایان رسید.', textDirection: TextDirection.rtl),
+              SnackBar(
+                content: Text('زمان شما برای تکمیل رزرو به پایان رسید.', textDirection: TextDirection.rtl, style: TextStyle(fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily)),
                 backgroundColor: Colors.orangeAccent,
               ),
             );
@@ -168,8 +170,8 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text('زمان شما برای تکمیل رزرو به پایان رسیده است.',
-              style: currentTheme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
-          backgroundColor: Colors.redAccent,
+              style: TextStyle(fontFamily: currentTheme.textTheme.bodyMedium?.fontFamily, color: Colors.white)),
+          backgroundColor: _primaryColor,
         ),
       );
       return;
@@ -179,8 +181,8 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text('لطفاً قوانین و مقررات رزرو را مطالعه و تأیید نمایید.',
-              style: currentTheme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
-          backgroundColor: Colors.redAccent,
+              style: TextStyle(fontFamily: currentTheme.textTheme.bodyMedium?.fontFamily, color: Colors.white)),
+          backgroundColor: _primaryColor,
         ),
       );
       return;
@@ -195,8 +197,8 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
         scaffoldMessenger.showSnackBar(
           SnackBar(
             content: Text('لطفاً اطلاعات مسافر ${i + 1} را به صورت کامل وارد کنید.',
-                style: currentTheme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
-            backgroundColor: Colors.redAccent,
+                style: TextStyle(fontFamily: currentTheme.textTheme.bodyMedium?.fontFamily, color: Colors.white)),
+            backgroundColor: _primaryColor,
           ),
         );
         break;
@@ -235,9 +237,9 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircularProgressIndicator(color: currentTheme.colorScheme.primary),
+                  CircularProgressIndicator(color: _primaryColor),
                   const SizedBox(width: 20),
-                  Text("در حال ثبت رزرو...", style: currentTheme.textTheme.bodyLarge),
+                  Text("در حال ثبت رزرو...", style: TextStyle(fontFamily: currentTheme.textTheme.bodyLarge?.fontFamily, fontSize: currentTheme.textTheme.bodyLarge?.fontSize)),
                 ],
               ),
             ),
@@ -256,15 +258,15 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
         scaffoldMessenger.showSnackBar(
           SnackBar(
               content: Text('رزرو شما با موفقیت ثبت شد!',
-                  style: currentTheme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
+                  style: TextStyle(fontFamily: currentTheme.textTheme.bodyMedium?.fontFamily, color: Colors.white)),
               backgroundColor: Colors.green),
         );
       } else {
         scaffoldMessenger.showSnackBar(
           SnackBar(
               content: Text('خطا در ثبت رزرو. لطفاً مجدداً تلاش فرمایید.',
-                  style: currentTheme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
-              backgroundColor: Colors.redAccent),
+                  style: TextStyle(fontFamily: currentTheme.textTheme.bodyMedium?.fontFamily, color: Colors.white)),
+              backgroundColor: _primaryColor),
         );
       }
     } catch (e) {
@@ -272,8 +274,8 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
       scaffoldMessenger.showSnackBar(
         SnackBar(
             content: Text('خطا در ارتباط با سرور: $e',
-                style: currentTheme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
-            backgroundColor: Colors.redAccent),
+                style: TextStyle(fontFamily: currentTheme.textTheme.bodyMedium?.fontFamily, color: Colors.white)),
+            backgroundColor: _primaryColor),
       );
     }
   }
@@ -294,28 +296,20 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
   }
 
   AppBar? _buildAppBar() {
+    final appBarTextStyle = Theme.of(context).appBarTheme.titleTextStyle ?? Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).appBarTheme.foregroundColor);
+
     if (!_isIntlInitialized || (_isIntlInitialized && _isLoading && _bookingPageData == null)) {
       return AppBar(
-        title: Text('بارگذاری اطلاعات...', style: Theme.of(context).textTheme.titleMedium),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        elevation: 0.5,
+        title: Text('بارگذاری اطلاعات...', style: appBarTextStyle),
       );
     }
     if (_errorMessage != null && _bookingPageData == null) {
       return AppBar(
-        title: Text('خطا', style: Theme.of(context).textTheme.titleMedium),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        elevation: 0.5,
+        title: Text('خطا', style: appBarTextStyle),
       );
     }
     return AppBar(
-      title: Text(_bookingPageData!['hotelName'] ?? 'تکمیل اطلاعات رزرو',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-      backgroundColor: Colors.white,
-      foregroundColor: Colors.black87,
-      elevation: 0.5,
+      title: Text(_bookingPageData!['hotelName'] ?? 'تکمیل اطلاعات رزرو', style: appBarTextStyle),
     );
   }
 
@@ -326,14 +320,14 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
       return Center(child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
+          CircularProgressIndicator(color: _primaryColor),
           const SizedBox(height: 16),
           Text("در حال آماده سازی...", style: textTheme.bodyLarge),
         ],
       ));
     }
     if (_isLoading && _isIntlInitialized && _errorMessage == null) {
-      return Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary));
+      return Center(child: CircularProgressIndicator(color: _primaryColor));
     }
     if (_errorMessage != null) {
       return Center(
@@ -342,14 +336,14 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, color: Colors.redAccent, size: 60),
+              Icon(Icons.error_outline, color: _primaryColor, size: 60),
               const SizedBox(height: 16),
               Text(_errorMessage!, style: textTheme.bodyLarge, textAlign: TextAlign.center),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _isIntlInitialized ? _loadBookingPageData : _initializeDependencies,
+                style: ElevatedButton.styleFrom(backgroundColor: _primaryColor),
                 child: const Text('تلاش مجدد'),
-                style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
               )
             ],
           ),
@@ -424,7 +418,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
                   value: loadingProgress.expectedTotalBytes != null
                       ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
                       : null,
-                  color: Theme.of(context).colorScheme.primary,
+                  color: _primaryColor,
                 ),
               ),
             );
@@ -465,13 +459,12 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
     required int starRatingVisual,
   }) {
     final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(Icons.location_on_outlined, color: textTheme.bodyMedium?.color, size: 18),
+            Icon(Icons.location_on, color: _primaryColor, size: 18),
             const SizedBox(width: 6),
             Expanded(
               child: Text(address, style: textTheme.bodyMedium, maxLines: 2, overflow: TextOverflow.ellipsis),
@@ -481,18 +474,18 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
         const SizedBox(height: 10),
         Row(
           children: [
-            Icon(Icons.thumb_up_alt_outlined, color: colorScheme.primary, size: 18),
+            Icon(Icons.thumb_up, color: _primaryColor, size: 18),
             const SizedBox(width: 4),
             Text(
               rating.toStringAsFixed(1),
-              style: textTheme.bodyMedium?.copyWith(color: colorScheme.primary, fontWeight: FontWeight.bold),
+              style: textTheme.bodyMedium?.copyWith(color: _primaryColor, fontWeight: FontWeight.bold),
             ),
             const SizedBox(width: 16),
             Row(
               children: List.generate(5, (index) {
                 return Icon(
                   index < starRatingVisual ? Icons.star_rounded : Icons.star_border_rounded,
-                  color: Colors.amber,
+                  color: _primaryColor,
                   size: 20,
                 );
               }),
@@ -515,9 +508,9 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
       children: [
         Row(
           children: [
-            Icon(Icons.calendar_today_outlined, color: textTheme.bodyMedium?.color, size: 20),
+            Icon(Icons.calendar_today_outlined, color: _primaryColor, size: 20),
             const SizedBox(width: 8),
-            Text('اطلاعات رزرو', style: textTheme.titleMedium),
+            Text('اطلاعات رزرو', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
           ],
         ),
         const SizedBox(height: 12),
@@ -541,7 +534,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
         children: [
-          Icon(icon, color: Theme.of(context).textTheme.bodyMedium?.color, size: 18),
+          Icon(icon, color: _primaryColor, size: 18),
           const SizedBox(width: 10),
           Expanded(child: Text(text, style: Theme.of(context).textTheme.bodyMedium)),
         ],
@@ -562,9 +555,9 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
       children: [
         Row(
           children: [
-            Icon(Icons.list_alt_outlined, color: textTheme.bodyMedium?.color, size: 20),
+            Icon(Icons.list_alt_outlined, color: _primaryColor, size: 20),
             const SizedBox(width: 8),
-            Text('اطلاعات مسافران', style: textTheme.titleMedium),
+            Text('اطلاعات مسافران', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
           ],
         ),
         const SizedBox(height: 12),
@@ -582,7 +575,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
                     if (!isFirstNote)
                       Padding(
                         padding: const EdgeInsets.only(left: 4.0, top: 6.0),
-                        child: Icon(Icons.circle, size: 6, color: textTheme.bodyMedium?.color),
+                        child: Icon(Icons.circle, size: 6, color: textTheme.bodyMedium?.color ?? Colors.black54),
                       ),
                     if (!isFirstNote) const SizedBox(width: 4),
                     Expanded(
@@ -695,18 +688,16 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
   }) {
     final inputDecorationTheme = Theme.of(context).inputDecorationTheme;
     final textTheme = Theme.of(context).textTheme;
+    final String? fontFamily = textTheme.bodyMedium?.fontFamily;
 
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
-      style: textTheme.bodyMedium?.copyWith(fontSize: 15),
+      style: TextStyle(fontFamily: fontFamily, fontSize: 15, color: textTheme.bodyMedium?.color ?? Colors.black87),
       textAlign: TextAlign.right,
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: inputDecorationTheme.hintStyle?.copyWith(
-          fontSize: 15,
-          color: Colors.grey.shade600,
-        ) ?? TextStyle(fontFamily: textTheme.bodyMedium?.fontFamily, fontSize: 15, color: Colors.grey.shade600),
+        hintStyle: TextStyle(fontFamily: fontFamily, fontSize: 15, color: Colors.grey.shade600),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.0),
           borderSide: BorderSide(color: Colors.grey.shade400, width: 1.0),
@@ -717,7 +708,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.0),
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.5),
+          borderSide: BorderSide(color: _primaryColor, width: 1.5),
         ),
         contentPadding: inputDecorationTheme.contentPadding ??
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -729,8 +720,8 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
 
   Widget _buildTermsAndPaymentSection() {
     final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
     final intl.NumberFormat currencyFormatter = intl.NumberFormat("#,##0", "fa_IR");
+    final String? fontFamily = textTheme.titleMedium?.fontFamily;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 20.0),
@@ -774,7 +765,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
                       _termsAndConditionsAccepted = value ?? false;
                     });
                   },
-                  activeColor: colorScheme.primary,
+                  activeColor: _primaryColor,
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   side: BorderSide(color: Colors.grey.shade400, width: 1.5),
                 ),
@@ -802,7 +793,8 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
                     _bookingPageData != null && _bookingPageData!['totalPrice'] != null
                         ? currencyFormatter.format(_bookingPageData!['totalPrice'])
                         : "...",
-                    style: textTheme.titleLarge?.copyWith(
+                    style: TextStyle(
+                      fontFamily: textTheme.titleLarge?.fontFamily,
                       color: Colors.black87,
                       fontWeight: FontWeight.bold,
                       fontSize: 20,
@@ -822,7 +814,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
                   const SizedBox(width: 8),
                   Icon(
                     Icons.account_balance_wallet_outlined,
-                    color: textTheme.titleMedium?.color,
+                    color: _primaryColor,
                     size: 26,
                   ),
                 ],
@@ -835,18 +827,21 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
             child: ElevatedButton(
               onPressed: _isTimerActive ? _handleBookingSubmission : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: _isTimerActive ? colorScheme.primary : Colors.grey.shade400,
+                backgroundColor: _isTimerActive ? _primaryColor : Colors.grey.shade400,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(28.0),
                 ),
-                textStyle: textTheme.titleMedium?.copyWith(
+              ),
+              child: Text(
+                _isTimerActive ? 'تایید و ادامه' : 'زمان به پایان رسید',
+                style: TextStyle(
+                  fontFamily: fontFamily,
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 17,
                 ),
               ),
-              child: Text(_isTimerActive ? 'تایید و ادامه' : 'زمان به پایان رسید'),
             ),
           ),
         ],
