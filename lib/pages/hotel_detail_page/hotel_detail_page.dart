@@ -434,7 +434,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                 padding: const EdgeInsets.all(10.0),
                 child: Icon(
                   _isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: _isFavorite ? Colors.redAccent[700] : Color(0xFF542545),
+                  color: _isFavorite ? Color(0xFF542545) : Color(0xFF542545),
                   size: 26,
                 ),
               ),
