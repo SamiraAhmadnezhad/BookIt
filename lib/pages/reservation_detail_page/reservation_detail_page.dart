@@ -427,13 +427,13 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
         if (_isTimerActive || _remainingSeconds > 0 || !_isTimerActive && _remainingSeconds == 0)
           Positioned(
             bottom: 10,
-            right: 10,
+            left: 10,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
                 color: _isTimerActive && _remainingSeconds > 0
-                    ? Colors.black.withOpacity(0.6)
-                    : Colors.red.withOpacity(0.8),
+                    ? Color(0xFFEEEEEE)
+                    : Color(0xFF542545),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -442,7 +442,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
                     : 'زمان به پایان رسید',
                 style: TextStyle(
                   fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily,
-                  color: Colors.white,
+                  color: Color(0xFF5F5F5F),
                   fontSize: 11,
                   fontWeight: _isTimerActive && _remainingSeconds > 0 ? FontWeight.normal : FontWeight.bold,
                 ),
