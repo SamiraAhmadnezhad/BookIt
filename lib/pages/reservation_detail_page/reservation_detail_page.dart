@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:intl/date_symbol_data_local.dart' as intl_local;
 
-// شبیه‌سازی سرویس API (بدون تغییر)
 class BookingApiService {
   Future<Map<String, dynamic>> fetchBookingPreviewDetails(String hotelId) async {
     print('API Call: fetchBookingPreviewDetails for hotelId: $hotelId');
@@ -13,7 +12,7 @@ class BookingApiService {
       'hotelAddress': 'آدرس دقیق هتل در حالت طولانی قرار می‌گیرد',
       'hotelRating': 4.5,
       'hotelStarRatingVisual': 4,
-      'hotelImageUrl': 'https://picsum.photos/seed/hotel_booking_timer_fixed/800/300',
+      'hotelImageUrl': 'https://picsum.photos/seed/hotel_booking_final_v3/800/300',
       'checkInDate': "2026-03-15T00:00:00.000Z",
       'checkOutDate': "2026-03-18T00:00:00.000Z",
       'roomInfo': '1 اتاق به مدت 3 شب',
@@ -117,14 +116,10 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
   void _startTimer() {
     _timer?.cancel();
     if (_remainingSeconds <= 0) {
-      setState(() {
-        _isTimerActive = false;
-      });
+      setState(() { _isTimerActive = false; });
       return;
     }
-    setState(() {
-      _isTimerActive = true;
-    });
+    setState(() { _isTimerActive = true; });
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
@@ -136,9 +131,9 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
         } else {
           _isTimerActive = false;
           timer.cancel();
-          if (mounted) { // بررسی mounted قبل از نمایش SnackBar
+          if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar( // ایجاد ویجت SnackBar
+              const SnackBar(
                 content: Text('زمان شما برای تکمیل رزرو به پایان رسید.', textDirection: TextDirection.rtl),
                 backgroundColor: Colors.orangeAccent,
               ),
@@ -171,7 +166,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
 
     if (!_isTimerActive) {
       scaffoldMessenger.showSnackBar(
-        SnackBar( // ایجاد ویجت SnackBar
+        SnackBar(
           content: Text('زمان شما برای تکمیل رزرو به پایان رسیده است.',
               style: currentTheme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
           backgroundColor: Colors.redAccent,
@@ -182,7 +177,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
 
     if (!_termsAndConditionsAccepted) {
       scaffoldMessenger.showSnackBar(
-        SnackBar( // ایجاد ویجت SnackBar
+        SnackBar(
           content: Text('لطفاً قوانین و مقررات رزرو را مطالعه و تأیید نمایید.',
               style: currentTheme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
           backgroundColor: Colors.redAccent,
@@ -198,7 +193,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
           _guestFormControllers[i]['nationalCode']!.text.trim().isEmpty) {
         formIsValid = false;
         scaffoldMessenger.showSnackBar(
-          SnackBar( // ایجاد ویجت SnackBar
+          SnackBar(
             content: Text('لطفاً اطلاعات مسافر ${i + 1} را به صورت کامل وارد کنید.',
                 style: currentTheme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
             backgroundColor: Colors.redAccent,
@@ -230,12 +225,12 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
 
     if (mounted) {
       showDialog(
-        context: context, // پارامتر context اضافه شد
+        context: context,
         barrierDismissible: false,
-        builder: (BuildContext dialogContext) { // پارامتر builder اضافه شد و نام context به dialogContext تغییر کرد تا با context اصلی تداخل نداشته باشد
+        builder: (BuildContext dialogContext) {
           return Dialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            child: Padding( // پارامتر padding اضافه شد
+            child: Padding(
               padding: const EdgeInsets.all(20.0),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -253,29 +248,29 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
 
     try {
       bool submissionSuccess = await _apiService.submitHotelBooking(bookingPayload);
-      if (mounted) Navigator.pop(context); // بستن دیالوگ
+      if (mounted) Navigator.pop(context);
 
       if (submissionSuccess) {
         _timer?.cancel();
         setState(() { _isTimerActive = false; });
         scaffoldMessenger.showSnackBar(
-          SnackBar( // ایجاد ویجت SnackBar
+          SnackBar(
               content: Text('رزرو شما با موفقیت ثبت شد!',
                   style: currentTheme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
               backgroundColor: Colors.green),
         );
       } else {
         scaffoldMessenger.showSnackBar(
-          SnackBar( // ایجاد ویجت SnackBar
+          SnackBar(
               content: Text('خطا در ثبت رزرو. لطفاً مجدداً تلاش فرمایید.',
                   style: currentTheme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
               backgroundColor: Colors.redAccent),
         );
       }
     } catch (e) {
-      if (mounted) Navigator.pop(context); // بستن دیالوگ در صورت خطا
+      if (mounted) Navigator.pop(context);
       scaffoldMessenger.showSnackBar(
-        SnackBar( // ایجاد ویجت SnackBar
+        SnackBar(
             content: Text('خطا در ارتباط با سرور: $e',
                 style: currentTheme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
             backgroundColor: Colors.redAccent),
@@ -287,8 +282,8 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl, // پارامتر textDirection اضافه شد
-      child: Scaffold( // پارامتر child به Directionality پاس داده شد
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
         appBar: _buildAppBar(),
         body: _buildBody(),
         bottomNavigationBar: !_isIntlInitialized || _isLoading || _errorMessage != null || _bookingPageData == null
@@ -343,7 +338,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
     if (_errorMessage != null) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(20.0), // پارامتر padding اضافه شد
+          padding: const EdgeInsets.all(20.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -376,7 +371,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
           _buildHotelImageSection(
             imageUrl: _bookingPageData!['hotelImageUrl'],
           ),
-          Padding( // پارامتر padding اضافه شد
+          Padding(
             padding: const EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -396,14 +391,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
                 const SizedBox(height: 24),
                 _buildTravelerNotesSection(),
                 const SizedBox(height: 24),
-                for (int i = 0; i < _guestFormControllers.length; i++) ...[
-                  _buildGuestFormWidget(
-                    guestNumber: i + 1,
-                    isSupervisor: i == 0,
-                    controllers: _guestFormControllers[i],
-                  ),
-                  const SizedBox(height: 16),
-                ],
+                _buildRoomFormsSection(),
                 const SizedBox(height: 8),
               ],
             ),
@@ -416,7 +404,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
   Widget _buildHotelImageSection({required String imageUrl}) {
     return Stack(
       children: [
-        Image.network( // آرگومان imageUrl به عنوان اولین پارامتر (positional)
+        Image.network(
           imageUrl,
           width: double.infinity,
           height: 200,
@@ -617,31 +605,72 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
     );
   }
 
+  Widget _buildRoomFormsSection() {
+    const String roomTitle = "اتاق ۱";
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12.0, right: 4.0),
+          child: Text(
+            roomTitle,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        for (int i = 0; i < _guestFormControllers.length; i++) ...[
+          _buildGuestFormWidget(
+            guestNumber: i + 1,
+            isSupervisor: i == 0,
+            controllers: _guestFormControllers[i],
+          ),
+          const SizedBox(height: 16),
+        ],
+      ],
+    );
+  }
+
   Widget _buildGuestFormWidget({
     required int guestNumber,
     required bool isSupervisor,
     required Map<String, TextEditingController> controllers,
   }) {
     final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-    String title = 'بزرگسال $guestNumber';
+    String title = 'بزرگسال ${guestNumber == 1 ? "اول" : guestNumber == 2 ? "دوم" : guestNumber.toString()}';
     if (isSupervisor) {
       title += ' - سرپرست';
     }
     return Container(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
       decoration: BoxDecoration(
+        color: Colors.white,
         border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(12.0),
+        borderRadius: BorderRadius.circular(16.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 3,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: textTheme.titleMedium?.copyWith(color: colorScheme.primary, fontWeight: FontWeight.w600),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16.0, right: 4.0),
+            child: Text(
+              title,
+              style: textTheme.titleMedium?.copyWith(
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
+                fontSize: 17,
+              ),
+            ),
           ),
-          const SizedBox(height: 16),
           _buildFormTextField(hintText: 'نام', controller: controllers['firstName']!),
           const SizedBox(height: 12),
           _buildFormTextField(hintText: 'نام خانوادگی', controller: controllers['lastName']!),
@@ -665,19 +694,35 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
     TextInputType keyboardType = TextInputType.text,
   }) {
     final inputDecorationTheme = Theme.of(context).inputDecorationTheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
-      style: Theme.of(context).textTheme.bodyMedium,
+      style: textTheme.bodyMedium?.copyWith(fontSize: 15),
+      textAlign: TextAlign.right,
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: inputDecorationTheme.hintStyle,
-        border: inputDecorationTheme.border,
-        focusedBorder: inputDecorationTheme.focusedBorder,
-        enabledBorder: inputDecorationTheme.border,
-        contentPadding: inputDecorationTheme.contentPadding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        hintStyle: inputDecorationTheme.hintStyle?.copyWith(
+          fontSize: 15,
+          color: Colors.grey.shade600,
+        ) ?? TextStyle(fontFamily: textTheme.bodyMedium?.fontFamily, fontSize: 15, color: Colors.grey.shade600),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: BorderSide(color: Colors.grey.shade400, width: 1.0),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: BorderSide(color: Colors.grey.shade400, width: 1.0),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.5),
+        ),
+        contentPadding: inputDecorationTheme.contentPadding ??
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         filled: true,
-        fillColor: inputDecorationTheme.fillColor ?? Colors.grey.shade100.withOpacity(0.5),
+        fillColor: inputDecorationTheme.fillColor ?? Colors.white,
       ),
     );
   }
@@ -688,15 +733,15 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
     final intl.NumberFormat currencyFormatter = intl.NumberFormat("#,##0", "fa_IR");
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 16.0),
+      padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 20.0),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: Colors.grey.withOpacity(0.15),
             spreadRadius: 0,
-            blurRadius: 8,
-            offset: const Offset(0, -2),
+            blurRadius: 10,
+            offset: const Offset(0, -3),
           ),
         ],
       ),
@@ -705,21 +750,6 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
         children: [
           Row(
             children: [
-              SizedBox(
-                width: 24,
-                height: 24,
-                child: Checkbox(
-                  value: _termsAndConditionsAccepted,
-                  onChanged: (bool? value) {
-                    setState(() {
-                      _termsAndConditionsAccepted = value ?? false;
-                    });
-                  },
-                  activeColor: colorScheme.primary,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              ),
-              const SizedBox(width: 8),
               Expanded(
                 child: InkWell(
                   onTap: () {
@@ -729,34 +759,92 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
                   },
                   child: Text(
                     'قوانین و مقررات رزرو هتل را می‌پذیرم.',
-                    style: textTheme.bodyMedium,
+                    style: textTheme.bodyMedium?.copyWith(fontSize: 13.5),
                   ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 22,
+                height: 22,
+                child: Checkbox(
+                  value: _termsAndConditionsAccepted,
+                  onChanged: (bool? value) {
+                    setState(() {
+                      _termsAndConditionsAccepted = value ?? false;
+                    });
+                  },
+                  activeColor: colorScheme.primary,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  side: BorderSide(color: Colors.grey.shade400, width: 1.5),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text('مبلغ قابل پرداخت:', style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
-              Text(
-                _bookingPageData != null && _bookingPageData!['totalPrice'] != null
-                    ? "${currencyFormatter.format(_bookingPageData!['totalPrice'])} تومان"
-                    : "محاسبه...",
-                style: textTheme.titleLarge?.copyWith(color: colorScheme.primary, fontWeight: FontWeight.bold),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'تومان',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: Colors.grey.shade700,
+                      fontSize: 11,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _bookingPageData != null && _bookingPageData!['totalPrice'] != null
+                        ? currencyFormatter.format(_bookingPageData!['totalPrice'])
+                        : "...",
+                    style: textTheme.titleLarge?.copyWith(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('مبلغ قابل پرداخت',
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 17,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.account_balance_wallet_outlined,
+                    color: textTheme.titleMedium?.color,
+                    size: 26,
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: _isTimerActive ? _handleBookingSubmission : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: _isTimerActive ? colorScheme.primary : Colors.grey,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                textStyle: textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                backgroundColor: _isTimerActive ? colorScheme.primary : Colors.grey.shade400,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(28.0),
+                ),
+                textStyle: textTheme.titleMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                ),
               ),
               child: Text(_isTimerActive ? 'تایید و ادامه' : 'زمان به پایان رسید'),
             ),
