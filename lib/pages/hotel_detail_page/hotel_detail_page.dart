@@ -318,7 +318,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
             width: screenWidth,
             height: screenWidth * 0.6,
             color: Colors.grey[300],
-            child: Icon(Icons.broken_image, size: 50, color: Colors.grey[600]),
+            child: Icon(Icons.broken_image, size: 50, color: Color(0xFF542545)),
           ),
           loadingBuilder: (context, child, loadingProgress) {
             if (loadingProgress == null) return child;
@@ -342,13 +342,13 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
           child: Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.5),
+              color: Color(0xFFEEEEEE),
               borderRadius: BorderRadius.circular(8),
             ),
             child: IconButton(
               icon: Icon(
                 _isFavorite ? Icons.favorite : Icons.favorite_border,
-                color: _isFavorite ? Colors.red : Colors.white,
+                color: _isFavorite ? Color(0xFF542545) : Color(0xFF542545),
               ),
               onPressed: _toggleFavorite,
             ),
@@ -369,12 +369,12 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
         const SizedBox(height: 4),
         Row(
           children: [
-            Icon(Icons.location_on_outlined, size: 16, color: Colors.grey[600]),
+            Icon(Icons.location_on, size: 16, color: Color(0xFF542545)),
             const SizedBox(width: 4),
             Expanded(
               child: Text(
                 address,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[700]),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -390,7 +390,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
         for (int i = 0; i < 5; i++)
           Icon(
             i < rating.floor() ? Icons.star : (i < rating ? Icons.star_half : Icons.star_border),
-            color: Colors.amber,
+            color: Color(0xFF542545),
             size: 20,
           ),
         const SizedBox(width: 8),
@@ -417,7 +417,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
             title == "ثبت نظر" ? Icons.edit_note_outlined :
             Icons.circle, // Default icon
             size: 18,
-            color: Theme.of(context).primaryColorDark,
+            color: Color(0xFF542545),
           ),
         ),
         Text(
@@ -429,8 +429,6 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
   }
 
   Widget _buildAmenitiesGrid(List<Amenity> amenities) {
-    // اگر تعداد امکانات زیاد است، استفاده از GridView مناسب‌تر است
-    // برای تعداد کم، Row یا Wrap هم کافیست
     return Wrap(
       spacing: 16.0,
       runSpacing: 12.0,
@@ -444,7 +442,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                 color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(amenity.icon, size: 28, color: Theme.of(context).primaryColorDark),
+              child: Icon(amenity.icon, size: 28, color: Color(0xFF542545)),
             ),
             const SizedBox(height: 4),
             Text(amenity.name, style: Theme.of(context).textTheme.bodySmall),
@@ -466,7 +464,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
         }
         final rooms = snapshot.data!;
         return ListView.separated(
-          physics: const NeverScrollableScrollPhysics(), // برای جلوگیری از اسکرول داخلی
+          physics: const NeverScrollableScrollPhysics(),
           shrinkWrap: true,
           itemCount: rooms.length,
           itemBuilder: (context, index) => _buildRoomCard(rooms[index]),
@@ -508,7 +506,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      Icon(Icons.people_alt_outlined, size: 16, color: Colors.grey[700]),
+                      Icon(Icons.people_alt_outlined, size: 16, color:  Color(0xFF542545)),
                       const SizedBox(width: 4),
                       Text("ظرفیت ${room.capacity} نفر", style: Theme.of(context).textTheme.bodySmall),
                     ],
@@ -516,7 +514,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(Icons.restaurant_menu_outlined, size: 16, color: Colors.grey[700]),
+                      Icon(Icons.restaurant_menu_outlined, size: 16, color: Color(0xFF542545)),
                       const SizedBox(width: 4),
                       Text(room.breakfastInfo, style: Theme.of(context).textTheme.bodySmall),
                     ],
@@ -531,13 +529,13 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                           Text("قیمت برای ۳ شب", style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.grey[600])),
                           Text(
                             "${_formatPrice(room.pricePerNight)} تومان",
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColorDark),
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Color(0xFF542545)),
                           ),
                         ],
                       ),
                       Row(
                         children: [
-                          Icon(Icons.thumb_up_alt_outlined, size: 16, color: Colors.blue),
+                          Icon(Icons.thumb_up_alt_outlined, size: 16, color: Color(0xFF542545)),
                           const SizedBox(width: 4),
                           Text(room.rating.toString(), style: Theme.of(context).textTheme.bodySmall),
                         ],
@@ -546,7 +544,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                   ),
                   const SizedBox(height: 8),
                   Align(
-                    alignment: Alignment.centerLeft, // برای RTL
+                    alignment: Alignment.centerLeft,
                     child: ElevatedButton(
                       onPressed: () {
                         // TODO: پیاده‌سازی ناوبری به صفحه رزرو اتاق
@@ -555,7 +553,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,
+                        backgroundColor: Color(0xFF542545),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
@@ -611,13 +609,13 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
               ],
             ),
             const SizedBox(height: 8),
-            _buildFeedbackPoint(icon: Icons.add_circle_outline, text: "نکات مثبت: ${review.positiveFeedback}", color: Colors.green),
+            _buildFeedbackPoint(icon: Icons.add_circle_outline, text: "نکات مثبت: ${review.positiveFeedback}", color: Color(0xFF542545)),
             const SizedBox(height: 4),
-            _buildFeedbackPoint(icon: Icons.remove_circle_outline, text: "نکات منفی: ${review.negativeFeedback}", color: Colors.red),
+            _buildFeedbackPoint(icon: Icons.remove_circle_outline, text: "نکات منفی: ${review.negativeFeedback}", color: Color(0xFF542545)),
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.thumb_up_alt_outlined, size: 18, color: Colors.blue),
+                Icon(Icons.thumb_up_alt_outlined, size: 18, color: Color(0xFF542545)),
                 const SizedBox(width: 4),
                 Text(review.rating.toStringAsFixed(1), style: Theme.of(context).textTheme.bodyMedium),
               ],
@@ -657,7 +655,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                     return IconButton(
                       icon: Icon(
                         index < _newReviewRating ? Icons.star : Icons.star_border,
-                        color: Colors.amber,
+                        color: Color(0xFF542545),
                       ),
                       onPressed: () {
                         setState(() {
@@ -683,7 +681,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
               child: ElevatedButton(
                 onPressed: _submitReview,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColorDark,
+                  backgroundColor: Color(0xFF542545),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -719,16 +717,15 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
       return;
     }
 
-    final reviewData = Review( // userId باید از سیستم احراز هویت گرفته شود
+    final reviewData = Review(
       userId: "currentUser", // Placeholder
-      userName: "شما", // Placeholder, سرور باید نام کاربر را بداند
-      date: intl.DateFormat('yyyy/MM/dd', 'fa_IR').format(DateTime.now()), // فرمت تاریخ شمسی
+      userName: "شما", // Placeholder,
+      date: intl.DateFormat('yyyy/MM/dd', 'fa_IR').format(DateTime.now()),
       positiveFeedback: "${_positiveTitleController.text}: ${_positiveDetailController.text}".trim(),
       negativeFeedback: "${_negativeTitleController.text}: ${_negativeDetailController.text}".trim(),
       rating: _newReviewRating,
     );
 
-    // نمایش یک لودینگ کوچک
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -750,20 +747,19 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
     );
 
     bool success = await _apiService.submitReview(widget.hotelId, reviewData);
-    Navigator.pop(context); // بستن دیالوگ لودینگ
+    Navigator.pop(context);
 
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("نظر شما با موفقیت ثبت شد.", textDirection: TextDirection.rtl)),
       );
-      // پاک کردن فیلدها و رفرش لیست نظرات
       _positiveTitleController.clear();
       _positiveDetailController.clear();
       _negativeTitleController.clear();
       _negativeDetailController.clear();
       setState(() {
         _newReviewRating = 3.0;
-        _reviewsFuture = _apiService.fetchHotelReviews(widget.hotelId); // رفرش لیست نظرات
+        _reviewsFuture = _apiService.fetchHotelReviews(widget.hotelId);
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
