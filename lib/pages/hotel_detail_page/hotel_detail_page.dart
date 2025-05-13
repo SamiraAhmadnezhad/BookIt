@@ -400,7 +400,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
           errorBuilder: (context, error, stackTrace) => Container(
             width: screenWidth,
             height: screenWidth * 0.6,
-            color: Colors.grey[300],
+            color: Color(0xFFEEEEEE),
             child: Icon(Icons.broken_image, size: 50, color: Color(0xFF542545)),
           ),
           loadingBuilder: (context, child, loadingProgress) {
@@ -408,7 +408,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
             return Container(
               width: screenWidth,
               height: screenWidth * 0.6,
-              color: Colors.grey[200],
+              color: Color(0xFFEEEEEE),
               child: Center(
                 child: CircularProgressIndicator(
                   value: loadingProgress.expectedTotalBytes != null
@@ -599,7 +599,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey[200],
+                color: Color(0xFFEEEEEE),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(amenity.icon, size: 28, color: Color(0xFF542545)),
@@ -660,8 +660,8 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                 height: 100,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => Container(
-                  width: 100, height: 100, color: Colors.grey[300],
-                  child: Icon(Icons.broken_image, size: 30, color: Colors.grey[600]),
+                  width: 100, height: 100, color: Color(0xFFEEEEEE),
+                  child: Icon(Icons.broken_image, size: 30, color: Color(0xFFEEEEEE)),
                 ),
               ),
             ),
@@ -695,7 +695,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("قیمت برای ۳ شب", style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.grey[600])),
+                            Text("قیمت برای ۳ شب", style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.black)),
                             Text(
                               "${_formatPrice(room.pricePerNight)} تومان",
                               style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Color(0xFF542545)),
@@ -970,7 +970,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                       decoration: InputDecoration(
                         hintText: "$hintTextPrefix ${index + 1}",
                         filled: true,
-                        fillColor: Colors.grey[100],
+                        fillColor: Color(0xFFEEEEEE),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide.none,
@@ -984,7 +984,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                   ),
                   if (controllers.length > 1)
                     IconButton(
-                      icon: Icon(removeIcon, color: Colors.grey[600], size: 20),
+                      icon: Icon(removeIcon, color: Color(0xFFEEEEEE), size: 20),
                       onPressed: () => onRemoveField(index),
                       padding: EdgeInsets.zero,
                       constraints: BoxConstraints(),
