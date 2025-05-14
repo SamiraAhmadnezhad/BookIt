@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'edit_manager_profile_page.dart';
 
-// ... (مدل‌های ManagerProfileModel, ReviewModel بدون تغییر) ...
 // TODO: این مدل‌ها را بر اساس داده‌های واقعی سرور خود تکمیل یا جایگزین کنید
 class ManagerProfileModel {
   final String name;
@@ -11,7 +11,6 @@ class ManagerProfileModel {
 // TODO: factory ManagerProfileModel.fromJson(Map<String, dynamic> json)
 }
 
-// RuleModel برای نمایش لازم است، اما برای ویرایش با TextField بزرگ، مستقیما با رشته کار می‌کنیم
 class RuleModel {
   String id;
   String title;
@@ -207,8 +206,25 @@ class _ManagerAccountPageState extends State<ManagerAccountPage> {
       else if (newTab == 'پاسخگویی به نظرات' && (_reviews.isEmpty || _isLoadingReviews)) _fetchReviews();
     }
   }
-  void _editManagerProfile() { /* ... بدون تغییر ... */ }
-  void _toggleReplyForm(String reviewId) { /* ... بدون تغییر ... */
+  void _editManagerProfile() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const EditManagerProfilePage(
+          // TODO: در صورت نیاز، اطلاعات اولیه مدیر (_managerProfile) را به صفحه ویرایش پاس دهید
+          // initialManagerData: _managerProfile,
+        ),
+      ),
+    ).then((value) {
+      // این بخش بعد از بازگشت از EditManagerProfilePage اجرا می‌شود.
+      // اگر در EditManagerProfilePage اطلاعات ذخیره شد و pop(true) فراخوانی شد،
+      // می‌توانید اطلاعات پروفایل مدیر را دوباره از سرور بگیرید.
+      if (value == true) {
+        _fetchManagerProfile();
+      }
+    });
+  }
+
+  void _toggleReplyForm(String reviewId) {
     setState(() {
       final review = _reviews.firstWhere((r) => r.id == reviewId);
       if (_replyingToReviewId == reviewId) {
