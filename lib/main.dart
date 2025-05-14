@@ -1,5 +1,6 @@
 import 'package:bookit/pages/authentication_page/authentication_page.dart';
 import 'package:bookit/pages/hotel_detail_page/hotel_detail_page.dart';
+import 'package:bookit/pages/reservation_detail_page/reservation_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -12,7 +13,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const HotelDetailsPage(hotelId: "123"),
+      home: const ReservationDetailPage(hotelId: "hotel_123_test"),
       theme: ThemeData(
         fontFamily: GoogleFonts.inter().fontFamily,
         textTheme: GoogleFonts.interTextTheme(),
