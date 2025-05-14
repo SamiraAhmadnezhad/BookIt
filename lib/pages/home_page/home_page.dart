@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
+// فرض می‌کنیم این فایل‌ها وجود دارند و به درستی پیاده‌سازی شده‌اند
+import 'custom_bottom_nav_bar.dart';
 import 'widgets/filter_chip_row.dart';
 import 'widgets/hotel_card.dart';
 import 'widgets/image_banner.dart';
 import 'widgets/section_title.dart';
-import 'widgets/tay_card.dart';
-
+import 'widgets/stay_card.dart';
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -67,150 +68,174 @@ class _HomePageState extends State<HomePage> {
   ];
 
   final List<String> bannerImages = [
-    'https://via.placeholder.com/600x250/ADD8E6/000000?Text=Hotel+Booking+Plugin+1', // Placeholder for actual banner
+    'https://via.placeholder.com/600x250/ADD8E6/000000?Text=Hotel+Booking+Plugin+1',
     'https://via.placeholder.com/600x250/90EE90/000000?Text=Special+Offer+2',
     'https://via.placeholder.com/600x250/FFB6C1/000000?Text=New+Destinations+3',
   ];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leadingWidth: 100,
-        leading: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Row(
-            children: [
-              Icon(Icons.location_on, color: Colors.deepPurple.shade700),
-              const SizedBox(width: 4),
-              Text(
-                'مکان',
-                style: TextStyle(color: Colors.grey.shade700, fontSize: 16),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.notifications_none_outlined, color: Colors.deepPurple.shade700, size: 28),
-            onPressed: () {
-              // Notification action
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Banner
-            ImageBanner(
-              controller: _bannerController,
-              images: bannerImages,
-            ),
-            Center(
-              child: SmoothPageIndicator(
-                controller: _bannerController,
-                count: bannerImages.length,
-                effect: WormEffect(
-                  dotHeight: 8,
-                  dotWidth: 8,
-                  activeDotColor: Colors.deepPurple.shade300,
-                  dotColor: Colors.grey.shade300,
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Color(0xFFEEEEEE), // رنگ ثابت AppBar
+          // foregroundColor: Color(0xFF542545), // رنگ آیکون‌ها و متن پیش‌فرض AppBar
+          elevation: 0,
+          leadingWidth: 120, // کمی بیشتر فضا برای "مکان"
+          leading: Padding(
+            padding: const EdgeInsets.only(left:16.0, right: 16.0), // برای فارسی، left پدینگ اصلی است
+            child: Row(
+              mainAxisSize: MainAxisSize.min, // برای جلوگیری از کشیده شدن بیش از حد
+              children: [
+                Icon(Icons.location_on, color: Color(0xFF542545), size: 22,),
+                const SizedBox(width: 4),
+                Text(
+                  'تهران',
+                  style: TextStyle(
+                      color: Colors.grey.shade800, // کمی تیره‌تر برای خوانایی بهتر
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Vazirmatn' 
+                  ),
                 ),
-                onDotClicked: (index) => _bannerController.animateToPage(
-                  index,
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Section: قدم بزنی، می‌رسی
-            const SectionTitle(title: 'قدم بزنی، می‌رسی'),
-            FilterChipRow(
-              chips: const [
-                'هتل اسپیناس پالاس تهران',
-                'هتل آزادی تهران',
-                'هتل ونوس', // Assume this was the cut-off one
-                'همه موارد',
               ],
-              onViewAll: () {
-                // Handle "مشاهده همه" for this section
+            ),
+          ),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.notifications_none_outlined, color: Color(0xFF542545), size: 28),
+              onPressed: () {
+                // Notification action
               },
-              showViewAllText: 'مشاهده همه', // Text for the "View All" on the left
             ),
-            const SizedBox(height: 24),
-
-            // Section: هتل‌های لوکس با قیمت جیب‌دوست
-            const SectionTitle(title: 'هتل‌های لوکس با قیمت جیب‌دوست'),
-            SizedBox(
-              height: 290, // Adjust height as needed for HotelCard
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                itemCount: hotels.length,
-                itemBuilder: (context, index) {
-                  final hotel = hotels[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(left: 12.0), // Spacing between cards
-                    child: HotelCard(
-                      imageUrl: hotel['imageUrl']!,
-                      name: hotel['name']!,
-                      location: hotel['location']!,
-                      rating: hotel['rating']!,
-                      isFavorite: hotel['isFavorite']!,
-                      discount: hotel['discount']!,
-                      onTap: () {
-                        // Handle hotel tap
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Section: ستاره‌های اقامت
-            const SectionTitle(
-              title: 'ستاره‌های اقامت',
-              showViewAll: true,
-              viewAllText: 'مشاهده همه',
-              onViewAllPressed: null, // Implement if needed
-            ),
-            SizedBox(
-              height: 250, // Adjust height as needed for StayCard
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                itemCount: stays.length,
-                itemBuilder: (context, index) {
-                  final stay = stays[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(left: 12.0), // Spacing between cards
-                    child: StayCard(
-                      imageUrl: stay['imageUrl']!,
-                      name: stay['name']!,
-                      price: stay['price']!,
-                      rating: stay['rating']!,
-                      onTap: () {
-                        // Handle stay tap
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 20), // Bottom padding
+            const SizedBox(width: 8), // این SizedBox برای ایجاد فاصله از لبه صفحه است
           ],
         ),
+        body: Align(
+          alignment: Alignment.center,
+          child: SingleChildScrollView(
+            child: Container(
+              color: Color(0xFFEEEEEE),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Banner
+                  ImageBanner(
+                    controller: _bannerController,
+                    images: bannerImages,
+                  ),
+                  Center(
+                    child: SmoothPageIndicator(
+                      controller: _bannerController,
+                      count: bannerImages.length,
+                      effect: WormEffect(
+                        dotHeight: 8,
+                        dotWidth: 8,
+                        activeDotColor: Colors.deepPurple.shade300,
+                        dotColor: Colors.grey.shade300,
+                      ),
+                      onDotClicked: (index) => _bannerController.animateToPage(
+                        index,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const SectionTitle(
+                    title: 'قدم بزنی، می‌رسی',
+                    showViewAll: true,
+                    viewAllText: 'مشاهده همه',
+                    onViewAllPressed: null,
+                  ),
+                  FilterChipRow(
+                    chips: const [
+                      'هتل اسپیناس پالاس تهران',
+                      'هتل آزادی تهران',
+                      'هتل ونوس',
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Section: هتل‌های لوکس با قیمت جیب‌دوست
+                  const SectionTitle(title: 'هتل‌های لوکس با قیمت جیب‌دوست'),
+                  SizedBox(
+                    height: 330,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      reverse: true,
+                      padding: const EdgeInsetsDirectional.symmetric(horizontal: 16.0),
+                      itemCount: hotels.length,
+                      itemBuilder: (context, index) {
+                        final hotel = hotels[index];
+                        return Padding(
+                          padding: const EdgeInsetsDirectional.only(start: 0.0, bottom: 16.0),
+                          child: HotelCard(
+                            imageUrl: hotel['imageUrl']!,
+                            name: hotel['name']!,
+                            location: hotel['location']!,
+                            rating: (hotel['rating']! as num).toDouble(), // اطمینان از نوع double
+                            isFavorite: hotel['isFavorite']!,           // مقدار isFavorite از state خوانده می‌شود
+                            discount: (hotel['discount']! as num).toInt(), // اطمینان از نوع int
+                            onTap: () {
+                              // Handle hotel tap
+                              print('Tapped on ${hotel['name']}');
+                            },
+                            onFavoriteToggle: () {
+
+                            },
+                            onReserveTap: () {
+                              // Handle reserve tap
+                              print('Reserve tapped for ${hotel['name']}');
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SectionTitle(
+                    title: 'ستاره‌های اقامت',
+                    showViewAll: true,
+                    viewAllText: 'مشاهده همه',
+                    onViewAllPressed: null,
+                  ),
+                  SizedBox(
+                    height: 100,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      reverse: true,
+                      padding: const EdgeInsetsDirectional.symmetric(horizontal: 16.0),
+                      itemCount: stays.length,
+                      itemBuilder: (context, index) {
+                        final stay = stays[index];
+                        return Padding(
+                          padding: const EdgeInsetsDirectional.only(start: 12.0),
+                          child: StayCard( // فرض می‌کنم StayCard همان tay_card است
+                            imageUrl: stay['imageUrl']!,
+                            name: stay['name']!,
+                            price: stay['price']!,
+                            rating: stay['rating']!,
+                            onTap: () {
+                              // Handle stay tap
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          ),
+        ),
+        bottomNavigationBar: CustomBottomNavBar(selectedIndex: 0, onItemTapped: (int ) {  },),
       ),
     );
   }
+
+
 
   @override
   void dispose() {

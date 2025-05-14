@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class StayCard extends StatelessWidget {
   final String imageUrl;
   final String name;
-  final String price; // Keep as string for "تومان"
+  final String price;
   final double rating;
   final VoidCallback onTap;
 
@@ -18,32 +18,31 @@ class StayCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // final formatter = NumberFormat("#,###", "fa_IR"); // For Farsi numbers if price is int
-
     return GestureDetector(
       onTap: onTap,
       child: Card(
+        color: Colors.white,
         elevation: 2.0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
         child: SizedBox(
-          width: 170, // Fixed width
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          width: 300, // Fixed width
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(10.0),
-                  topRight: Radius.circular(10.0),
-                ),
-                child: Image.network(
-                  imageUrl,
-                  height: 120,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    height: 120,
-                    color: Colors.grey[300],
-                    child: const Icon(Icons.broken_image, size: 40, color: Colors.grey),
+              Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.all(Radius.circular(20.0),),
+                  child: Image.network(
+                    imageUrl,
+                    height: double.infinity,
+                    width: 100,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      height: 100,
+                      color: Colors.grey[300],
+                      child: const Icon(Icons.broken_image, size: 40, color: Colors.grey),
+                    ),
                   ),
                 ),
               ),
