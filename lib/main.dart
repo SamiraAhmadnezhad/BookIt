@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const ReservationDetailPage(hotelId: "hotel_123_test"),
+      home: const AuthenticationPage(),
       theme: ThemeData(
         fontFamily: GoogleFonts.inter().fontFamily,
         textTheme: GoogleFonts.interTextTheme(),
