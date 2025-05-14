@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-import 'dart:async'; // برای شبیه‌سازی و تاخیر
+import 'dart:async';
 
-// --- Constants ---
 const Color kManagerPrimaryColor = Color(0xFF542545);
 const Color kPageBackgroundColor = Color(0xFFF0F0F0);
 const Color kCardBackgroundColor = Colors.white;
-const Color kDiscountOriginalPriceColor = Colors.grey; // رنگ قیمت اصلی
-const Color kDiscountedPriceColor = kManagerPrimaryColor; // رنگ قیمت با تخفیف (بنفش)
+const Color kDiscountOriginalPriceColor = Colors.grey;
+const Color kDiscountedPriceColor = kManagerPrimaryColor;
 
-// --- Model for Discountable Room ---
 class DiscountableRoom {
   final String id;
   final String name;
@@ -17,7 +15,7 @@ class DiscountableRoom {
   final String type;
   final double originalPricePerNight;
   bool isSelectedForDiscount;
-  double? discountedPrice; // قیمت پس از تخفیف، می‌تواند null باشد
+  double? discountedPrice;
 
   DiscountableRoom({
     required this.id,
@@ -41,7 +39,7 @@ class DiscountsPage extends StatefulWidget {
 class _DiscountsPageState extends State<DiscountsPage> {
   List<DiscountableRoom> _rooms = [];
   bool _isLoading = true;
-  double _discountPercentage = 50.0; // مقدار تخفیف پیش‌فرض از فیگما
+  double _discountPercentage = 50.0;
   final TextEditingController _discountController = TextEditingController();
 
   @override
@@ -60,15 +58,14 @@ class _DiscountsPageState extends State<DiscountsPage> {
   // TODO: تابع برای دریافت لیست اتاق‌های قابل تخفیف از سرور
   Future<void> _fetchDiscountableRooms() async {
     setState(() { _isLoading = true; });
-    await Future.delayed(const Duration(seconds: 1)); // شبیه‌سازی تاخیر شبکه
+    await Future.delayed(const Duration(seconds: 1));
     setState(() {
-      _rooms = [ // داده‌های نمونه
-        DiscountableRoom(id: '1', name: 'اسم اتاق در حالت طولانی ...', imageUrl: 'https://picsum.photos/seed/discount_room1/200/300', capacity: 20, type: 'دو تخته', originalPricePerNight: 1200000),
-        DiscountableRoom(id: '2', name: 'اسم اتاق در حالت طولانی ...', imageUrl: 'https://picsum.photos/seed/discount_room2/200/300', capacity: 5, type: 'سوئیت', originalPricePerNight: 3200000, isSelectedForDiscount: true), // یک اتاق نمونه انتخاب شده
-        DiscountableRoom(id: '3', name: 'اسم اتاق در حالت طولانی ...', imageUrl: 'https://picsum.photos/seed/discount_room3/200/300', capacity: 15, type: 'اتاق ویژه', originalPricePerNight: 2800000),
-        DiscountableRoom(id: '4', name: 'اتاق لوکس با نمای شهر', imageUrl: 'https://picsum.photos/seed/discount_room4/200/300', capacity: 2, type: 'دولوکس', originalPricePerNight: 4500000),
+      _rooms = [
+        DiscountableRoom(id: '1', name: 'اسم اتاق در حالت طولانی ...', imageUrl: 'https://picsum.photos/seed/discount_room1_rtl/200/300', capacity: 20, type: 'دو تخته', originalPricePerNight: 1200000, isSelectedForDiscount: true),
+        DiscountableRoom(id: '2', name: 'اسم اتاق در حالت طولانی برای مثال و تست نمایش ...', imageUrl: 'https://picsum.photos/seed/discount_room2_rtl/200/300', capacity: 5, type: 'سوئیت', originalPricePerNight: 3200000),
+        DiscountableRoom(id: '3', name: 'اتاق دیگری با توضیحات کامل و امکانات ویژه برای مسافران', imageUrl: 'https://picsum.photos/seed/discount_room3_rtl/200/300', capacity: 15, type: 'اتاق ویژه', originalPricePerNight: 2800000, isSelectedForDiscount: true),
       ];
-      _applyDiscountToSelectedRooms(); // اعمال تخفیف اولیه به اتاق‌های از قبل انتخاب شده
+      _applyDiscountToSelectedRooms();
       _isLoading = false;
     });
   }
@@ -80,7 +77,7 @@ class _DiscountsPageState extends State<DiscountsPage> {
         if (room.isSelectedForDiscount) {
           room.discountedPrice = room.originalPricePerNight * (1 - discountFactor);
         } else {
-          room.discountedPrice = null; // حذف تخفیف اگر انتخاب نشده
+          room.discountedPrice = null;
         }
       }
     });
@@ -89,35 +86,30 @@ class _DiscountsPageState extends State<DiscountsPage> {
   void _onDiscountPercentageChanged(String value) {
     final newPercentage = double.tryParse(value);
     if (newPercentage != null && newPercentage >= 0 && newPercentage <= 100) {
-      setState(() {
-        _discountPercentage = newPercentage;
-      });
-      _applyDiscountToSelectedRooms();
+      setState(() { _discountPercentage = newPercentage; });
     } else if (value.isEmpty){
-      setState(() { _discountPercentage = 0; }); // یا هر مقدار پیش‌فرض دیگر
-      _applyDiscountToSelectedRooms();
+      setState(() { _discountPercentage = 0; });
+    } else if (newPercentage != null && newPercentage > 100) {
+      _discountController.text = "100";
+      setState(() { _discountPercentage = 100; });
     }
+    _applyDiscountToSelectedRooms();
   }
 
   // TODO: تابع برای ارسال اطلاعات تخفیف‌ها به سرور
   Future<void> _saveDiscounts() async {
-    List<Map<String, dynamic>> discountedRoomsData = [];
-    for (var room in _rooms) {
-      if (room.isSelectedForDiscount && room.discountedPrice != null) {
-        discountedRoomsData.add({
-          'roomId': room.id,
-          'discountPercentage': _discountPercentage,
-          'originalPrice': room.originalPricePerNight,
-          'discountedPrice': room.discountedPrice,
-        });
-      }
-    }
+    List<Map<String, dynamic>> discountedRoomsData = _rooms
+        .where((room) => room.isSelectedForDiscount && room.discountedPrice != null)
+        .map((room) => {
+      'roomId': room.id, 'discountPercentage': _discountPercentage,
+      'originalPrice': room.originalPricePerNight, 'discountedPrice': room.discountedPrice,
+    }).toList();
+
     if (discountedRoomsData.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('هیچ اتاقی برای اعمال تخفیف انتخاب نشده است.')));
       return;
     }
     debugPrint("TODO: Sending discount data to server: $discountedRoomsData");
-    // شبیه‌سازی ذخیره
     await Future.delayed(const Duration(seconds: 1));
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تخفیف‌ها با موفقیت (شبیه‌سازی شده) اعمال شدند.')));
@@ -130,61 +122,49 @@ class _DiscountsPageState extends State<DiscountsPage> {
 
   Widget _buildDiscountInputSection(ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-      color: kPageBackgroundColor, // پس‌زمینه این بخش باید با پس‌زمینه کلی صفحه یکی باشد
+      padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 12.0),
+      color: kPageBackgroundColor,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("اعمال تخفیف‌های ویژه", style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87)),
-              const Icon(Icons.percent, color: kManagerPrimaryColor, size: 30),
+              Text("اعمال تخفیف‌های ویژه", textAlign: TextAlign.right, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87)),
+              Container(padding: const EdgeInsets.all(6), decoration: const BoxDecoration(color: kManagerPrimaryColor, shape: BoxShape.circle,), child: const Icon(Icons.percent, color: Colors.white, size: 20),),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Row(
-            mainAxisAlignment: MainAxisAlignment.end, // برای چینش از راست
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text("%", style: theme.textTheme.titleMedium?.copyWith(color: Colors.black54)),
+              Text("  مقدار تخفیف :", textAlign: TextAlign.right, style: theme.textTheme.titleMedium?.copyWith(color: Colors.black54)),
               const SizedBox(width: 8),
-              SizedBox(
-                width: 60, // عرض ثابت برای فیلد درصد
-                height: 40, // ارتفاع ثابت
+              SizedBox(width: 70, height: 40,
                 child: TextFormField(
-                  controller: _discountController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: false),
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  controller: _discountController, keyboardType: const TextInputType.numberWithOptions(decimal: false), textAlign: TextAlign.center,
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87),
                   decoration: InputDecoration(
-                    filled: true,
-                    fillColor: kCardBackgroundColor, // پس‌زمینه سفید برای فیلد
-                    contentPadding: const EdgeInsets.symmetric(vertical: 8.0), // پدینگ داخلی
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                      borderSide: BorderSide(color: Colors.grey.shade400),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                      borderSide: BorderSide(color: Colors.grey.shade400),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                      borderSide: const BorderSide(color: kManagerPrimaryColor, width: 1.5),
-                    ),
+                    filled: true, fillColor: kCardBackgroundColor, contentPadding: const EdgeInsets.symmetric(vertical: 8.0),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide(color: Colors.grey.shade300)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide(color: Colors.grey.shade300)),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: const BorderSide(color: kManagerPrimaryColor, width: 1.5)),
                   ),
                   onChanged: _onDiscountPercentageChanged,
                 ),
               ),
-              const SizedBox(width: 8),
-              Text("مقدار تخفیف : ", style: theme.textTheme.titleMedium?.copyWith(color: Colors.black54)),
+              const SizedBox(width: 4),
+              Text("%", style: theme.textTheme.titleMedium?.copyWith(color: Colors.black54)),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            "اتاق‌هایی را که شامل تخفیف می‌شوند انتخاب کنید:",
-            textAlign: TextAlign.right,
-            style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: Text(
+              "اتاق‌هایی را که شامل تخفیف می‌شوند انتخاب کنید:",
+              textAlign: TextAlign.right,
+              style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
+            ),
           ),
         ],
       ),
@@ -194,69 +174,70 @@ class _DiscountsPageState extends State<DiscountsPage> {
   Widget _buildRoomItemForDiscount(DiscountableRoom room, ThemeData theme) {
     return Card(
       color: kCardBackgroundColor,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 1.5,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.fromLTRB(8.0, 12.0, 12.0, 12.0),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Checkbox در سمت راست ترین قسمت
-            SizedBox(
-              width: 24, // فضای کافی برای چک‌باکس
-              child: Checkbox(
-                value: room.isSelectedForDiscount,
-                onChanged: (bool? value) {
-                  setState(() {
-                    room.isSelectedForDiscount = value ?? false;
-                    _applyDiscountToSelectedRooms(); // اعمال مجدد تخفیف با تغییر انتخاب
-                  });
-                },
-                activeColor: kManagerPrimaryColor,
-                visualDensity: VisualDensity.compact,
-                side: BorderSide(color: Colors.grey.shade500, width: 1.5),
-              ),
-            ),
-            const SizedBox(width: 10), // فاصله بین چک‌باکس و محتوای اصلی
-            Expanded( // محتوای اصلی اتاق
+            Expanded(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded( // اطلاعات متنی اتاق
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8.0),
+                    child: Image.network(room.imageUrl, width: 100, height: 110, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => Container(width: 100, height: 110, color: Colors.grey[200], child: const Icon(Icons.broken_image_outlined, size: 30))),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(room.name, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87), maxLines: 2, overflow: TextOverflow.ellipsis),
+                        Text(room.name, textAlign: TextAlign.right, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87), maxLines: 2, overflow: TextOverflow.ellipsis),
                         const SizedBox(height: 6),
-                        Row(children: [const Icon(Icons.people_alt_outlined, size: 18, color: Colors.grey), const SizedBox(width: 4), Text('ظرفیت: ${room.capacity}', style: theme.textTheme.bodyMedium)]),
+                        Row(mainAxisAlignment: MainAxisAlignment.start, children: [const Icon(Icons.people_alt_outlined, size: 16, color: Colors.black), const SizedBox(width: 4), Text('ظرفیت: ${room.capacity}', textAlign: TextAlign.right, style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey[700]))]),
                         const SizedBox(height: 3),
-                        Row(children: [const Icon(Icons.home_outlined, size: 18, color: Colors.grey), const SizedBox(width: 4), Text('نوع: ${room.type}', style: theme.textTheme.bodyMedium)]),
-                        const SizedBox(height: 10),
-                        Text('تومان', style: theme.textTheme.bodySmall?.copyWith(color: kDiscountOriginalPriceColor)),
-                        Text(_formatPrice(room.originalPricePerNight), style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: kDiscountOriginalPriceColor, decoration: room.isSelectedForDiscount ? TextDecoration.lineThrough : TextDecoration.none)),
-                        if (room.isSelectedForDiscount && room.discountedPrice != null) ...[
-                          const SizedBox(height: 4),
-                          Text(_formatPrice(room.discountedPrice!), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: kDiscountedPriceColor)),
-                        ],
+                        Row(mainAxisAlignment: MainAxisAlignment.start, children: [const Icon(Icons.home_outlined, size: 16, color: Colors.black), const SizedBox(width: 4), Text('نوع: ${room.type}', textAlign: TextAlign.right, style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey[700]))]),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(_formatPrice(room.originalPricePerNight), style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: kDiscountOriginalPriceColor, decoration: room.isSelectedForDiscount ? TextDecoration.lineThrough : TextDecoration.none, decorationThickness: 1.5)),
+                                if (room.isSelectedForDiscount && room.discountedPrice != null) ...[
+                                  const SizedBox(height: 2),
+                                  Text(_formatPrice(room.discountedPrice!), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: kDiscountedPriceColor)),
+                                ],
+                              ],
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text('قیمت یک شب', textAlign: TextAlign.right, style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey[600])),
+                                if (room.isSelectedForDiscount)
+                                  Text('قیمت یک شب پس از تخفیف', textAlign: TextAlign.right, style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey[600])),
+                              ],
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12), // فاصله بین متن و تصویر
-                  Column( // تصویر و لیبل‌های قیمت
-                    crossAxisAlignment: CrossAxisAlignment.end, // چینش از راست برای لیبل‌های قیمت
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8.0),
-                        child: Image.network(room.imageUrl, width: 100, height: 100, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => Container(width: 100, height: 100, color: Colors.grey[200], child: const Icon(Icons.broken_image_outlined, size: 30))),
-                      ),
-                      const SizedBox(height: 8),
-                      Text('قیمت یک شب', style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey[600]), textAlign: TextAlign.right),
-                      if (room.isSelectedForDiscount)
-                        Text('قیمت یک شب پس از تخفیف', style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey[600]), textAlign: TextAlign.right),
-                    ],
-                  ),
                 ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            SizedBox(
+              width: 24, height: 24,
+              child: Checkbox(
+                value: room.isSelectedForDiscount,
+                onChanged: (bool? value) { setState(() { room.isSelectedForDiscount = value ?? false; _applyDiscountToSelectedRooms(); }); },
+                activeColor: kManagerPrimaryColor, visualDensity: VisualDensity.compact, materialTapTargetSize: MaterialTapTargetSize.shrinkWrap, side: BorderSide(color: Colors.grey.shade500, width: 1.5),
               ),
             ),
           ],
@@ -265,7 +246,6 @@ class _DiscountsPageState extends State<DiscountsPage> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -273,16 +253,7 @@ class _DiscountsPageState extends State<DiscountsPage> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: kPageBackgroundColor,
-        appBar: AppBar(
-          backgroundColor: kPageBackgroundColor, // یا kManagerPrimaryColor برای ظاهر متفاوت
-          elevation: 0, // یا 1 اگر می‌خواهید کمی سایه داشته باشد
-          title: Text('اعمال تخفیف', style: theme.textTheme.titleLarge?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold)),
-          centerTitle: true,
-          leading: IconButton(icon: Icon(Icons.arrow_back_ios_new, color: Colors.grey[700]), onPressed: () => Navigator.of(context).pop()),
-          // actions: [ // دکمه ذخیره می‌تواند اینجا هم باشد
-          //   TextButton(onPressed: _saveDiscounts, child: Text('ذخیره', style: TextStyle(color: kManagerPrimaryColor, fontWeight: FontWeight.bold)))
-          // ],
-        ),
+        appBar: AppBar(backgroundColor: kPageBackgroundColor, elevation: 0, leading: IconButton(icon: Icon(Icons.arrow_back_ios_new, color: Colors.grey[700]), onPressed: () => Navigator.of(context).pop()),),
         body: Column(
           children: [
             _buildDiscountInputSection(theme),
@@ -290,30 +261,19 @@ class _DiscountsPageState extends State<DiscountsPage> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator(color: kManagerPrimaryColor))
                   : _rooms.isEmpty
-                  ? Center(child: Text('اتاقی برای اعمال تخفیف یافت نشد.', style: theme.textTheme.titleMedium?.copyWith(color: Colors.grey[700])))
+                  ? Center(child: Text('اتاقی برای اعمال تخفیف یافت نشد.', textAlign: TextAlign.center, style: theme.textTheme.titleMedium?.copyWith(color: Colors.grey[700])))
                   : ListView.builder(
-                padding: const EdgeInsets.only(bottom: 80.0), // فضا برای دکمه شناور یا دکمه پایین
-                itemCount: _rooms.length,
-                itemBuilder: (context, index) {
-                  return _buildRoomItemForDiscount(_rooms[index], theme);
-                },
+                padding: const EdgeInsets.only(bottom: 90.0, top: 4.0), itemCount: _rooms.length,
+                itemBuilder: (context, index) { return _buildRoomItemForDiscount(_rooms[index], theme); },
               ),
             ),
           ],
         ),
-        // دکمه ذخیره می‌تواند به صورت شناور یا ثابت در پایین باشد
-        // مثال برای دکمه ثابت در پایین:
-        bottomNavigationBar: Padding(
-          padding: const EdgeInsets.all(16.0),
+        bottomNavigationBar: Container(
+          color: kPageBackgroundColor, padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 24.0),
           child: ElevatedButton(
             onPressed: _saveDiscounts,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: kManagerPrimaryColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              textStyle: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: kManagerPrimaryColor, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), textStyle: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),),
             child: const Text('اعمال و ذخیره تخفیف‌ها'),
           ),
         ),
