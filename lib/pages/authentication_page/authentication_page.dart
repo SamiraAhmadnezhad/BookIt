@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../home_page/home_page.dart';
+import '../main_screen.dart';
 import 'constants.dart'; // Import constants
 import 'widgets/auth_card.dart'; // Import the AuthCard widget
 // import 'otp_fields.dart'; // OtpFields is now used within OtpForm
@@ -180,16 +181,10 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
           print('Login successful: $responseData');
 
           // TODO: توکن را از responseData استخراج و ذخیره کنید
-          // مثال: String? token = responseData['token']; یا responseData['access'];
-          // if (token != null) {
-          //   SharedPreferences prefs = await SharedPreferences.getInstance();
-          //   await prefs.setString('authToken', token);
-          //   print('Token saved: $token');
-          // }
 
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const HomePage()),
+            MaterialPageRoute(builder: (context) => const MainScreen()),
           );
         } else {
           String errorMessage = 'خطا در ورود. لطفا دوباره تلاش کنید.';
@@ -225,7 +220,7 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
     }
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomePage()),
+        MaterialPageRoute(builder: (context) => const MainScreen()),
       );
   }
 

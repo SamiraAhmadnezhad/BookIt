@@ -9,7 +9,7 @@ class SectionTitle extends StatelessWidget {
   const SectionTitle({
     super.key,
     required this.title,
-    this.showViewAll = false, // Default to false if not specified
+    this.showViewAll = false,
     this.viewAllText,
     this.onViewAllPressed,
   });
@@ -34,7 +34,7 @@ class SectionTitle extends StatelessWidget {
               onPressed: onViewAllPressed,
               child: Text(
                 viewAllText!,
-                style: TextStyle(color: Colors.deepPurple.shade400, fontSize: 14),
+                style: TextStyle(color: Color(0xFF542545), fontSize: 14),
               ),
             ),
         ],

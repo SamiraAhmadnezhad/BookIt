@@ -1,63 +1,53 @@
 import 'package:flutter/material.dart';
 
-class FilterChipRow extends StatefulWidget {
-  final List<String> chips;
-  final String? showViewAllText; // Text for the "View All" on the far left
-  final VoidCallback? onViewAll; // Action for "View All"
+class FilterChipRow extends StatelessWidget { // تبدیل به StatelessWidget چون دیگر state داخلی ندارد
+  final List<String> items; // تغییر نام از chips به items برای وضوح بیشتر
 
   const FilterChipRow({
     super.key,
-    required this.chips,
-    this.showViewAllText,
-    this.onViewAll,
+    required this.items,
   });
 
   @override
-  State<FilterChipRow> createState() => _FilterChipRowState();
-}
-
-class _FilterChipRowState extends State<FilterChipRow> {
-  String? _selectedChip;
-
-  @override
   Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return const SizedBox.shrink(); // یا Container()
+    }
+
     return SizedBox(
-      height: 50, // Adjust height as needed
-      child: ListView(
+      height: 40, // ارتفاع مورد نظر برای ردیف متن‌ها، می‌توانید تنظیم کنید
+      child: ListView.builder( // استفاده از ListView.builder برای بهینگی بهتر
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        children: [
-          if (widget.showViewAllText != null && widget.onViewAll != null)
-            Padding(
-              padding: const EdgeInsets.only(left: 8.0), // `left` because of RTL
-              child: ActionChip(
-                label: Text(widget.showViewAllText!),
-                backgroundColor: Colors.grey[200],
-                onPressed: widget.onViewAll,
-              ),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0), // پدینگ راست و چپ برای کل لیست
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          final label = items[index];
+          return Padding(
+           padding: EdgeInsetsDirectional.only(
+              start: index == 0 ? 0 : 8.0,
             ),
-          ...widget.chips.map((label) {
-            final isSelected = _selectedChip == label;
-            return Padding(
-              padding: const EdgeInsets.only(left: 8.0), // `left` because of RTL
-              child: ChoiceChip(
-                label: Text(label),
-                selected: isSelected,
-                onSelected: (selected) {
-                  setState(() {
-                    _selectedChip = selected ? label : null;
-                  });
-                  // Handle chip selection
-                },
-                selectedColor: Colors.deepPurple.shade100,
-                backgroundColor: Colors.grey[200],
-                labelStyle: TextStyle(
-                  color: isSelected ? Colors.deepPurple.shade700 : Colors.black54,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0), // پدینگ داخلی هر آیتم
+              decoration: BoxDecoration(
+                color: Colors.white, // رنگ پس‌زمینه هر آیتم
+                borderRadius: BorderRadius.circular(20.0), // گرد کردن گوشه‌ها
+              ),
+              child: Center( // برای وسط‌چین کردن متن در کانتینر
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.black, // رنگ متن
+                    fontSize: 13, // اندازه فونت
+                    fontFamily: 'Vazirmatn', // فونت
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-            );
-          }).toList(),
-        ],
+            ),
+          );
+        },
       ),
     );
   }
