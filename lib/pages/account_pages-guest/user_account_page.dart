@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'edit_profile_page.dart';
 
 // TODO: این مدل را بر اساس داده‌های واقعی سرور خود تکمیل یا جایگزین کنید
 class UserProfileModel {
@@ -57,6 +58,7 @@ class PreviousBookingModel {
 // TODO: factory PreviousBookingModel.fromJson(Map<String, dynamic> json)
 }
 
+
 class UserAccountPage extends StatefulWidget {
   const UserAccountPage({super.key});
   @override
@@ -65,7 +67,8 @@ class UserAccountPage extends StatefulWidget {
 
 class _UserAccountPageState extends State<UserAccountPage> {
   final Color primaryPurple = const Color(0xFF542545);
-  String _selectedTab = 'رزروهای قبلی';
+  // تب پیش‌فرض را می‌توانید به هرکدام که می‌خواهید تغییر دهید
+  String _selectedTab = 'علاقه‌مندی‌ها';
 
   UserProfileModel? _userProfile;
   List<FavoriteHotelModel> _favoriteHotels = [];
@@ -73,14 +76,15 @@ class _UserAccountPageState extends State<UserAccountPage> {
   List<PreviousBookingModel> _previousBookings = [];
 
   bool _isLoadingProfile = true;
-  bool _isLoadingFavorites = false;
+  bool _isLoadingFavorites = true; // اگر علاقه‌مندی‌ها تب پیش‌فرض است
   bool _isLoadingCurrentBookings = false;
-  bool _isLoadingPreviousBookings = true;
+  bool _isLoadingPreviousBookings = false;
 
   final double _cardWidthHorizontal = 300.0;
-  final double _horizontalListHeight = 390.0; // ارتفاع برای تطابق با بلندترین کارت
-  final double _interCardSpacingHorizontal = 12.0; // فاصله بین کارت‌های افقی
-  final double _interCardSpacingVertical = 12.0; // فاصله بین کارت‌های عمودی
+  final double _horizontalListHeight = 390.0;
+  final double _interCardSpacingHorizontal = 12.0;
+  final double _interCardSpacingVertical = 12.0;
+
 
   @override
   void initState() {
@@ -89,7 +93,9 @@ class _UserAccountPageState extends State<UserAccountPage> {
   }
 
   Future<void> _fetchDataForPage() async {
+    // اول پروفایل را لود می‌کنیم چون در هر صورت نمایش داده می‌شود
     await _fetchUserProfile();
+    // سپس دیتای تب فعال را لود می‌کنیم
     if (_selectedTab == 'علاقه‌مندی‌ها') {
       await _fetchFavoriteHotels();
     } else if (_selectedTab == 'لیست رزروها') {
@@ -111,7 +117,7 @@ class _UserAccountPageState extends State<UserAccountPage> {
 
   // TODO: تابع دریافت لیست هتل‌های مورد علاقه از سرور
   Future<void> _fetchFavoriteHotels() async {
-    if (_selectedTab != 'علاقه‌مندی‌ها' && _favoriteHotels.isNotEmpty) return;
+    if (_selectedTab != 'علاقه‌مندی‌ها' && _favoriteHotels.isNotEmpty && !_isLoadingFavorites) return;
     setState(() { _isLoadingFavorites = true; });
     try {
       await Future.delayed(const Duration(seconds: 1));
@@ -122,7 +128,7 @@ class _UserAccountPageState extends State<UserAccountPage> {
 
   // TODO: تابع دریافت لیست رزروهای فعلی از سرور
   Future<void> _fetchCurrentBookings() async {
-    if (_selectedTab != 'لیست رزروها' && _currentBookings.isNotEmpty) return;
+    if (_selectedTab != 'لیست رزروها' && _currentBookings.isNotEmpty && !_isLoadingCurrentBookings) return;
     setState(() { _isLoadingCurrentBookings = true; });
     try {
       await Future.delayed(const Duration(seconds: 1));
@@ -133,7 +139,7 @@ class _UserAccountPageState extends State<UserAccountPage> {
 
   // TODO: تابع دریافت لیست رزروهای قبلی از سرور
   Future<void> _fetchPreviousBookings() async {
-    if (_selectedTab != 'رزروهای قبلی' && _previousBookings.isNotEmpty) return;
+    if (_selectedTab != 'رزروهای قبلی' && _previousBookings.isNotEmpty && !_isLoadingPreviousBookings) return;
     setState(() { _isLoadingPreviousBookings = true; });
     try {
       await Future.delayed(const Duration(seconds: 1));
@@ -143,7 +149,25 @@ class _UserAccountPageState extends State<UserAccountPage> {
   }
 
   Future<void> _logoutUser() async { /* TODO: Implement */ }
-  void _editProfile() { /* TODO: Implement */ }
+
+  // تابع برای هدایت به صفحه ویرایش پروفایل
+  void _editProfile() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const EditProfilePage(
+          // TODO: در صورت نیاز، اطلاعات اولیه کاربر را از _userProfile به EditProfilePage پاس دهید
+          // مثال: initialProfileData: _userProfile != null ? UserEditableProfileModel(...) : null,
+        ),
+      ),
+    ).then((value) {
+      // TODO: این بخش بعد از بازگشت از EditProfilePage اجرا می‌شود.
+      // اگر اطلاعات پروفایل تغییر کرده باشد، می‌توانید _fetchUserProfile() را دوباره صدا بزنید.
+      // if (value == true) { // true می‌تواند نشانه‌ای از ذخیره موفقیت‌آمیز باشد
+      //   _fetchUserProfile();
+      // }
+    });
+  }
+
   void _viewBookingDetails(String bookingId) { /* TODO: Implement */ }
   Future<void> _toggleFavoriteStatus(String hotelId, bool currentStatus) async { /* TODO: Implement */ }
   void _reserveFavoriteHotel(String hotelId) { /* TODO: Implement */ }
@@ -155,13 +179,15 @@ class _UserAccountPageState extends State<UserAccountPage> {
       child: GestureDetector(
         onTap: () {
           if (_selectedTab != title) {
-            setState(() {
-              _selectedTab = title;
-              _isLoadingFavorites = false; _isLoadingCurrentBookings = false; _isLoadingPreviousBookings = false;
-            });
-            if (title == 'علاقه‌مندی‌ها' && _favoriteHotels.isEmpty) _fetchFavoriteHotels();
-            else if (title == 'لیست رزروها' && _currentBookings.isEmpty) _fetchCurrentBookings();
-            else if (title == 'رزروهای قبلی' && _previousBookings.isEmpty) _fetchPreviousBookings();
+            setState(() { _selectedTab = title; });
+            // فقط دیتای تب جدید را لود کن اگر قبلا لود نشده یا نیاز به رفرش دارد
+            if (title == 'علاقه‌مندی‌ها' && (_favoriteHotels.isEmpty || _isLoadingFavorites)) {
+              _fetchFavoriteHotels();
+            } else if (title == 'لیست رزروها' && (_currentBookings.isEmpty || _isLoadingCurrentBookings)) {
+              _fetchCurrentBookings();
+            } else if (title == 'رزروهای قبلی' && (_previousBookings.isEmpty || _isLoadingPreviousBookings)) {
+              _fetchPreviousBookings();
+            }
           }
         },
         child: Container(
@@ -184,22 +210,35 @@ class _UserAccountPageState extends State<UserAccountPage> {
           leading: IconButton(icon: Icon(Icons.notifications_none_outlined, color: primaryPurple, size: 28), onPressed: () { /* TODO: Notification action */ }),
           actions: [Padding(padding: const EdgeInsets.only(left: 16.0, right: 8.0, top: 8.0, bottom: 8.0), child: ElevatedButton(onPressed: _logoutUser, style: ElevatedButton.styleFrom(backgroundColor: primaryPurple, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))), child: const Text('خروج از حساب کاربری', style: TextStyle(fontSize: 12))))],
         ),
-        body: Column( // این Column اصلی، بخش اطلاعات کاربر و محتوای اسکرول‌شونده را جدا می‌کند
+        body: Column(
           children: [
-            // بخش اطلاعات کاربر - این بخش ثابت می‌ماند
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 20.0),
               child: _isLoadingProfile ? const Center(child: CircularProgressIndicator()) : Column(children: [Icon(Icons.account_circle, size: 100, color: primaryPurple.withOpacity(0.8)), const SizedBox(height: 12), Text(_userProfile?.name ?? 'کاربر', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87)), const SizedBox(height: 4), Row(mainAxisAlignment: MainAxisAlignment.center, children: [Text(_userProfile?.email ?? '', style: TextStyle(fontSize: 14, color: Colors.grey[600])), const SizedBox(width: 4), if (_userProfile?.email.isNotEmpty ?? false) Icon(Icons.check_circle, color: Colors.green[600], size: 16)])]),
             ),
-            // بخش محتوای تب‌ها - این بخش اگر محتوای زیادی داشته باشد، اسکرول می‌شود
             Expanded(
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(color: Colors.grey[100], borderRadius: const BorderRadius.only(topLeft: Radius.circular(30.0), topRight: Radius.circular(30.0))),
-                child: ListView( // این ListView برای اسکرول دکمه ویرایش، تب‌ها و محتوای تب‌ها است
+                child: ListView(
                   padding: const EdgeInsets.only(top:16.0, bottom: 16.0),
                   children: [
-                    Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0), child: InkWell(onTap: _editProfile, child: Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade300)), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('ویرایش اطلاعات', style: TextStyle(fontSize: 15, color: Colors.black87)), Icon(Icons.keyboard_arrow_down, color: Colors.grey[600])])))),
+                    Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: InkWell(
+                            onTap: _editProfile, // اتصال به تابع هدایت به صفحه ویرایش
+                            child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade300)),
+                                child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text('ویرایش اطلاعات', style: TextStyle(fontSize: 15, color: Colors.black87)),
+                                      Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
+                                    ]
+                                )
+                            )
+                        )
+                    ),
                     const SizedBox(height: 20),
                     Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0), child: Row(children: [_buildTabButton('رزروهای قبلی'), _buildTabButton('لیست رزروها'), _buildTabButton('علاقه‌مندی‌ها')])),
                     const SizedBox(height: 24),
@@ -222,94 +261,23 @@ class _UserAccountPageState extends State<UserAccountPage> {
         shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         itemCount: _previousBookings.length,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: EdgeInsets.only(bottom: index < _previousBookings.length - 1 ? _interCardSpacingVertical : 0.0),
-            child: _buildPreviousBookingItemCard(_previousBookings[index]),
-          );
-        },
+        itemBuilder: (context, index) => Padding(padding: EdgeInsets.only(bottom: index < _previousBookings.length - 1 ? _interCardSpacingVertical : 0.0), child: _buildPreviousBookingItemCard(_previousBookings[index])),
       );
     }
     else if (_selectedTab == 'لیست رزروها') {
       if (_isLoadingCurrentBookings) return const Center(child: CircularProgressIndicator());
       if (_currentBookings.isEmpty) return const Center(child: Padding(padding: EdgeInsets.all(30.0), child: Text('هیچ رزرو فعالی وجود ندارد.', style: TextStyle(fontSize: 16, color: Colors.grey))));
-      return SizedBox(
-        height: _horizontalListHeight,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16.0), // فاصله از لبه‌های صفحه
-          itemCount: _currentBookings.length,
-          itemBuilder: (context, index) {
-            return Container(
-              // فاصله بین کارت‌ها (سمت چپ کارت فعلی، مگر اینکه اولین کارت باشد)
-              margin: EdgeInsets.only(left: index > 0 ? _interCardSpacingHorizontal : 0.0),
-              child: _buildBookingItemCard(_currentBookings[index]),
-            );
-          },
-        ),
-      );
+      return SizedBox(height: _horizontalListHeight, child: ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16.0), itemCount: _currentBookings.length, itemBuilder: (context, index) => Container(margin: EdgeInsets.only(left: index > 0 ? _interCardSpacingHorizontal : 0.0), child: _buildBookingItemCard(_currentBookings[index]))));
     } else if (_selectedTab == 'علاقه‌مندی‌ها') {
       if (_isLoadingFavorites) return const Center(child: CircularProgressIndicator());
       if (_favoriteHotels.isEmpty) return const Center(child: Padding(padding: EdgeInsets.all(30.0), child: Text('موردی برای نمایش در علاقه‌مندی‌ها وجود ندارد.', style: TextStyle(fontSize: 16, color: Colors.grey))));
-      return SizedBox(
-        height: _horizontalListHeight,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          itemCount: _favoriteHotels.length,
-          itemBuilder: (context, index) {
-            return Container(
-              margin: EdgeInsets.only(left: index > 0 ? _interCardSpacingHorizontal : 0.0),
-              child: _buildFavoriteItemCard(_favoriteHotels[index]),
-            );
-          },
-        ),
-      );
+      return SizedBox(height: _horizontalListHeight, child: ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16.0), itemCount: _favoriteHotels.length, itemBuilder: (context, index) => Container(margin: EdgeInsets.only(left: index > 0 ? _interCardSpacingHorizontal : 0.0), child: _buildFavoriteItemCard(_favoriteHotels[index]))));
     }
     return const SizedBox.shrink();
   }
 
   Widget _buildPreviousBookingItemCard(PreviousBookingModel item) {
-    return Card(
-      elevation: 2,
-      // margin: EdgeInsets.zero, // مارجین توسط Padding در ListView.builder کنترل می‌شود
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // عکس سمت راست (فرزند اول Row در RTL)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                item.imageUrl,
-                width: 80, height: 80, fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(width: 80, height: 80, color: Colors.grey[200], child: Icon(Icons.image_not_supported, color: Colors.grey[400])),
-              ),
-            ),
-            const SizedBox(width: 12),
-            // اطلاعات متنی سمت چپ (فرزند دوم Row در RTL)
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(item.hotelName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87), maxLines: 2, overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 8),
-                  Row(children: [Text(item.userRating?.toString() ?? '-', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey[700])), const SizedBox(width: 4), Icon(Icons.thumb_up, size: 16, color: Colors.grey[700])]),
-                  const SizedBox(height: 12),
-                  InkWell(
-                    onTap: () => _ratePreviousBooking(item.id),
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.star, color: primaryPurple, size: 20), const SizedBox(width: 6), Text('ثبت نظر و امتیازدهی', style: TextStyle(color: primaryPurple, fontSize: 13, fontWeight: FontWeight.w600))]),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return Card(elevation: 2, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), color: Colors.white, child: Padding(padding: const EdgeInsets.all(12.0), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(item.imageUrl, width: 80, height: 80, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => Container(width: 80, height: 80, color: Colors.grey[200], child: Icon(Icons.image_not_supported, color: Colors.grey[400])))), const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(item.hotelName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87), maxLines: 2, overflow: TextOverflow.ellipsis), const SizedBox(height: 8), Row(children: [Text(item.userRating?.toString() ?? '-', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey[700])), const SizedBox(width: 4), Icon(Icons.thumb_up, size: 16, color: Colors.grey[700])]), const SizedBox(height: 12), InkWell(onTap: () => _ratePreviousBooking(item.id), child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.star, color: primaryPurple, size: 20), const SizedBox(width: 6), Text('ثبت نظر و امتیازدهی', style: TextStyle(color: primaryPurple, fontSize: 13, fontWeight: FontWeight.w600))]))]))])));
   }
 
   Widget _buildBookingItemCard(BookingModel booking) {
