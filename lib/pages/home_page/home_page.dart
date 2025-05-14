@@ -159,17 +159,13 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ImageBanner(
-                    controller: _bannerController,
-                    images: bannerImages,
-                  ),
                   Center(
                     child: SmoothPageIndicator(
                       controller: _bannerController,
                       count: bannerImages.length,
                       effect: WormEffect(
-                        dotHeight: 8,
-                        dotWidth: 8,
+                        dotHeight: 6,
+                        dotWidth: 6,
                         activeDotColor: Color(0xFF542545),
                         dotColor: Colors.grey.shade300,
                       ),
@@ -180,7 +176,10 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  ImageBanner(
+                    controller: _bannerController,
+                    images: bannerImages,
+                  ),
                   const SectionTitle(
                     title: 'قدم بزنی، می‌رسی',
                     showViewAll: true,
@@ -199,8 +198,9 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 10),
                   const SectionTitle(title: 'هتل‌های لوکس با قیمت جیب‌دوست'),
+                  const SizedBox(height: 10),
                   SizedBox(
-                    height: 320, // Increased height slightly to accommodate scaled card and padding
+                    height: 290, // Increased height slightly to accommodate scaled card and padding
                     child: PageView.builder(
                       reverse: true,
                       controller: _hotelPageController,
@@ -290,7 +290,7 @@ class _HomePageState extends State<HomePage> {
                     viewAllText: 'مشاهده همه',
                   ),
                   SizedBox(
-                    height: 115,
+                    height: 95,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       reverse: false,

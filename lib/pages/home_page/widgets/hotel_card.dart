@@ -88,125 +88,124 @@ class HotelCard extends StatelessWidget {
                   ),
                 ],
               ),
-              Padding(
-                padding: const EdgeInsets.only(right: 12.0, left: 12.0, top: 10.0, bottom: 6.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        fontFamily: 'Vazirmatn',
-                        color: Colors.black,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.start,
-                    ),
-                    const SizedBox(height: 5),
-                    Row(
-                      children: [
-                        Icon(Icons.location_on, size: 20, color: Color(0xFF542545)),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            location,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.black,
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'Vazirmatn',
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.start,
-                          ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 12.0, left: 12.0,top: 10,bottom: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          fontFamily: 'Vazirmatn',
+                          color: Colors.black,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: List.generate(5, (index) {
-                        IconData starIcon;
-                        if (index < rating.floor()) {
-                          starIcon = Icons.star_rounded;
-                        } else if (index < rating && index == rating.floor()) {
-                          starIcon = Icons.star_half_rounded;
-                        } else {
-                          starIcon = Icons.star_border_rounded;
-                        }
-                        return Icon(
-                          starIcon,
-                          color:Color(0xFF542545),
-                          size: 15,
-                        );
-                      }),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(right: 12.0, left: 12.0, bottom: 12.0, top: 4.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      child: Row(
-                        textDirection: TextDirection.ltr,
-                        mainAxisSize: MainAxisSize.min,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.start,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            '$discount% تخفیف', // متن عکس: 73% تخفیف
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: discountRedText,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Vazirmatn',
-                            ),
+                          Row(
+                            children: [
+                              Icon(Icons.location_on, size: 20, color: Color(0xFF542545)),
+                              const SizedBox(width: 4),
+                              Text(
+                                location,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'Vazirmatn',
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.start,
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 3),
-                          const Icon(
-                            Icons.local_fire_department, // یا Icons.local_offer_outlined
-                            size: 20,
-                            color: discountRedIcon,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: List.generate(5, (index) {
+                              IconData starIcon;
+                              if (index < rating.floor()) {
+                                starIcon = Icons.star_rounded;
+                              } else if (index < rating && index == rating.floor()) {
+                                starIcon = Icons.star_half_rounded;
+                              } else {
+                                starIcon = Icons.star_border_rounded;
+                              }
+                              return Icon(
+                                starIcon,
+                                color:Color(0xFF542545),
+                                size: 15,
+                              );
+                            }),
                           ),
                         ],
                       ),
-                    ),
-                    // بخش رزرو (سمت راست در UI، پس در Row دوم می آید)
-                    InkWell(
-                      onTap: onReserveTap,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 2.0),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Text(
-                              'رزرو',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: customPurple,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Vazirmatn',
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            child: Row(
+                              textDirection: TextDirection.ltr,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '$discount% تخفیف', // متن عکس: 73% تخفیف
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: discountRedText,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'Vazirmatn',
+                                  ),
+                                ),
+                                const SizedBox(width: 3),
+                                const Icon(
+                                  Icons.local_fire_department, // یا Icons.local_offer_outlined
+                                  size: 20,
+                                  color: discountRedIcon,
+                                ),
+                              ],
+                            ),
+                          ),
+                          InkWell(
+                            onTap: onReserveTap,
+                            borderRadius: BorderRadius.circular(8),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 2.0),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  Text(
+                                    'رزرو',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: customPurple,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Vazirmatn',
+                                    ),
+                                  ),
+                                  SizedBox(width: 2),
+                                  Icon(
+                                    Icons.arrow_forward, // این آیکون در RTL به چپ اشاره می کند
+                                    size: 20,
+                                    color: customPurple,
+                                  ),
+                                ],
                               ),
                             ),
-                            SizedBox(width: 2),
-                            Icon(
-                              Icons.arrow_forward, // این آیکون در RTL به چپ اشاره می کند
-                              size: 20,
-                              color: customPurple,
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],
