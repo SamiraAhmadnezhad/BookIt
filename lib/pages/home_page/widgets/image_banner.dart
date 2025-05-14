@@ -13,7 +13,7 @@ class ImageBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 100, // Adjust banner height
+      height: 80, // Adjust banner height
       child: PageView.builder(
         controller: controller,
         itemCount: images.length,

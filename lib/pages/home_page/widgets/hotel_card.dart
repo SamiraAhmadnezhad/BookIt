@@ -29,7 +29,6 @@ class HotelCard extends StatelessWidget {
     const Color customPurple = Color(0xFF542545);
     const Color discountRedText = Color(0xFF542545);
     const Color discountRedIcon = Color(0xFF542545);
-    const Color discountBgColor = Color(0xFFFEEBEE);
 
     return GestureDetector(
       onTap: onTap,

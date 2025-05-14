@@ -17,15 +17,15 @@ class SectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 0.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             title,
             style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
               color: Colors.black87,
             ),
           ),
@@ -34,7 +34,7 @@ class SectionTitle extends StatelessWidget {
               onPressed: onViewAllPressed,
               child: Text(
                 viewAllText!,
-                style: TextStyle(color: Color(0xFF542545), fontSize: 14),
+                style: TextStyle(color: Color(0xFF542545), fontSize: 12),
               ),
             ),
         ],

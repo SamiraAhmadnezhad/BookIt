@@ -1,7 +1,7 @@
 // main_screen.dart
 import 'package:flutter/material.dart';
 
-import 'home_page/custom_bottom_nav_bar.dart';
+import 'custom_bottom_nav_bar.dart';
 import 'home_page/home_page.dart';
 
 class MainScreen extends StatefulWidget {
