@@ -5,6 +5,7 @@ import 'package:bookit/pages/hotel_info_pages/hotel_info_page.dart';
 import 'package:bookit/pages/hotel_info_pages/room_info_page.dart';
 import 'package:bookit/pages/hotel_info_pages/reserved_rooms_page.dart';
 import 'package:bookit/pages/account_pages-guest/user_account_page.dart';
+import 'package:bookit/pages/account_pages-manager/manager_account_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -17,7 +18,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const UserAccountPage(),
+      home: const ManagerAccountPage(),
       theme: ThemeData(
         fontFamily: GoogleFonts.inter().fontFamily,
         textTheme: GoogleFonts.interTextTheme(),
