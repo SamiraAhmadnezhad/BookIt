@@ -1,11 +1,10 @@
-// lib/pages/hotel_info_pages/hotel_info_page.dart
 import 'package:flutter/material.dart';
-import 'dart:async'; // برای Future.delayed
+import 'dart:async';
 
-// --- ثابت رنگ اصلی ---
 const Color kManagerPrimaryColor = Color(0xFF542545);
+const Color kPageBackgroundColor = Color(0xFFF0F0F0);
+const Color kCardBackgroundColor = Colors.white;
 
-// --- مدل داده برای اتاق ---
 class Room {
   final String id;
   final String name;
@@ -24,7 +23,6 @@ class Room {
   });
 }
 
-// --- ویجت کارت اتاق ---
 class _RoomCardWidget extends StatelessWidget {
   final Room room;
   final VoidCallback onDelete;
@@ -34,7 +32,6 @@ class _RoomCardWidget extends StatelessWidget {
     required this.onDelete,
   });
 
-  // تابع کمکی برای فرمت قیمت با ویرگول
   String _formatPrice(double price) {
     return price.toStringAsFixed(0).replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
@@ -44,11 +41,12 @@ class _RoomCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context); // استفاده از تم Material 3
+    final theme = Theme.of(context);
 
     return Card(
+      color: kCardBackgroundColor,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 2, // Material 3 از elevation کمتری استفاده می‌کند
+      elevation: 1.5,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
@@ -66,10 +64,10 @@ class _RoomCardWidget extends StatelessWidget {
                   return Container(
                     width: 100,
                     height: 120,
-                    color: theme.colorScheme.surfaceVariant, // رنگ مناسب برای placeholder در M3
+                    color: Colors.grey[200],
                     child: Icon(
-                      Icons.broken_image,
-                      color: theme.colorScheme.onSurfaceVariant,
+                      Icons.broken_image_outlined,
+                      color: Colors.grey[400],
                       size: 40,
                     ),
                   );
@@ -80,19 +78,18 @@ class _RoomCardWidget extends StatelessWidget {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     room.name,
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 6),
-                  _buildInfoRow(Icons.people_alt_outlined, 'ظرفیت: ${room.capacity} نفر', theme),
-                  const SizedBox(height: 3),
-                  _buildInfoRow(Icons.king_bed_outlined, 'نوع: ${room.type}', theme),
                   const SizedBox(height: 8),
+                  _buildInfoRow(Icons.people_alt_outlined, 'ظرفیت: ${room.capacity}', theme),
+                  const SizedBox(height: 4),
+                  _buildInfoRow(Icons.home_outlined, 'نوع: ${room.type}', theme),
+                  const SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -103,14 +100,14 @@ class _RoomCardWidget extends StatelessWidget {
                           Text(
                             'قیمت یک شب',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
+                              color: Colors.grey[600],
                             ),
                           ),
                           Text(
                             '${_formatPrice(room.pricePerNight)} تومان',
                             style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: kManagerPrimaryColor, // رنگ بنفش برای قیمت
+                              color: kManagerPrimaryColor,
                             ),
                           ),
                         ],
@@ -120,11 +117,12 @@ class _RoomCardWidget extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: kManagerPrimaryColor,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                          textStyle: theme.textTheme.labelLarge?.copyWith(color: Colors.white),
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                          textStyle: theme.textTheme.labelLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
+                          elevation: 1,
                         ),
                         child: const Text('حذف'),
                       ),
@@ -142,16 +140,15 @@ class _RoomCardWidget extends StatelessWidget {
   Widget _buildInfoRow(IconData icon, String text, ThemeData theme) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7)),
+        Icon(icon, size: 18, color: Colors.grey[700]),
         const SizedBox(width: 6),
-        Text(text, style: theme.textTheme.bodyMedium),
+        Text(text, style: theme.textTheme.bodyMedium?.copyWith(color: Colors.black54)),
       ],
     );
   }
 }
 
 
-// --- صفحه اصلی مدیریت اطلاعات هتل/اتاق‌ها ---
 class RoomInfoPage extends StatefulWidget {
   const RoomInfoPage({Key? key}) : super(key: key);
 
@@ -172,36 +169,41 @@ class _RoomInfoPageState extends State<RoomInfoPage> {
   // TODO: تابع برای دریافت اطلاعات اتاق‌ها از سرور
   Future<void> _fetchRoomsData() async {
     setState(() { _isLoading = true; });
-    // شبیه‌سازی تاخیر شبکه
     await Future.delayed(const Duration(seconds: 1));
 
-    // داده‌های نمونه - این بخش باید با فراخوانی API واقعی جایگزین شود
-    // استفاده از picsum.photos برای تنوع تصاویر
     setState(() {
       _rooms = [
         Room(
           id: '1',
-          name: 'اسم اتاق در حالت طولانی ...',
-          imageUrl: 'https://picsum.photos/seed/r1/200/300',
+          name: 'اسم اتاق در حالت طولانی',
+          imageUrl: 'https://picsum.photos/seed/hotelA/200/300',
           capacity: 20,
           type: 'دو تخته',
           pricePerNight: 1200000,
         ),
         Room(
           id: '2',
-          name: 'اسم اتاق در حالت طولانی برای مثال ...',
-          imageUrl: 'https://picsum.photos/seed/r2/200/300',
+          name: 'اسم اتاق در حالت طولانی برای مثال و تست نمایش ...',
+          imageUrl: 'https://picsum.photos/seed/hotelB/200/300',
           capacity: 5,
           type: 'سوئیت',
           pricePerNight: 3200000,
         ),
         Room(
           id: '3',
-          name: 'اتاق دیگری با توضیحات بیشتر ...',
-          imageUrl: 'https://picsum.photos/seed/r3/200/300',
+          name: 'اتاق دیگری با توضیحات کامل',
+          imageUrl: 'https://picsum.photos/seed/hotelC/200/300',
           capacity: 15,
           type: 'اتاق ویژه',
           pricePerNight: 2800000,
+        ),
+        Room(
+          id: '4',
+          name: 'اتاق لوکس با نمای دریا و امکانات کامل رفاهی',
+          imageUrl: 'https://picsum.photos/seed/hotelD/200/300',
+          capacity: 2,
+          type: 'دولوکس',
+          pricePerNight: 4500000,
         ),
       ];
       _isLoading = false;
@@ -214,8 +216,10 @@ class _RoomInfoPageState extends State<RoomInfoPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('تایید حذف'),
-          content: const Text('آیا از حذف این اتاق اطمینان دارید؟'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: const Text('تایید حذف', textAlign: TextAlign.right),
+          content: const Text('آیا از حذف این اتاق اطمینان دارید؟', textAlign: TextAlign.right),
+          actionsAlignment: MainAxisAlignment.center,
           actions: <Widget>[
             TextButton(
               child: const Text('لغو'),
@@ -232,16 +236,18 @@ class _RoomInfoPageState extends State<RoomInfoPage> {
     );
 
     if (confirmDelete == true) {
-      // اینجا باید API حذف اتاق از سرور کال شود
-      // مثال: await ApiService.deleteRoom(roomId);
       debugPrint('TODO: Call API to delete room $roomId');
-
       setState(() {
         _rooms.removeWhere((room) => room.id == roomId);
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('اتاق با موفقیت حذف شد'), behavior: SnackBarBehavior.floating),
+          const SnackBar(
+            content: Text('اتاق با موفقیت حذف شد'),
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
+          ),
         );
       }
     }
@@ -250,9 +256,13 @@ class _RoomInfoPageState extends State<RoomInfoPage> {
   // TODO: تابع برای ناوبری به صفحه افزودن اتاق جدید
   void _navigateToAddRoomPage() {
     debugPrint('TODO: Navigate to Add New Room Page');
-    // Navigator.push(context, MaterialPageRoute(builder: (context) => AddRoomPage()));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('به صفحه افزودن اتاق جدید هدایت می‌شوید...'), behavior: SnackBarBehavior.floating),
+      const SnackBar(
+        content: Text('به صفحه افزودن اتاق جدید هدایت می‌شوید...'),
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
+      ),
     );
   }
 
@@ -260,33 +270,60 @@ class _RoomInfoPageState extends State<RoomInfoPage> {
   void _navigateToDiscountsPage() {
     debugPrint('TODO: Navigate to Special Discounts Page');
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('به صفحه تخفیف‌های ویژه هدایت می‌شوید...'), behavior: SnackBarBehavior.floating),
-    );
-  }
-
-  // TODO: تابع برای نمایش لیست کامل اتاق‌های هتل (اگر این صفحه خودش نیست)
-  void _navigateToHotelRoomsList() {
-    debugPrint('TODO: Navigate to Hotel Rooms List Page or refresh');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('لیست اتاق‌های هتل نمایش داده می‌شود...'), behavior: SnackBarBehavior.floating),
-    );
-  }
-
-  Widget _buildActionItem(IconData icon, String label, VoidCallback onPressed, ThemeData theme) {
-    return InkWell(
-      onTap: onPressed,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-        child: Row(
-          children: [
-            Icon(icon, color: kManagerPrimaryColor, size: 26),
-            const SizedBox(width: 16),
-            Text(label, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w500)),
-          ],
-        ),
+      const SnackBar(
+        content: Text('به صفحه تخفیف‌های ویژه هدایت می‌شوید...'),
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
       ),
     );
+  }
+
+  Widget _buildHeaderActionItem(IconData iconData, String label, VoidCallback? onPressed, ThemeData theme, {required bool isTitle}) {
+    Widget rowContent = Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: isTitle ? Colors.transparent : kManagerPrimaryColor,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            iconData,
+            color: isTitle ? kManagerPrimaryColor : Colors.white,
+            size: isTitle ? 24 : 18,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          label,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: Colors.black.withOpacity(0.85),
+          ),
+        ),
+      ],
+    );
+
+    if (onPressed != null && !isTitle) {
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
+            child: rowContent,
+          ),
+        ),
+      );
+    } else {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
+        child: rowContent,
+      );
+    }
   }
 
   @override
@@ -296,40 +333,39 @@ class _RoomInfoPageState extends State<RoomInfoPage> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        // AppBar در تصویر شما نبود، اما اگر نیاز داشتید، می‌توانید اضافه کنید:
-        // appBar: AppBar(
-        //   title: Text('مدیریت اتاق‌ها', style: theme.textTheme.titleLarge?.copyWith(color: theme.colorScheme.onPrimary)),
-        //   backgroundColor: theme.colorScheme.primary,
-        //   elevation: 2,
-        // ),
-        backgroundColor: theme.colorScheme.background, // استفاده از رنگ پس‌زمینه تم
+        backgroundColor: kPageBackgroundColor,
         body: SafeArea(
           child: Column(
             children: [
-              // بخش بالایی با گزینه‌ها
               Container(
-                color: theme.cardColor, // یا theme.colorScheme.surface برای تطابق با M3
-                padding: const EdgeInsets.only(top:8.0, bottom:0),
+                width: double.infinity,
+                padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildActionItem(Icons.add_circle_outline, 'افزودن اتاق جدید', _navigateToAddRoomPage, theme),
-                    _buildActionItem(Icons.percent_outlined, 'اعمال تخفیف‌های ویژه', _navigateToDiscountsPage, theme),
-                    _buildActionItem(Icons.list_alt_outlined, 'لیست اتاق‌های هتل', _navigateToHotelRoomsList, theme),
+                    _buildHeaderActionItem(Icons.add, 'افزودن اتاق جدید', _navigateToAddRoomPage, theme, isTitle: false),
+                    _buildHeaderActionItem(Icons.percent_rounded, 'اعمال تخفیف‌های ویژه', _navigateToDiscountsPage, theme, isTitle: false),
+                    _buildHeaderActionItem(Icons.list_alt_outlined, 'لیست اتاق‌های هتل', null, theme, isTitle: true), // onPressed is null
                   ],
                 ),
               ),
-              const Divider(height: 1, indent: 16, endIndent: 16),
+              // Divider(height: 1, thickness: 1, color: Colors.grey[300], indent: 16, endIndent: 16),
+
               Expanded(
                 child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
+                    ? const Center(child: CircularProgressIndicator(color: kManagerPrimaryColor))
                     : _rooms.isEmpty
                     ? Center(
-                    child: Text(
-                      'هیچ اتاقی برای نمایش وجود ندارد.',
-                      style: theme.textTheme.titleMedium,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        'هیچ اتاقی برای نمایش وجود ندارد. برای افزودن اتاق جدید از گزینه بالا استفاده کنید.',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.titleMedium?.copyWith(color: Colors.grey[700]),
+                      ),
                     ))
                     : ListView.builder(
-                  padding: const EdgeInsets.only(top: 8, bottom: 16), // فاصله برای اسکرول
+                  padding: const EdgeInsets.only(top: 0, bottom: 16),
                   itemCount: _rooms.length,
                   itemBuilder: (context, index) {
                     final room = _rooms[index];
@@ -343,13 +379,6 @@ class _RoomInfoPageState extends State<RoomInfoPage> {
             ],
           ),
         ),
-        // اگر bottomNavigationBar هم دارید، اینجا اضافه کنید
-        // bottomNavigationBar: BottomNavigationBar(
-        //   items: const [
-        //      BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: 'اتاق‌ها'),
-        //      BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'تنظیمات'),
-        //   ],
-        // ),
       ),
     );
   }
