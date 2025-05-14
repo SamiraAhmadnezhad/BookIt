@@ -1,7 +1,7 @@
 // lib/screens/hotel_info_page.dart
-import 'dart:io'; // برای کار با File
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart'; // ۱. ایمپورت پکیج
+import 'package:image_picker/image_picker.dart';
 
 class HotelInfoPage extends StatefulWidget {
   const HotelInfoPage({super.key});
@@ -24,9 +24,8 @@ class _HotelInfoPageState extends State<HotelInfoPage> {
 
   final Color _customPurpleColor = const Color(0xFF542545);
 
-  // ۲. لیستی برای نگهداری تصاویر انتخاب شده
   final List<XFile> _selectedImages = [];
-  final ImagePicker _picker = ImagePicker(); // نمونه‌ای از ImagePicker
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -53,9 +52,6 @@ class _HotelInfoPageState extends State<HotelInfoPage> {
   Future<void> _saveHotelInfo() async {
     if (_formKey.currentState!.validate()) {
       // TODO: Implement API call to save hotel information
-      // در اینجا باید _selectedImages را هم به سرور ارسال کنید
-      // برای ارسال، معمولا از multipart request استفاده می‌شود.
-      // هر XFile در _selectedImages یک path دارد که می‌توانید از آن File بسازید: File(xfile.path)
       print("نام: ${_nameController.text}");
       print("آدرس: ${_addressController.text}");
       print("توضیحات: ${_descriptionController.text}");
@@ -77,26 +73,20 @@ class _HotelInfoPageState extends State<HotelInfoPage> {
     }
   }
 
-  // ۳. پیاده‌سازی تابع انتخاب تصویر
   Future<void> _pickImages() async {
-    // می‌توانید به کاربر اجازه دهید از گالری انتخاب کند یا با دوربین عکس بگیرد
-    // در اینجا، انتخاب چند تصویر از گالری را پیاده‌سازی می‌کنیم
     try {
       final List<XFile> pickedFiles = await _picker.pickMultiImage(
-        imageQuality: 80, // کیفیت تصویر (0-100)
-        // maxWidth: 1000, // می‌توانید حداکثر عرض/ارتفاع هم تعیین کنید
+        imageQuality: 80,
+        // maxWidth: 1000,
         // maxHeight: 1000,
       );
 
       if (pickedFiles.isNotEmpty) {
         setState(() {
-          // می‌توانید محدودیت برای تعداد تصاویر هم بگذارید
-          // مثلا: if ((_selectedImages.length + pickedFiles.length) <= 5)
           _selectedImages.addAll(pickedFiles);
         });
       }
     } catch (e) {
-      // مدیریت خطاها، مثلا اگر کاربر دسترسی نداد
       print("خطا در انتخاب تصویر: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('خطا در انتخاب تصویر: $e')),
@@ -104,7 +94,6 @@ class _HotelInfoPageState extends State<HotelInfoPage> {
     }
   }
 
-  // تابعی برای حذف یک تصویر از لیست
   void _removeImage(int index) {
     setState(() {
       _selectedImages.removeAt(index);
@@ -117,7 +106,6 @@ class _HotelInfoPageState extends State<HotelInfoPage> {
     int maxLines = 1,
     double fieldHeight = 50.0,
   }) {
-    // ... (کد بدون تغییر)
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
@@ -162,7 +150,6 @@ class _HotelInfoPageState extends State<HotelInfoPage> {
   }
 
   Widget _buildCheckboxRow(String title, bool value, ValueChanged<bool?> onChanged) {
-    // ... (کد بدون تغییر)
     return InkWell(
       onTap: () => onChanged(!value),
       child: Padding(
@@ -250,7 +237,7 @@ class _HotelInfoPageState extends State<HotelInfoPage> {
 
                     const SizedBox(height: 24),
                     InkWell(
-                      onTap: _pickImages, // فراخوانی تابع انتخاب تصویر
+                      onTap: _pickImages,
                       borderRadius: BorderRadius.circular(8.0),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 12.0),
@@ -267,19 +254,17 @@ class _HotelInfoPageState extends State<HotelInfoPage> {
                         ),
                       ),
                     ),
-
-                    // ۴. نمایش تصاویر انتخاب شده
                     if (_selectedImages.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
                         child: SizedBox(
-                          height: 120, // ارتفاع ثابت برای نمایش افقی تصاویر
+                          height: 120,
                           child: ListView.builder(
-                            scrollDirection: Axis.horizontal, // اسکرول افقی
+                            scrollDirection: Axis.horizontal,
                             itemCount: _selectedImages.length,
                             itemBuilder: (context, index) {
                               return Padding(
-                                padding: const EdgeInsets.only(left: 8.0), // فاصله بین تصاویر
+                                padding: const EdgeInsets.only(left: 8.0),
                                 child: Stack(
                                   children: [
                                     ClipRRect(
