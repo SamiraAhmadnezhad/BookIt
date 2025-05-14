@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'add_room_page.dart';
+import 'discount_page.dart';
 
 const Color kManagerPrimaryColor = Color(0xFF542545);
 const Color kPageBackgroundColor = Color(0xFFF0F0F0);
@@ -261,16 +262,10 @@ class _RoomInfoPageState extends State<RoomInfoPage> {
     );
   }
 
-  // TODO: تابع برای ناوبری به صفحه اعمال تخفیف‌های ویژه
   void _navigateToDiscountsPage() {
-    debugPrint('TODO: Navigate to Special Discounts Page');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('به صفحه تخفیف‌های ویژه هدایت می‌شوید...'),
-        behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
-      ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const DiscountsPage()),
     );
   }
 
