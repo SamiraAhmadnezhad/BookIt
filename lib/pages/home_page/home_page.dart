@@ -1,13 +1,16 @@
+import 'dart:math';
+import 'dart:ui' show lerpDouble; // For smoother interpolation
+
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
-// فرض می‌کنیم این فایل‌ها وجود دارند و به درستی پیاده‌سازی شده‌اند
-import 'custom_bottom_nav_bar.dart';
-import 'widgets/filter_chip_row.dart';
+import 'custom_bottom_nav_bar.dart'; // Assuming this exists
+import 'widgets/filter_chip_row.dart'; // Assuming this exists
 import 'widgets/hotel_card.dart';
-import 'widgets/image_banner.dart';
-import 'widgets/section_title.dart';
-import 'widgets/stay_card.dart';
+import 'widgets/image_banner.dart'; // Assuming this exists
+import 'widgets/section_title.dart'; // Assuming this exists
+import 'widgets/stay_card.dart'; // Assuming this exists
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -17,6 +20,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final PageController _bannerController = PageController();
+  late PageController _hotelPageController; // For the hotel carousel
 
   // Dummy data (replace with actual data from API or state management)
   final List<Map<String, dynamic>> hotels = [
@@ -43,6 +47,22 @@ class _HomePageState extends State<HomePage> {
       'rating': 3.5,
       'isFavorite': true,
       'discount': 20,
+    },
+    {
+      'imageUrl': 'https://picsum.photos/seed/hotel4/400/300',
+      'name': 'هتل چهارم برای تست',
+      'location': 'کنار دریا',
+      'rating': 4.2,
+      'isFavorite': false,
+      'discount': 15,
+    },
+    {
+      'imageUrl': 'https://picsum.photos/seed/hotel5/400/300',
+      'name': 'هتل پنجم لوکس',
+      'location': 'کوهستان',
+      'rating': 4.9,
+      'isFavorite': true,
+      'discount': 30,
     },
   ];
 
@@ -73,30 +93,51 @@ class _HomePageState extends State<HomePage> {
     'https://via.placeholder.com/600x250/FFB6C1/000000?Text=New+Destinations+3',
   ];
 
+  int _currentHotelPage = 0; // To keep track of the centered hotel item
+
+  @override
+  void initState() {
+    super.initState();
+     _currentHotelPage = hotels.isNotEmpty ? (hotels.length ~/ 2) : 0;
+    _hotelPageController = PageController(
+      initialPage: _currentHotelPage,
+      viewportFraction: 0.75, // Adjust this to control how much of the next/prev items are visible
+    );
+    // Listener to update current page for other UI elements if needed, or just for state
+    _hotelPageController.addListener(() {
+      int nextPage = _hotelPageController.page?.round() ?? _currentHotelPage;
+      if (nextPage != _currentHotelPage) {
+        // setState(() { // Not strictly needed for scaling if using AnimatedBuilder properly
+        //   _currentHotelPage = nextPage;
+        // });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: Color(0xFFEEEEEE), // رنگ ثابت AppBar
-          // foregroundColor: Color(0xFF542545), // رنگ آیکون‌ها و متن پیش‌فرض AppBar
+          backgroundColor: const Color(0xFFEEEEEE),
           elevation: 0,
-          leadingWidth: 120, // کمی بیشتر فضا برای "مکان"
+          surfaceTintColor: Color(0xFFEEEEEE),
+          leadingWidth: 120,
           leading: Padding(
-            padding: const EdgeInsets.only(left:16.0, right: 16.0), // برای فارسی، left پدینگ اصلی است
+            padding: const EdgeInsets.only(left:16.0, right: 16.0),
             child: Row(
-              mainAxisSize: MainAxisSize.min, // برای جلوگیری از کشیده شدن بیش از حد
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.location_on, color: Color(0xFF542545), size: 22,),
+                const Icon(Icons.location_on, color: Color(0xFF542545), size: 22,),
                 const SizedBox(width: 4),
                 Text(
                   'تهران',
                   style: TextStyle(
-                      color: Colors.grey.shade800, // کمی تیره‌تر برای خوانایی بهتر
+                      color: Colors.grey.shade800,
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      fontFamily: 'Vazirmatn' 
+                      fontFamily: 'Vazirmatn'
                   ),
                 ),
               ],
@@ -104,23 +145,20 @@ class _HomePageState extends State<HomePage> {
           ),
           actions: [
             IconButton(
-              icon: Icon(Icons.notifications_none_outlined, color: Color(0xFF542545), size: 28),
-              onPressed: () {
-                // Notification action
-              },
+              icon: const Icon(Icons.notifications_none_outlined, color: Color(0xFF542545), size: 28),
+              onPressed: () {},
             ),
-            const SizedBox(width: 8), // این SizedBox برای ایجاد فاصله از لبه صفحه است
+            const SizedBox(width: 8),
           ],
         ),
         body: Align(
           alignment: Alignment.center,
           child: SingleChildScrollView(
             child: Container(
-              color: Color(0xFFEEEEEE),
+              color: const Color(0xFFEEEEEE),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Banner
                   ImageBanner(
                     controller: _bannerController,
                     images: bannerImages,
@@ -132,7 +170,7 @@ class _HomePageState extends State<HomePage> {
                       effect: WormEffect(
                         dotHeight: 8,
                         dotWidth: 8,
-                        activeDotColor: Colors.deepPurple.shade300,
+                        activeDotColor: Color(0xFF542545),
                         dotColor: Colors.grey.shade300,
                       ),
                       onDotClicked: (index) => _bannerController.animateToPage(
@@ -142,51 +180,102 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 10),
                   const SectionTitle(
                     title: 'قدم بزنی، می‌رسی',
                     showViewAll: true,
                     viewAllText: 'مشاهده همه',
-                    onViewAllPressed: null,
                   ),
-                  FilterChipRow(
-                    chips: const [
-                      'هتل اسپیناس پالاس تهران',
-                      'هتل آزادی تهران',
-                      'هتل ونوس',
-                    ],
+                   FilterChipRow(
+                     items: [
+                       'هتل اسپیناس پالاس تهران',
+                       'هتل آزادی تهران',
+                       'هتل ونوس',
+                       'هتل اسپیناس پالاس تهران',
+                       'هتل آزادی تهران',
+                       'هتل ونوس',
+                       'هتل ونوس',
+                     ],
                   ),
-                  const SizedBox(height: 24),
-
-                  // Section: هتل‌های لوکس با قیمت جیب‌دوست
+                  const SizedBox(height: 10),
                   const SectionTitle(title: 'هتل‌های لوکس با قیمت جیب‌دوست'),
                   SizedBox(
-                    height: 330,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
+                    height: 320, // Increased height slightly to accommodate scaled card and padding
+                    child: PageView.builder(
                       reverse: true,
-                      padding: const EdgeInsetsDirectional.symmetric(horizontal: 16.0),
+                      controller: _hotelPageController,
                       itemCount: hotels.length,
+                      // reverse: true, // PageView handles LTR/RTL based on Directionality
+                      onPageChanged: (int page) {
+                        setState(() {
+                          _currentHotelPage = page;
+                        });
+                      },
                       itemBuilder: (context, index) {
                         final hotel = hotels[index];
-                        return Padding(
-                          padding: const EdgeInsetsDirectional.only(start: 0.0, bottom: 16.0),
+                        // AnimatedBuilder is used to listen to PageController and rebuild
+                        // only the transforming part, which is more efficient.
+                        return AnimatedBuilder(
+                          animation: _hotelPageController,
+                          builder: (context, child) {
+                            double value = 0.0;
+                            if (_hotelPageController.position.haveDimensions) {
+                              value = (_hotelPageController.page ?? _hotelPageController.initialPage.toDouble()) - index;
+                              // We want a value from 0 (centered) to 1 (one page away)
+                              value = value.abs();
+                              // Clamp value to prevent extreme scaling beyond adjacent items
+                              value = value.clamp(0.0, 1.0);
+                            }
+
+                            // Define max and min scale
+                            const double maxScale = 1.0;  // Scale for the centered item
+                            const double minScale = 0.85; // Scale for adjacent items
+
+                            // Interpolate scale: maxScale when value is 0, minScale when value is 1
+                            final double scale = lerpDouble(maxScale, minScale, value)!;
+
+                            // Add vertical padding to give space when card is scaled up
+                            // Add horizontal padding to create space between cards
+                            return Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 6.0, // Space between cards
+                                vertical: lerpDouble(0,0, 1-scale)! , // More vertical padding for smaller items
+                              ),
+                              child: Transform.scale(
+                                scale: scale,
+                                alignment: Alignment.center, // Ensure scaling is from the center
+                                child: child,
+                              ),
+                            );
+                          },
                           child: HotelCard(
                             imageUrl: hotel['imageUrl']!,
                             name: hotel['name']!,
                             location: hotel['location']!,
-                            rating: (hotel['rating']! as num).toDouble(), // اطمینان از نوع double
-                            isFavorite: hotel['isFavorite']!,           // مقدار isFavorite از state خوانده می‌شود
-                            discount: (hotel['discount']! as num).toInt(), // اطمینان از نوع int
+                            rating: (hotel['rating']! as num).toDouble(),
+                            isFavorite: hotel['isFavorite']!,
+                            discount: (hotel['discount']! as num).toInt(),
                             onTap: () {
-                              // Handle hotel tap
-                              print('Tapped on ${hotel['name']}');
+                              // If not centered, animate to it
+                              if (index != _currentHotelPage) {
+                                _hotelPageController.animateToPage(
+                                  index,
+                                  duration: const Duration(milliseconds: 400),
+                                  curve: Curves.easeInOut,
+                                );
+                              } else {
+                                // Handle hotel tap when it's already centered
+                                print('Tapped on centered ${hotel['name']}');
+                              }
                             },
                             onFavoriteToggle: () {
-
+                              // Example: Update favorite state
+                              setState(() {
+                                hotels[index]['isFavorite'] = !hotels[index]['isFavorite'];
+                              });
+                              print('Favorite toggled for ${hotel['name']}');
                             },
                             onReserveTap: () {
-                              // Handle reserve tap
                               print('Reserve tapped for ${hotel['name']}');
                             },
                           ),
@@ -194,31 +283,29 @@ class _HomePageState extends State<HomePage> {
                       },
                     ),
                   ),
+
                   const SectionTitle(
                     title: 'ستاره‌های اقامت',
                     showViewAll: true,
                     viewAllText: 'مشاهده همه',
-                    onViewAllPressed: null,
                   ),
                   SizedBox(
-                    height: 100,
+                    height: 115,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      reverse: true,
+                      reverse: false,
                       padding: const EdgeInsetsDirectional.symmetric(horizontal: 16.0),
                       itemCount: stays.length,
                       itemBuilder: (context, index) {
                         final stay = stays[index];
                         return Padding(
                           padding: const EdgeInsetsDirectional.only(start: 12.0),
-                          child: StayCard( // فرض می‌کنم StayCard همان tay_card است
+                          child: StayCard(
                             imageUrl: stay['imageUrl']!,
                             name: stay['name']!,
                             price: stay['price']!,
                             rating: stay['rating']!,
-                            onTap: () {
-                              // Handle stay tap
-                            },
+                            onTap: () {},
                           ),
                         );
                       },
@@ -230,16 +317,14 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ),
-        bottomNavigationBar: CustomBottomNavBar(selectedIndex: 0, onItemTapped: (int ) {  },),
       ),
     );
   }
 
-
-
   @override
   void dispose() {
     _bannerController.dispose();
+    _hotelPageController.dispose(); // Don't forget to dispose this!
     super.dispose();
   }
 }

@@ -46,34 +46,51 @@ class StayCard extends StatelessWidget {
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '$price تومان',
-                      style: TextStyle(fontSize: 13, color: Colors.green.shade700, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Icon(Icons.thumb_up_alt_outlined, size: 16, color: Colors.deepPurple.shade400),
-                        const SizedBox(width: 4),
-                        Text(
-                          rating.toString(),
-                          style: TextStyle(fontSize: 13, color: Colors.grey[700]),
-                        ),
-                      ],
-                    ),
-                  ],
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        name,
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'تومان',
+                            style: TextStyle(fontSize: 12, color: Color(0xFF542545), fontWeight: FontWeight.bold),
+                          ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.thumb_up_alt, size: 20, color:Color(0xFF542545)),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    rating.toString(),
+                                    style: TextStyle(fontSize: 14, color: Colors.black),
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                '$price',
+                                style: TextStyle(fontSize: 16, color: Color(0xFF542545), fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ],
+                      )
+                    ],
+                  ),
                 ),
               ),
             ],

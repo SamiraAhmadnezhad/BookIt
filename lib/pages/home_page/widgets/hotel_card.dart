@@ -39,8 +39,6 @@ class HotelCard extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)), // کمی گردتر
         clipBehavior: Clip.antiAlias,
         child: SizedBox(
-          width: 300,
-
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -52,11 +50,11 @@ class HotelCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20.0), //  مقدار شعاع گردی را به دلخواه تنظیم کنید
                       child: Image.network(
                         imageUrl,
-                        height: 150,
+                        height: 155,
                         width: double.infinity,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Container(
-                          height: 150,
+                          height: 155,
                            alignment: Alignment.center,
                           child: const Icon(Icons.broken_image_rounded, size: 40, color: Colors.grey),
                         ),
