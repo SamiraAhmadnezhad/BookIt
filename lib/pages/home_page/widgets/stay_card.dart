@@ -25,7 +25,7 @@ class StayCard extends StatelessWidget {
         elevation: 2.0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
         child: SizedBox(
-          width: 300, // Fixed width
+          width: 285, // Fixed width
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -36,10 +36,10 @@ class StayCard extends StatelessWidget {
                   child: Image.network(
                     imageUrl,
                     height: double.infinity,
-                    width: 100,
+                    width: 90,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Container(
-                      height: 100,
+                      height: 90,
                       color: Colors.grey[300],
                       child: const Icon(Icons.broken_image, size: 40, color: Colors.grey),
                     ),
@@ -65,7 +65,7 @@ class StayCard extends StatelessWidget {
                         children: [
                           Text(
                             'تومان',
-                            style: TextStyle(fontSize: 12, color: Color(0xFF542545), fontWeight: FontWeight.bold),
+                            style: TextStyle(fontSize: 10, color: Color(0xFF542545), fontWeight: FontWeight.bold),
                           ),
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.end,
@@ -77,13 +77,13 @@ class StayCard extends StatelessWidget {
                                   const SizedBox(width: 4),
                                   Text(
                                     rating.toString(),
-                                    style: TextStyle(fontSize: 14, color: Colors.black),
+                                    style: TextStyle(fontSize: 12, color: Colors.black),
                                   ),
                                 ],
                               ),
                               Text(
                                 '$price',
-                                style: TextStyle(fontSize: 16, color: Color(0xFF542545), fontWeight: FontWeight.bold),
+                                style: TextStyle(fontSize: 14, color: Color(0xFF542545), fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
