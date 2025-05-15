@@ -1,4 +1,5 @@
-import 'package:bookit/pages/authentication_page/authentication_page.dart';
+
+import 'package:bookit/pages/main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -11,7 +12,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const AuthenticationPage(),
+      home: const MainScreen(),
       theme: ThemeData(
         fontFamily: GoogleFonts.inter().fontFamily,
         textTheme: GoogleFonts.interTextTheme(),

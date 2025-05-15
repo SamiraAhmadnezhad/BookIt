@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
+import 'hotel_list_page.dart';
 import 'widgets/filter_chip_row.dart';
 import 'widgets/hotel_card.dart';
 import 'widgets/image_banner.dart';
 import 'widgets/section_title.dart';
 import 'widgets/stay_card.dart';
-
-// فایل مدال جدید را ایمپورت کنید
-import 'location_selection_modal.dart'; // مطمئن شوید مسیر درست است
+import 'location_selection_modal.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,8 +20,7 @@ class _HomePageState extends State<HomePage> {
   final PageController _bannerController = PageController();
   late PageController _hotelPageController;
 
-  // --- اضافه شده: وضعیت برای شهر انتخاب شده و لیست شهرها ---
-  String _selectedCity = 'تهران'; // شهر پیش‌فرض
+  String _selectedCity = 'تهران';
   final List<String> _allCities = [
     'تهران',
     'مشهد',
@@ -204,12 +202,12 @@ class _HomePageState extends State<HomePage> {
                     controller: _bannerController,
                     images: bannerImages,
                   ),
+                  SizedBox(height: 5,),
                   const SectionTitle(
                     title: 'قدم بزنی، می‌رسی',
-                    showViewAll: true,
-                    viewAllText: 'مشاهده همه',
+                    showViewAll: false,
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 15),
                   FilterChipRow( // اگر از ورژن قبلی که فقط متن بود استفاده می‌کنید:
                     items: const [
                       'هتل اسپیناس پالاس تهران',
@@ -284,10 +282,16 @@ class _HomePageState extends State<HomePage> {
                       },
                     ),
                   ),
-                  const SectionTitle(
+                   SectionTitle(
                     title: 'ستاره‌های اقامت',
                     showViewAll: true,
                     viewAllText: 'مشاهده همه',
+                      onViewAllPressed:() {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const HotelListPage()),
+                        );
+                      },
                   ),
                   SizedBox(
                     height: 95,
