@@ -1,4 +1,5 @@
 // main_screen.dart
+import 'package:bookit/pages/search_page/hotel_search_page.dart';
 import 'package:flutter/material.dart';
 
 import 'custom_bottom_nav_bar.dart';
@@ -16,7 +17,7 @@ class _MainScreenState extends State<MainScreen> {
 
  static const List<Widget> _widgetOptions = <Widget>[
     HomePage(), // محتوای صفحه اصلی شما
-    // SearchPage(),
+    HotelSearchPage(),
     // ProfilePage(),
   ];
 

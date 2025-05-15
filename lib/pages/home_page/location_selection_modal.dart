@@ -52,13 +52,13 @@ class _LocationSelectionModalState extends State<LocationSelectionModal> {
       child: Padding(
         padding: MediaQuery.of(context).viewInsets, // برای مدیریت کیبورد
         child: Container( // کانتینر اصلی برای محدودیت ارتفاع و پس زمینه کلی مدال (اختیاری)
-          // decoration: BoxDecoration( // اگر می‌خواهید کل مدال (به جز دسته) یک پس‌زمینه داشته باشد
-          //   color: Theme.of(context).canvasColor,
-          //   borderRadius: const BorderRadius.only(
-          //     topLeft: Radius.circular(20),
-          //     topRight: Radius.circular(20),
-          //   ),
-          // ),
+          decoration: BoxDecoration( // اگر می‌خواهید کل مدال (به جز دسته) یک پس‌زمینه داشته باشد
+            color: Colors.white,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(30),
+              topRight: Radius.circular(30),
+            ),
+          ),
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.82, // فضای کافی برای دکمه
           ),
@@ -79,7 +79,7 @@ class _LocationSelectionModalState extends State<LocationSelectionModal> {
                       height: 5,
                       width: 80,
                       decoration: BoxDecoration(
-                        color: Color(0xFF542545).withOpacity(0.7),
+                        color: Color(0xFF542545),
                         borderRadius: BorderRadius.circular(2.5),
                       ),
                     ),
