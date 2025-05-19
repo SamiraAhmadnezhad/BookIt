@@ -1,4 +1,5 @@
-// مسیرها را متناسب با پروژه خود تنظیم کنید
+
+import 'package:bookit/pages/search_page/search_list_page.dart';
 import 'package:bookit/pages/search_page/widgets/custom_shamsi_date_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:shamsi_date/shamsi_date.dart';
@@ -404,7 +405,12 @@ class _HotelSearchPageState extends State<HotelSearchPage> {
                       }).join('، ');
 
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(duration: const Duration(seconds: 5), content: Text('جستجو برای: $_selectedCity\nورود: ${_formatShamsiDateToString(_checkInDateShamsi)}\nخروج: ${_formatShamsiDateToString(_checkOutDateShamsi)}\n$_numberOfRooms اتاق، مسافران: $guestSummary', textAlign: TextAlign.right, style: TextStyle(fontFamily: 'Vazirmatn', height: 1.5))));
-                    },
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const SearchListPage()),
+                      );
+                      },
                     child: const Text('جستجو و رزرو هتل', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                   ),
                 ),

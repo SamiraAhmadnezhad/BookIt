@@ -4,7 +4,7 @@ import 'auth_tab_bar.dart';
 import 'forms/login_form.dart';
 import 'forms/manager_signup_form.dart';
 import 'forms/guest_signup_form.dart';
-import 'forms/otp_form.dart';
+import 'forms/otp_form.dart'; // Make sure OtpForm accepts isLoadingResend
 
 class AuthCard extends StatelessWidget {
   // State Variables passed down
@@ -14,6 +14,8 @@ class AuthCard extends StatelessWidget {
   final bool otpSend;
   final String otpTabLabel;
   final bool isChecked; // For terms checkbox
+  final bool isLoading; // For main action button
+  final bool isLoadingResendOtp; // <<< NEW: For OTP resend button
 
   // Controllers passed down
   final TextEditingController loginUsernameController;
@@ -25,7 +27,8 @@ class AuthCard extends StatelessWidget {
   final TextEditingController managerHotelNameController;
   final TextEditingController managerPasswordController;
   final TextEditingController managerConfirmPasswordController;
-  final TextEditingController guestUsernameController;
+  final TextEditingController guestNameController;
+  final TextEditingController guestLastNameController;
   final TextEditingController guestEmailController;
   final TextEditingController guestPasswordController;
   final TextEditingController guestConfirmPasswordController;
@@ -51,6 +54,8 @@ class AuthCard extends StatelessWidget {
     required this.otpSend,
     required this.otpTabLabel,
     required this.isChecked,
+    required this.isLoading,
+    required this.isLoadingResendOtp, // <<< NEW
     required this.loginUsernameController,
     required this.loginPasswordController,
     required this.managerUsernameController,
@@ -60,7 +65,8 @@ class AuthCard extends StatelessWidget {
     required this.managerHotelNameController,
     required this.managerPasswordController,
     required this.managerConfirmPasswordController,
-    required this.guestUsernameController,
+    required this.guestNameController,
+    required this.guestLastNameController,
     required this.guestEmailController,
     required this.guestPasswordController,
     required this.guestConfirmPasswordController,
@@ -90,8 +96,8 @@ class AuthCard extends StatelessWidget {
 
     if (otpSend && (selectedTab == 1 || selectedTab == 2)) {
       // OTP Stage for Manager or Guest Signup
-      buttonText = 'ثبت نام';
-      buttonAction = onSignupSubmitPressed; // Final signup action
+      buttonText = 'تایید و ثبت نام'; // Or "تایید کد" or similar
+      buttonAction = onSignupSubmitPressed; // Final signup action (verify OTP)
       formContent = OtpForm(
         otpLabel: otpTabLabel,
         otp1Controller: otp1Controller,
@@ -100,6 +106,7 @@ class AuthCard extends StatelessWidget {
         otp4Controller: otp4Controller,
         onResendOtp: onResendOtpPressed,
         textColor: primaryTextColor,
+        isLoadingResend: isLoadingResendOtp, // <<< Pass specific loading state for resend
       );
     } else {
       // Initial Login or Signup Stage
@@ -108,8 +115,8 @@ class AuthCard extends StatelessWidget {
           buttonText = 'ورود';
           buttonAction = onLoginPressed;
           formContent = LoginForm(
-            isManager: isLoginAsManager, // نام پارامتر را در LoginForm به isManager تغییر می‌دهیم
-            onUserTypeChanged: (bool? val) { // اینجا هم نوع را به bool تغییر می‌دهیم
+            isManager: isLoginAsManager,
+            onUserTypeChanged: (bool? val) {
               onLoginUserTypeBoolChanged(val);
             },
             usernameController: loginUsernameController,
@@ -119,10 +126,10 @@ class AuthCard extends StatelessWidget {
           );
           break;
         case 1: // Manager Signup (Initial)
-          buttonText = 'ادامه';
-          buttonAction = onContinuePressed; // Action to proceed to OTP
+          buttonText = 'ادامه'; // This button now triggers initial registration and then OTP request
+          buttonAction = onContinuePressed;
           formContent = ManagerSignupForm(
-            usernameController: managerUsernameController,
+            emailController: managerUsernameController,
             nameController: managerNameController,
             lastNameController: managerLastNameController,
             nationalIdController: managerNationalIdController,
@@ -136,10 +143,11 @@ class AuthCard extends StatelessWidget {
           );
           break;
         case 2: // Guest Signup (Initial)
-          buttonText = 'ادامه';
-          buttonAction = onContinuePressed; // Action to proceed to OTP
+          buttonText = 'ادامه'; // This button now triggers initial registration and then OTP request
+          buttonAction = onContinuePressed;
           formContent = GuestSignupForm(
-            usernameController: guestUsernameController,
+            nameController: guestNameController,
+            lastNameController: guestLastNameController,
             emailController: guestEmailController,
             passwordController: guestPasswordController,
             confirmPasswordController: guestConfirmPasswordController,
@@ -188,9 +196,18 @@ class AuthCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 elevation: 3,
               ),
-              onPressed: buttonAction, // Use the determined action
-              child: Text(
-                buttonText, // Use the determined text
+              onPressed: isLoading ? null : buttonAction, // Main button uses 'isLoading'
+              child: isLoading // Main button uses 'isLoading'
+                  ? SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  color: buttonTextColor,
+                  strokeWidth: 2.0,
+                ),
+              )
+                  : Text(
+                buttonText,
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: buttonTextColor),
               ),
             ),
