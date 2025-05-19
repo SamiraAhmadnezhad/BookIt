@@ -122,7 +122,7 @@ class LoginForm extends StatelessWidget {
           ),
         ),
         CustomTextField(
-          label: 'نام کاربری',
+          label: 'ایمیل',
           controller: usernameController,
           textColor: textColor,
         ),

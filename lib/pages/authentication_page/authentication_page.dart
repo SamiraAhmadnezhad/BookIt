@@ -9,7 +9,7 @@ import 'widgets/auth_card.dart'; // Make sure AuthCard has isLoadingResendOtp if
 // --- API Endpoints ---
 const String BASE_URL = 'https://bookit.darkube.app';
 const String GUEST_LOGIN_ENDPOINT = '$BASE_URL/auth/login/';
-const String MANAGER_LOGIN_ENDPOINT = '$BASE_URL/hotelManager-api/hotel-manager/';
+const String MANAGER_LOGIN_ENDPOINT = '$BASE_URL/hotelManager-api/hotel-manager/get/';
 const String INITIAL_MANAGER_REGISTER_ENDPOINT='$BASE_URL/hotelManager-api/create/';
 const String INITIAL_GUEST_REGISTER_ENDPOINT='$BASE_URL/auth/register/';
 const String RESEND_OTP_ENDPOINT = '$BASE_URL/auth/resend-verification-code/'; // For requesting/resending OTP
@@ -147,9 +147,7 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
         'name': _managerNameController.text.trim(),
         'last_name': _managerLastNameController.text.trim(),
         'password': _managerPasswordController.text,
-        'password2': _managerConfirmPasswordController.text,
-        'role': 'HotelManager',
-        'nationalID': _managerNationalIdController.text.trim(),
+        'national_code': _managerNationalIdController.text.trim(),
         // 'hotel_name': _managerHotelNameController.text.trim(),
       };
     } else if (_selectedTab == 2) {// Guest
