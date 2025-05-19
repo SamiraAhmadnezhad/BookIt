@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class HotelCard extends StatelessWidget {
+  final String id;
   final String imageUrl;
   final String name;
   final String location;
@@ -22,6 +23,7 @@ class HotelCard extends StatelessWidget {
     required this.onTap,
     required this.onFavoriteToggle,
     required this.onReserveTap,
+    required this.id,
   });
 
   @override

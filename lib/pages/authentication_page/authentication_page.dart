@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:bookit/pages/main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../home_page/home_page.dart'; // Assuming you have this
@@ -7,8 +8,9 @@ import 'widgets/auth_card.dart'; // Make sure AuthCard has isLoadingResendOtp if
 
 // --- API Endpoints ---
 const String BASE_URL = 'https://bookit.darkube.app';
-const String LOGIN_ENDPOINT = '$BASE_URL/auth/login/';
-const String INITIAL_MANAGER_REGISTER_ENDPOINT='$BASE_URL/create/';
+const String GUEST_LOGIN_ENDPOINT = '$BASE_URL/auth/login/';
+const String MANAGER_LOGIN_ENDPOINT = '$BASE_URL/hotelManager-api/hotel-manager/';
+const String INITIAL_MANAGER_REGISTER_ENDPOINT='$BASE_URL/hotelManager-api/create/';
 const String INITIAL_GUEST_REGISTER_ENDPOINT='$BASE_URL/auth/register/';
 const String RESEND_OTP_ENDPOINT = '$BASE_URL/auth/resend-verification-code/'; // For requesting/resending OTP
 const String VERIFY_EMAIL_ENDPOINT = '$BASE_URL/auth/verify-email/'; // For final OTP verification
@@ -218,64 +220,70 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
 
   // --- API Call: Request/Resend OTP and Proceed to OTP Screen ---
   Future<void> _requestAndProceedToOtpScreen(String email, {bool isResend = false}) async {
+    // 1. اعتبارسنجی ایمیل (بدون تغییر)
     if (email.isEmpty || !email.contains('@')) {
       _showSnackBar('ایمیل معتبری برای ارسال کد وجود ندارد.', isError: true);
       if (isResend && mounted) setState(() => _isLoadingResendOtp = false);
-      else if (mounted) setState(() => _isLoading = false);
+      else if (mounted) setState(() => _isLoading = false); // _isLoading مربوط به دکمه اصلی "ادامه"
       return;
     }
 
     if (isResend) {
+      // --- این بلاک فقط برای ارسال مجدد کد اجرا می‌شود ---
       if (mounted) setState(() => _isLoadingResendOtp = true);
+      print('Requesting OTP for: $email to $RESEND_OTP_ENDPOINT (isResend: $isResend)');
+
+      try {
+        final response = await http.post(
+          Uri.parse(RESEND_OTP_ENDPOINT),
+          headers: <String, String>{'Content-Type': 'application/json; charset=UTF-8'},
+          body: jsonEncode(<String, String>{'email': email}),
+        );
+
+        if (!mounted) return;
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          print('OTP resend successful: ${response.body}');
+          _showSnackBar('کد جدید ارسال شد.');
+          // نیازی به تغییر صفحه نیست چون کاربر از قبل در صفحه OTP است
+        } else {
+          String errorMessage = 'خطا در ارسال کد تایید.';
+          try {
+            final errorData = jsonDecode(response.body);
+            if (errorData['detail'] != null) {
+              errorMessage = errorData['detail'];
+            } else if (errorData['email'] != null && errorData['email'] is List) {
+              errorMessage = "ایمیل: ${errorData['email'][0]}";
+            }
+          } catch (e) { /* Ignore decoding error */ }
+          print('OTP resend failed: ${response.statusCode} - ${response.body}');
+          _showSnackBar(errorMessage, isError: true);
+        }
+      } catch (e) {
+        print('Error during OTP resend: $e');
+        if (mounted) _showSnackBar('خطا در برقراری ارتباط برای ارسال کد.', isError: true);
+      } finally {
+        if (mounted) {
+          setState(() => _isLoadingResendOtp = false);
+        }
+      }
     } else {
-      // _isLoading is already true from _handleContinueToOtp if it's not a resend
-    }
+      // --- این بلاک برای اولین بار (ارسال اولیه کد) اجرا می‌شود ---
+      // _isLoading از قبل توسط _handleContinueToOtp (تابع فراخواننده) true شده است.
+      // در این حالت، هیچ درخواست HTTP به بک‌اند ارسال نمی‌کنیم.
 
-    print('Requesting OTP for: $email to $RESEND_OTP_ENDPOINT (isResend: $isResend)');
+      print('Simulating initial OTP request for: $email (isResend: $isResend) - NO BACKEND CALL');
 
-    try {
-      final response = await http.post(
-        Uri.parse(RESEND_OTP_ENDPOINT),
-        headers: <String, String>{'Content-Type': 'application/json; charset=UTF-8'},
-        body: jsonEncode(<String, String>{'email': email}),
-      );
-
+      // شبیه‌سازی موفقیت و رفتن به صفحه OTP بدون تماس با بک‌اند
       if (!mounted) return;
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        print('OTP request/resend successful: ${response.body}');
-        _showSnackBar(isResend ? 'کد جدید ارسال شد.' : 'کد تایید به ایمیل شما ارسال شد.');
-        if (!isResend) { // Only transition to OTP screen on initial request, not resend
-          setState(() {
-            _otpTabLabel = (_selectedTab == 1) ? 'تایید ایمیل مدیر هتل' : 'تایید ایمیل مهمان';
-            _otpSend = true;
-            _clearOtpFields();
-          });
-        }
-      } else {
-        String errorMessage = 'خطا در ارسال کد تایید.';
-        try {
-          final errorData = jsonDecode(response.body);
-          if (errorData['detail'] != null) {
-            errorMessage = errorData['detail'];
-          } else if (errorData['email'] != null && errorData['email'] is List) {
-            errorMessage = "ایمیل: ${errorData['email'][0]}";
-          }
-        } catch (e) { /* Ignore decoding error */ }
-        print('OTP request/resend failed: ${response.statusCode} - ${response.body}');
-        _showSnackBar(errorMessage, isError: true);
-      }
-    } catch (e) {
-      print('Error during OTP request/resend: $e');
-      if (mounted) _showSnackBar('خطا در برقراری ارتباط برای ارسال کد.', isError: true);
-    } finally {
-      if (mounted) {
-        if (isResend) {
-          setState(() => _isLoadingResendOtp = false);
-        } else {
-          setState(() => _isLoading = false); // Reset main button loading
-        }
-      }
+      _showSnackBar('کد تایید به ایمیل شما ارسال شد.'); // پیام موفقیت برای ارسال اولیه
+      setState(() {
+        _otpTabLabel = (_selectedTab == 1) ? 'تایید ایمیل مدیر هتل' : 'تایید ایمیل مهمان';
+        _otpSend = true; // این باعث انتقال به تب OTP می‌شود
+        _clearOtpFields();
+        _isLoading = false; // ریست کردن وضعیت لودینگ دکمه اصلی "ادامه"
+      });
     }
   }
 
@@ -346,47 +354,83 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
 
   // --- Action: Login ---
   Future<void> _handleLogin() async {
+
     setState(() => _isLoading = true);
     final String email = _loginEmailController.text.trim();
     final String password = _loginPasswordController.text;
-
+    print(email+password);
     if (email.isEmpty || password.isEmpty) {
       _showSnackBar('لطفا ایمیل و رمز عبور را وارد کنید.', isError: true);
       if (mounted) setState(() => _isLoading = false);
       return;
     }
 
-    try {
-      final response = await http.post(
-        Uri.parse(LOGIN_ENDPOINT),
-        headers: <String, String>{'Content-Type': 'application/json; charset=UTF-8'},
-        body: jsonEncode(<String, String>{'email': email, 'password': password}),
-      );
-
-      if (!mounted) return;
-      final responseData = jsonDecode(response.body);
-
-      if (response.statusCode == 200) {
-        print('Login successful: $responseData');
-        // TODO: Save token from responseData
-        _showSnackBar('ورود با موفقیت انجام شد.');
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
+    if (_isLoginAsManager){
+      try {
+        final response = await http.post(
+          Uri.parse(MANAGER_LOGIN_ENDPOINT),
+          headers: <String, String>{'Content-Type': 'application/json; charset=UTF-8'},
+          body: jsonEncode(<String, String>{'email': email, 'password': password}),
         );
-      } else {
-        String errorMessage = responseData['detail'] ?? 'خطا در ورود. لطفا دوباره تلاش کنید.';
-        if (responseData['non_field_errors'] != null && responseData['non_field_errors'] is List) {
-          errorMessage = responseData['non_field_errors'][0];
+
+        if (!mounted) return;
+        final responseData = jsonDecode(response.body);
+
+        if (response.statusCode == 200) {
+          print('Login successful: $responseData');
+          // TODO: Save token from responseData
+          _showSnackBar('ورود با موفقیت انجام شد.');
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const MainScreen()),
+          );
+        } else {
+          String errorMessage = responseData['detail'] ?? 'خطا در ورود. لطفا دوباره تلاش کنید.';
+          if (responseData['non_field_errors'] != null && responseData['non_field_errors'] is List) {
+            errorMessage = responseData['non_field_errors'][0];
+          }
+          print('Login failed: ${response.statusCode} - ${response.body}');
+          _showSnackBar(errorMessage, isError: true);
         }
-        print('Login failed: ${response.statusCode} - ${response.body}');
-        _showSnackBar(errorMessage, isError: true);
+      } catch (e) {
+        print('Error during login request: $e');
+        if (mounted) _showSnackBar('خطا در برقراری ارتباط با سرور.', isError: true);
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
       }
-    } catch (e) {
-      print('Error during login request: $e');
-      if (mounted) _showSnackBar('خطا در برقراری ارتباط با سرور.', isError: true);
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+    } else{
+      try {
+        final response = await http.post(
+          Uri.parse(GUEST_LOGIN_ENDPOINT),
+          headers: <String, String>{'Content-Type': 'application/json; charset=UTF-8'},
+          body: jsonEncode(<String, String>{'email': email, 'password': password}),
+        );
+
+        if (!mounted) return;
+        final responseData = jsonDecode(response.body);
+
+        if (response.statusCode == 200) {
+          print('Login successful: $responseData');
+          // TODO: Save token from responseData
+          _showSnackBar('ورود با موفقیت انجام شد.');
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const MainScreen()),
+          );
+        } else {
+          String errorMessage = responseData['detail'] ?? 'خطا در ورود. لطفا دوباره تلاش کنید.';
+          if (responseData['non_field_errors'] != null && responseData['non_field_errors'] is List) {
+            errorMessage = responseData['non_field_errors'][0];
+          }
+          print('Login failed: ${response.statusCode} - ${response.body}');
+          _showSnackBar(errorMessage, isError: true);
+        }
+      } catch (e) {
+        print('Error during login request: $e');
+        if (mounted) _showSnackBar('خطا در برقراری ارتباط با سرور.', isError: true);
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
