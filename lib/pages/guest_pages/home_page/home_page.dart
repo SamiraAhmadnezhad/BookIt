@@ -4,6 +4,7 @@ import 'package:bookit/pages/guest_pages/home_page/widgets/stay_card.dart';
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
+import '../hotel_detail_page/hotel_detail_page.dart';
 import 'hotel_list_page.dart';
 import 'location_selection_modal.dart';
 import 'widgets/filter_chip_row.dart';
@@ -261,6 +262,7 @@ class _HomePageState extends State<HomePage> {
                             isFavorite: hotel['isFavorite']!,
                             discount: (hotel['discount']! as num).toInt(),
                             onTap: () {
+
                               // if (index != _currentHotelPage) { // _currentHotelPage دیگر مستقیم آپدیت نمی‌شود
                               //   _hotelPageController.animateToPage(
                               //     index,
@@ -276,7 +278,14 @@ class _HomePageState extends State<HomePage> {
                                 hotels[index]['isFavorite'] = !hotels[index]['isFavorite'];
                               });
                             },
-                            onReserveTap: () {},
+                            onReserveTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => HotelDetailsPage(hotelId: "12345"),
+                                ),
+                              );
+                            },
                           ),
                         );
                       },
