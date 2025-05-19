@@ -14,7 +14,6 @@ class LoginForm extends StatelessWidget {
   static const Color _activeSegmentColor = Color(0xFF542545); // رنگ بنفش شما برای حالت فعال
   static const Color _inactiveSegmentColor = Colors.white; // پس‌زمینه غیرفعال سفید
   static const Color _activeTextColor = Colors.white;
-  // رنگ متن غیرفعال سیاه خواهد بود (یا textColor اگر مشکی نیست)
   static const double _segmentControlHeight = 38.0;
   static const double _segmentControlBorderRadius = 18.0; // شعاع گردی بیشتر
   static const double _segmentFontSize = 12.5;
@@ -123,7 +122,7 @@ class LoginForm extends StatelessWidget {
           ),
         ),
         CustomTextField(
-          label: 'نام کاربری',
+          label: 'ایمیل',
           controller: usernameController,
           textColor: textColor,
         ),

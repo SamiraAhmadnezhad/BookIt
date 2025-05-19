@@ -308,6 +308,7 @@ class _HotelSearchPageState extends State<HotelSearchPage> {
       child: Scaffold(
         backgroundColor: _pageBackgroundColor,
         appBar: AppBar(
+          surfaceTintColor: _pageBackgroundColor,
           title: const Text('جستجو رزرو هتل', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 19)),
           backgroundColor: _pageBackgroundColor,
           elevation: 0.5,

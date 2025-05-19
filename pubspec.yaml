@@ -41,6 +41,8 @@ dependencies:
   persian_datetime_picker: ^3.1.0
   shamsi_date: ^1.1.0
   intl: ^0.20.2
+  flutter_secure_storage: ^9.2.4
+  provider: ^6.1.5
 
 dev_dependencies:
   flutter_test:

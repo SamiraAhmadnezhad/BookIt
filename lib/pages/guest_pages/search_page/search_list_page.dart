@@ -7,7 +7,7 @@ import '../home_page/widgets/hotel_list_card.dart';
 enum SortType { none, popular, cheapest, expensive, discount }
 
 class SearchListPage extends StatefulWidget {
-  final String? initialSearchQuery; // پارامتر برای دریافت عبارت جستجوی اولیه
+  final String? initialSearchQuery;
 
   const SearchListPage({super.key, this.initialSearchQuery});
 
@@ -21,15 +21,17 @@ class _SearchListPageState extends State<SearchListPage> {
   late List<Map<String, dynamic>> _filteredHotels;
   final TextEditingController _searchController = TextEditingController();
 
-  // Filter and Sort State
   SortType _currentSortType = SortType.none;
   late RangeValues _currentPriceRange;
-  double _maxPrice = 100000000.0;
+  double _maxPrice = 100000000.0; // Default max price, updated in initState
+  bool _isInitialPriceRangeDefault = true; // برای بررسی اینکه آیا رنج قیمت تغییر کرده یا نه
 
-  // Colors
   static const Color pageBackgroundColor = Color(0xFFEEEEEE);
-  static const Color appBarTextColor = Colors.black; // برای عنوان اپ‌بار
-  static const Color appBarActionsColor = Color(0xFF542545); // رنگ آیکون فیلتر و برگشت
+  static const Color appBarTextColor = Colors.black87;
+  static const Color appBarActionsColor = Color(0xFF542545);
+  static const Color searchFieldBgColor = Colors.white;
+  static const Color searchIconColor = Color(0xFF757575);
+  static const Color searchHintColor = Color(0xFFBDBDBD);
   static const String vazirmatnFontFamily = 'Vazirmatn';
 
 
@@ -103,10 +105,10 @@ class _SearchListPageState extends State<SearchListPage> {
     ];
 
     _allHotels = List.from(hotelDataList);
-    _calculateAndSetInitialPriceRange();
+    _calculateAndSetInitialPriceRange(); // این _maxPrice و _currentPriceRange اولیه را تنظیم می‌کند
     _filteredHotels = List.from(_allHotels);
     _searchController.addListener(_onSearchOrFilterChanged);
-    _applyFiltersAndSort(); // اعمال فیلتر اولیه (بر اساس initialSearchQuery و رنج قیمت پیش‌فرض)
+    _applyFiltersAndSort();
   }
 
   void _calculateAndSetInitialPriceRange() {
@@ -117,13 +119,10 @@ class _SearchListPageState extends State<SearchListPage> {
           .map((h) => h['price'] as num)
           .reduce((a, b) => a > b ? a : b)
           .toDouble();
-      if (_maxPrice == 0) _maxPrice = 100000000.0;
+      if (_maxPrice == 0) _maxPrice = 100000000.0; // اطمینان از اینکه مکس پرایس صفر نباشد
     }
-    double minVal = 0;
-    if (_maxPrice < minVal) {
-      minVal = _maxPrice;
-    }
-    _currentPriceRange = RangeValues(minVal, _maxPrice);
+    _currentPriceRange = RangeValues(0, _maxPrice);
+    _isInitialPriceRangeDefault = true; // در ابتدا رنج قیمت پیش‌فرض است
   }
 
   @override
@@ -141,7 +140,6 @@ class _SearchListPageState extends State<SearchListPage> {
     String query = _searchController.text.toLowerCase();
     List<Map<String, dynamic>> tempFilteredHotels = List.from(_allHotels);
 
-    // 1. Text Search (even if not actively typed on this page, initial query applies)
     if (query.isNotEmpty) {
       tempFilteredHotels = tempFilteredHotels.where((hotel) {
         final name = hotel["name"].toString().toLowerCase();
@@ -149,14 +147,16 @@ class _SearchListPageState extends State<SearchListPage> {
       }).toList();
     }
 
-    // 2. Price Range Filter
-    tempFilteredHotels = tempFilteredHotels.where((hotel) {
-      final price = hotel["price"] as num;
-      return price >= _currentPriceRange.start &&
-          price <= _currentPriceRange.end;
-    }).toList();
+    // بررسی می‌کنیم که آیا رنج قیمت از حالت پیش‌فرض تغییر کرده یا نه
+    if (!_isInitialPriceRangeDefault) {
+      tempFilteredHotels = tempFilteredHotels.where((hotel) {
+        final price = hotel["price"] as num;
+        return price >= _currentPriceRange.start &&
+            price <= _currentPriceRange.end;
+      }).toList();
+    }
 
-    // 3. Sorting
+
     switch (_currentSortType) {
       case SortType.popular:
         tempFilteredHotels.sort(
@@ -189,9 +189,46 @@ class _SearchListPageState extends State<SearchListPage> {
     });
   }
 
+  String _getSortTypeDisplayName(SortType sortType) {
+    switch (sortType) {
+      case SortType.popular:
+        return "محبوب‌ترین";
+      case SortType.cheapest:
+        return "ارزان‌ترین";
+      case SortType.expensive:
+        return "گران‌ترین";
+      case SortType.discount:
+        return "پرتخفیف";
+      case SortType.none:
+        return ""; // یا "بدون مرتب‌سازی"
+    }
+  }
+
+  String _buildActiveFiltersString() {
+    List<String> activeFilters = [];
+
+    String sortDisplayName = _getSortTypeDisplayName(_currentSortType);
+    if (sortDisplayName.isNotEmpty) {
+      activeFilters.add(sortDisplayName);
+    }
+
+    // فقط اگر رنج قیمت از حالت پیش‌فرض (0 تا maxPrice اولیه) تغییر کرده باشد، نمایش داده شود
+    if (!_isInitialPriceRangeDefault) {
+      activeFilters.add(
+          "قیمت: ${_currentPriceRange.start.round()} تا ${_currentPriceRange.end.round()}");
+    }
+
+    if (activeFilters.isEmpty) {
+      return "نتایج جستجو"; // یا "فیلترها را اعمال کنید"
+    }
+    return activeFilters.join("، "); // فیلترها با ویرگول جدا می‌شوند
+  }
+
   void _showFilterModal(BuildContext context) {
     SortType tempSortType = _currentSortType;
     RangeValues tempPriceRange = _currentPriceRange;
+    bool tempIsPriceRangeDefault = _isInitialPriceRangeDefault;
+
 
     showModalBottomSheet(
       context: context,
@@ -233,7 +270,7 @@ class _SearchListPageState extends State<SearchListPage> {
                       }
                     });
                   },
-                  activeColor: appBarActionsColor, // رنگ بنفش
+                  activeColor: appBarActionsColor,
                   controlAffinity: ListTileControlAffinity.trailing,
                   contentPadding:
                   const EdgeInsets.symmetric(horizontal: 24.0, vertical: 0),
@@ -294,7 +331,7 @@ class _SearchListPageState extends State<SearchListPage> {
                         child: RangeSlider(
                           values: tempPriceRange,
                           min: 0,
-                          max: _maxPrice,
+                          max: _maxPrice, // استفاده از _maxPrice محاسبه شده
                           divisions: (_maxPrice > 0)
                               ? (_maxPrice / 100000).round().clamp(1, 200)
                               : 1,
@@ -303,6 +340,8 @@ class _SearchListPageState extends State<SearchListPage> {
                           onChanged: (RangeValues values) {
                             setModalState(() {
                               tempPriceRange = values;
+                              // اگر کاربر اسلایدر را حرکت داد، یعنی دیگر رنج پیش‌فرض نیست
+                              tempIsPriceRangeDefault = (values.start == 0 && values.end == _maxPrice);
                             });
                           },
                         ),
@@ -347,9 +386,10 @@ class _SearchListPageState extends State<SearchListPage> {
                             setState(() {
                               _currentSortType = tempSortType;
                               _currentPriceRange = tempPriceRange;
+                              _isInitialPriceRangeDefault = tempIsPriceRangeDefault;
                             });
                             Navigator.pop(modalContext);
-                            _applyFiltersAndSort();
+                            _applyFiltersAndSort(); // این باعث آپدیت AppBar هم می‌شود
                           },
                           child: const Text(
                             "اعمال",
@@ -379,9 +419,8 @@ class _SearchListPageState extends State<SearchListPage> {
       backgroundColor: pageBackgroundColor,
       appBar: AppBar(
         backgroundColor: pageBackgroundColor,
-        elevation: 0,
+        elevation: 0.5, // یک سایه خیلی کم برای جداسازی
         surfaceTintColor: pageBackgroundColor,
-        // دکمه برگشت
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: appBarActionsColor),
           onPressed: () {
@@ -391,21 +430,18 @@ class _SearchListPageState extends State<SearchListPage> {
           },
           tooltip: 'برگشت',
         ),
-        // عنوان اپ‌بار
         title: Text(
-          widget.initialSearchQuery != null && widget.initialSearchQuery!.isNotEmpty
-              ? 'نتایج برای: "${widget.initialSearchQuery}"'
-              : "لیست هتل‌ها",
+          _buildActiveFiltersString(), // نمایش فیلترهای فعال
           style: const TextStyle(
             color: appBarTextColor,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w500, // کمی سبک‌تر از bold
             fontFamily: vazirmatnFontFamily,
-            fontSize: 17, // کمی کوچکتر برای جا شدن بهتر
+            fontSize: 14, // کوچکتر برای جا شدن بهتر
           ),
-          overflow: TextOverflow.ellipsis, // برای جلوگیری از سرریز شدن متن طولانی
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
         ),
-        centerTitle: true, // برای وسط‌چین کردن عنوان
-        // دکمه فیلتر در سمت راست
+        centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.tune_rounded, color: appBarActionsColor),
@@ -415,25 +451,69 @@ class _SearchListPageState extends State<SearchListPage> {
             },
             tooltip: 'فیلتر',
           ),
-          const SizedBox(width: 8), // فاصله کوچک از لبه
+          const SizedBox(width: 8),
         ],
       ),
-      body: Column( // استفاده از Column برای قرار دادن ListView.builder
+      body: Column(
         children: [
-          Expanded( // ListView.builder باید در Expanded قرار گیرد تا ارتفاع نامحدود نگیرد
+          // نوار جستجو در اینجا قرار می‌گیرد
+          Padding(
+            padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 0.0, bottom: 8.0),
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: searchFieldBgColor,
+                borderRadius: BorderRadius.circular(24.0), // Pill shape
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.15),
+                    spreadRadius: 1,
+                    blurRadius: 3,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _searchController,
+                textDirection: TextDirection.rtl,
+                textAlign: TextAlign.right,
+                textAlignVertical: TextAlignVertical.center,
+                style: const TextStyle(
+                    fontFamily: vazirmatnFontFamily, fontSize: 14, color: Colors.black87),
+                decoration: const InputDecoration(
+                  hintText: "جستجو",
+                  hintStyle: TextStyle(
+                      color: searchHintColor, fontFamily: vazirmatnFontFamily, fontSize: 14),
+                  border: InputBorder.none,
+                  prefixIcon: Padding( // آیکون جستجو در سمت چپ (برای RTL، prefixIcon در چپ قرار میگیرد)
+                    padding: EdgeInsets.symmetric(horizontal: 12.0),
+                    child: Icon(Icons.search, color: searchIconColor, size: 22),
+                  ),
+                  // برای اینکه متن از آیکون فاصله بگیرد و hint هم درست نمایش داده شود
+                  contentPadding: EdgeInsets.only(right: 16.0, left: 0, top: 2.0, bottom: 2.0),
+                ),
+              ),
+            ),
+          ),
+          // لیست نتایج
+          Expanded(
             child: _filteredHotels.isEmpty
                 ? Center(
-                child: Text(
-                  "موردی با این مشخصات یافت نشد.",
-                  style: TextStyle(
-                      fontFamily: vazirmatnFontFamily,
-                      fontSize: 16,
-                      color: Colors.grey[700]),
-                  textDirection: TextDirection.rtl,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    "موردی با این مشخصات یافت نشد.",
+                    style: TextStyle(
+                        fontFamily: vazirmatnFontFamily,
+                        fontSize: 16,
+                        color: Colors.grey[700]),
+                    textDirection: TextDirection.rtl,
+                    textAlign: TextAlign.center,
+                  ),
                 ))
                 : ListView.builder(
               padding: const EdgeInsets.only(
-                  top: 8.0, bottom: 8.0, left: 16.0, right: 16.0),
+                  top: 4.0, bottom: 16.0, left: 16.0, right: 16.0), // کمی پدینگ بالا کمتر
               itemCount: _filteredHotels.length,
               itemBuilder: (context, index) {
                 final hotel = _filteredHotels[index];
@@ -446,13 +526,7 @@ class _SearchListPageState extends State<SearchListPage> {
                     rating: hotel["rating"]!,
                     isFavorite: hotel["isFavorite"]!,
                     price: hotel["price"]!,
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text("Tapped on ${hotel["name"]}",
-                                textDirection: TextDirection.rtl)),
-                      );
-                    },
+                    onTap: () { /* ... */ },
                     onFavoriteToggle: () {
                       setState(() {
                         final originalHotelIndex = _allHotels.indexWhere(
@@ -465,14 +539,7 @@ class _SearchListPageState extends State<SearchListPage> {
                         hotel["isFavorite"] = !hotel["isFavorite"]!;
                       });
                     },
-                    onReserveTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text(
-                                "Reserve tapped for ${hotel["name"]}",
-                                textDirection: TextDirection.rtl)),
-                      );
-                    },
+                    onReserveTap: () { /* ... */ },
                   ),
                 );
               },
