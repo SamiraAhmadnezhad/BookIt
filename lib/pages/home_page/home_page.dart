@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
+import '../reservation_detail_page/reservation_detail_page.dart';
 import 'hotel_list_page.dart';
 import 'widgets/filter_chip_row.dart';
 import 'widgets/hotel_card.dart';
@@ -276,7 +277,14 @@ class _HomePageState extends State<HomePage> {
                                 hotels[index]['isFavorite'] = !hotels[index]['isFavorite'];
                               });
                             },
-                            onReserveTap: () {},
+                            onReserveTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const ReservationDetailPage(hotelId: '12345',),
+                                ),
+                              );
+                            }, id: '123456',
                           ),
                         );
                       },
