@@ -267,11 +267,11 @@ class _UserAccountPageState extends State<UserAccountPage> {
     else if (_selectedTab == 'لیست رزروها') {
       if (_isLoadingCurrentBookings) return const Center(child: CircularProgressIndicator());
       if (_currentBookings.isEmpty) return const Center(child: Padding(padding: EdgeInsets.all(30.0), child: Text('هیچ رزرو فعالی وجود ندارد.', style: TextStyle(fontSize: 16, color: Colors.grey))));
-      return SizedBox(height: _horizontalListHeight, child: ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16.0), itemCount: _currentBookings.length, itemBuilder: (context, index) => Container(margin: EdgeInsets.only(left: index > 0 ? _interCardSpacingHorizontal : 0.0), child: _buildBookingItemCard(_currentBookings[index]))));
+      return SizedBox(height: _horizontalListHeight, child: ListView.builder(scrollDirection: Axis.vertical, padding: const EdgeInsets.symmetric(horizontal: 16.0), itemCount: _currentBookings.length, itemBuilder: (context, index) => Container(margin: EdgeInsets.only(left: index > 0 ? _interCardSpacingHorizontal : 0.0), child: _buildBookingItemCard(_currentBookings[index]))));
     } else if (_selectedTab == 'علاقه‌مندی‌ها') {
       if (_isLoadingFavorites) return const Center(child: CircularProgressIndicator());
       if (_favoriteHotels.isEmpty) return const Center(child: Padding(padding: EdgeInsets.all(30.0), child: Text('موردی برای نمایش در علاقه‌مندی‌ها وجود ندارد.', style: TextStyle(fontSize: 16, color: Colors.grey))));
-      return SizedBox(height: _horizontalListHeight, child: ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16.0), itemCount: _favoriteHotels.length, itemBuilder: (context, index) => Container(margin: EdgeInsets.only(left: index > 0 ? _interCardSpacingHorizontal : 0.0), child: _buildFavoriteItemCard(_favoriteHotels[index]))));
+      return SizedBox(height: _horizontalListHeight, child: ListView.builder(scrollDirection: Axis.vertical, padding: const EdgeInsets.symmetric(horizontal: 16.0), itemCount: _favoriteHotels.length, itemBuilder: (context, index) => Container(margin: EdgeInsets.only(left: index > 0 ? _interCardSpacingHorizontal : 0.0), child: _buildFavoriteItemCard(_favoriteHotels[index]))));
     }
     return const SizedBox.shrink();
   }
