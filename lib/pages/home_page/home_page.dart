@@ -1,3 +1,4 @@
+import 'package:bookit/pages/hotel_detail_page/hotel_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -281,7 +282,7 @@ class _HomePageState extends State<HomePage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const ReservationDetailPage(hotelId: '12345',),
+                                  builder: (context) => const HotelDetailsPage(hotelId: '12345',),
                                 ),
                               );
                             }, id: '123456',
