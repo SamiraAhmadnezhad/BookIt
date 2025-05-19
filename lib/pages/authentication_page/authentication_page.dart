@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 import '../guest_pages/home_page/home_page.dart'; // Assuming you have this
 import '../guest_pages/main_screen.dart';
+import 'auth_service.dart';
 import 'constants.dart';
 import 'widgets/auth_card.dart'; // Make sure AuthCard has isLoadingResendOtp if you implemented it
 
@@ -351,85 +353,42 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
 
 
   // --- Action: Login ---
+// --- Action: Login ---
   Future<void> _handleLogin() async {
-
     setState(() => _isLoading = true);
     final String email = _loginEmailController.text.trim();
     final String password = _loginPasswordController.text;
-    print(email+password);
+
     if (email.isEmpty || password.isEmpty) {
       _showSnackBar('لطفا ایمیل و رمز عبور را وارد کنید.', isError: true);
       if (mounted) setState(() => _isLoading = false);
       return;
     }
 
-    if (_isLoginAsManager){
-      try {
-        final response = await http.post(
-          Uri.parse(MANAGER_LOGIN_ENDPOINT),
-          headers: <String, String>{'Content-Type': 'application/json; charset=UTF-8'},
-          body: jsonEncode(<String, String>{'email': email, 'password': password}),
-        );
+    // دریافت نمونه AuthService از Provider
+    final authService = Provider.of<AuthService>(context, listen: false);
 
-        if (!mounted) return;
-        final responseData = jsonDecode(response.body);
+    bool loginSuccess = false;
 
-        if (response.statusCode == 200) {
-          print('Login successful: $responseData');
-          // TODO: Save token from responseData
-          _showSnackBar('ورود با موفقیت انجام شد.');
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const MainScreen()),
-          );
-        } else {
-          String errorMessage = responseData['detail'] ?? 'خطا در ورود. لطفا دوباره تلاش کنید.';
-          if (responseData['non_field_errors'] != null && responseData['non_field_errors'] is List) {
-            errorMessage = responseData['non_field_errors'][0];
-          }
-          print('Login failed: ${response.statusCode} - ${response.body}');
-          _showSnackBar(errorMessage, isError: true);
-        }
-      } catch (e) {
-        print('Error during login request: $e');
-        if (mounted) _showSnackBar('خطا در برقراری ارتباط با سرور.', isError: true);
-      } finally {
-        if (mounted) setState(() => _isLoading = false);
-      }
-    } else{
-      try {
-        final response = await http.post(
-          Uri.parse(GUEST_LOGIN_ENDPOINT),
-          headers: <String, String>{'Content-Type': 'application/json; charset=UTF-8'},
-          body: jsonEncode(<String, String>{'email': email, 'password': password}),
-        );
-
-        if (!mounted) return;
-        final responseData = jsonDecode(response.body);
-
-        if (response.statusCode == 200) {
-          print('Login successful: $responseData');
-          // TODO: Save token from responseData
-          _showSnackBar('ورود با موفقیت انجام شد.');
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const MainScreen()),
-          );
-        } else {
-          String errorMessage = responseData['detail'] ?? 'خطا در ورود. لطفا دوباره تلاش کنید.';
-          if (responseData['non_field_errors'] != null && responseData['non_field_errors'] is List) {
-            errorMessage = responseData['non_field_errors'][0];
-          }
-          print('Login failed: ${response.statusCode} - ${response.body}');
-          _showSnackBar(errorMessage, isError: true);
-        }
-      } catch (e) {
-        print('Error during login request: $e');
-        if (mounted) _showSnackBar('خطا در برقراری ارتباط با سرور.', isError: true);
-      } finally {
-        if (mounted) setState(() => _isLoading = false);
-      }
+    if (_isLoginAsManager) {
+      loginSuccess = await authService.loginManager(email, password);
+    } else {
+      loginSuccess = await authService.loginGuest(email, password);
     }
+
+    if (!mounted) return;
+
+    if (loginSuccess) {
+      _showSnackBar('ورود با موفقیت انجام شد.');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const MainScreen()), // یا HomePage
+      );
+    } else {
+      _showSnackBar(authService.errorMessage ?? 'خطا در ورود. لطفا دوباره تلاش کنید.', isError: true);
+    }
+
+    setState(() => _isLoading = false);
   }
 
   // --- Action: Forgot Password ---
