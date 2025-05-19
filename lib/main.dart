@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
 
-      home: const AuthenticationPage(),
+      home: const MainScreen(),
 
       theme: ThemeData(
         fontFamily: GoogleFonts.inter().fontFamily,

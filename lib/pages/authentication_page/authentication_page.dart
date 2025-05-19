@@ -1,8 +1,8 @@
 import 'dart:convert';
-import 'package:bookit/pages/main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../guest_pages/home_page/home_page.dart'; // Assuming you have this
+import '../guest_pages/main_screen.dart';
 import 'constants.dart';
 import 'widgets/auth_card.dart'; // Make sure AuthCard has isLoadingResendOtp if you implemented it
 

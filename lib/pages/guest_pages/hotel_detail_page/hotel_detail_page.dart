@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:shamsi_date/shamsi_date.dart';
 
-import '../search_page/widgets/custom_shamsi_date_picker.dart';
+import '../search_page/widgets/custom_shamsi_date_picker.dart'; // فرض بر اینکه این مسیر صحیح است
+
 class HotelDetails {
   final String id;
   final String name;
@@ -87,7 +88,6 @@ class Review {
 
 
 // --- API Service Stub ---
-// ... (ApiService is unchanged from the previous version) ...
 class ApiService {
   Future<HotelDetails> fetchHotelDetails(String hotelId) async {
     await Future.delayed(const Duration(seconds: 1));
@@ -101,10 +101,20 @@ class ApiService {
       reviewCount: 120,
       description:
       "توضیحات کامل هتل، به عنوان مثال: هتل سه ستاره رویال ششم واقع در خیابان فلسطین در سال ۱۳۹۵ فعالیت خود را آغاز نمود. ساختمان هتل در ۵ طبقه بنا و دارای ۴۱ باب اتاق و سوئیت اقامتی با امکانات رفاهی مناسب می‌باشد و همچنین دسترسی آسانی به خلیج نیلگون فارس و مراکز خرید جزیره از جمله بازار ستاره دارد. هتل رویال قشم با پرسنلی مجرب آماده پذیرایی از شما میهمانان گرامی می‌باشد.",
-      amenities: [
+      amenities: [ // Updated amenities list
         Amenity(name: "WiFi رایگان", icon: Icons.wifi),
         Amenity(name: "پارکینگ", icon: Icons.local_parking_outlined),
         Amenity(name: "رستوران", icon: Icons.restaurant_outlined),
+        Amenity(name: "کافی شاپ", icon: Icons.local_cafe_outlined),
+        Amenity(name: "سرویس اتاق", icon: Icons.room_service_outlined),
+        Amenity(name: "خشکشویی", icon: Icons.local_laundry_service_outlined),
+        Amenity(name: "پذیرش ۲۴ ساعته", icon: Icons.support_agent_outlined),
+        Amenity(name: "آسانسور", icon: Icons.elevator_outlined),
+        // Amenity(name: "صندوق امانات", icon: Icons.lock_outline), // Add more as needed
+        // Amenity(name: "تلویزیون در لابی", icon: Icons.tv_outlined),
+        // Amenity(name: "صبحانه", icon: Icons.free_breakfast_outlined),
+        Amenity(name: "استخر", icon: Icons.pool_outlined),
+        Amenity(name: "باشگاه بدنسازی", icon: Icons.fitness_center_outlined),
       ],
       isCurrentlyFavorite: fetchedIsFavorite,
     );
@@ -142,7 +152,7 @@ class ApiService {
       Review(
         userId: "user1",
         userName: "اسم اشخاص اتاق 2 خوابه 5 تخته",
-        date: "تاریخ نظردهی",
+        date: "تاریخ نظردهی", // This will be formatted with English numerals by _submitReview if it's a new review
         positiveFeedback: "نکات مثبت نظردهی",
         negativeFeedback: "نکات منفی نظردهی",
         rating: 4.5,
@@ -187,7 +197,6 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
   List<TextEditingController> _positiveFeedbackControllers = [TextEditingController()];
   List<TextEditingController> _negativeFeedbackControllers = [TextEditingController()];
 
-  // static const Color _primaryColor = Color(0xFF542545); // Defined in HotelDetailsPage
   static const Color _lightGrayColor = Color(0xFFF5F5F5);
   static const Color _scaffoldContentColor = Colors.white;
 
@@ -198,7 +207,6 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
   }
 
   void _loadDataAndFavoriteStatus() {
-    // ... (unchanged)
     _hotelDetailsFuture = _apiService.fetchHotelDetails(widget.hotelId).then((hotel) {
       if (mounted) {
         setState(() {
@@ -212,7 +220,6 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
   }
 
   Future<void> _toggleFavorite() async {
-    // ... (unchanged)
     bool newFavoriteState = !_isFavorite;
     setState(() { _isFavorite = newFavoriteState; });
     try {
@@ -230,14 +237,13 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
   }
 
   String _formatPrice(double price) {
-    // ... (unchanged)
-    final formatter = intl.NumberFormat("#,###", "fa_IR");
+    // Changed "fa_IR" to "en_US" for English numerals
+    final formatter = intl.NumberFormat("#,###", "en_US");
     return formatter.format(price);
   }
 
   @override
   void dispose() {
-    // ... (unchanged)
     _positiveFeedbackControllers.forEach((controller) => controller.dispose());
     _negativeFeedbackControllers.forEach((controller) => controller.dispose());
     super.dispose();
@@ -249,7 +255,6 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
   void _removeNegativeFeedbackField(int index) { if (_negativeFeedbackControllers.length > 1) {setState(() {_negativeFeedbackControllers[index].dispose();_negativeFeedbackControllers.removeAt(index);});} else {_negativeFeedbackControllers[index].clear();}}
 
   Future<void> _showBookingDateRangePicker(BuildContext context, Room room) async {
-    // ... (unchanged from previous correct version)
     Jalali? startDate;
     Jalali? endDate;
     final Jalali today = Jalali.now();
@@ -267,9 +272,8 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
     if (startDate == null || !mounted) return;
 
     final Jalali firstDateForEndDate = startDate.addDays(1);
-    // Ensure end date's last selectable date is not before its first selectable date
     final Jalali lastDateForEndDate = initialLastDate.compareTo(firstDateForEndDate) < 0
-        ? firstDateForEndDate.addDays(30) // a fallback if initialLastDate is too early
+        ? firstDateForEndDate.addDays(30)
         : initialLastDate;
 
 
@@ -283,8 +287,10 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
 
     if (endDate == null || !mounted) return;
 
-    final String startDateFormatted = startDate.formatter.yyyy+startDate.formatter.mm+startDate.formatter.dd;
-    final String endDateFormatted = endDate.formatter.yyyy+endDate.formatter.mm+endDate.formatter.dd;
+    // Format date with English numerals using integer properties
+    final String startDateFormatted = "${startDate.year}/${startDate.month.toString().padLeft(2,'0')}/${startDate.day.toString().padLeft(2,'0')}";
+    final String endDateFormatted = "${endDate.year}/${endDate.month.toString().padLeft(2,'0')}/${endDate.day.toString().padLeft(2,'0')}";
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -298,7 +304,6 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    // ... (build method with CustomScrollView is unchanged from the previous version)
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
@@ -384,6 +389,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                 ),
                 SliverToBoxAdapter(
                   child: Container(
+                    // This container already has rounded top corners, which is the "white part on top"
                     decoration: BoxDecoration(
                       color: _scaffoldContentColor,
                       borderRadius: BorderRadius.only(
@@ -435,37 +441,33 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
     );
   }
 
-  Widget _buildHotelImageWithOverlays(String imageUrl, double rating) { /* ... unchanged ... */
+  Widget _buildHotelImageWithOverlays(String imageUrl, double rating) {
     return Stack(
       fit: StackFit.expand,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(25),
-            bottomRight: Radius.circular(25),
+        // Removed ClipRRect that rounded the bottom of the image.
+        // The image will now be rectangular.
+        Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Container(
+            color: _lightGrayColor,
+            child: Icon(Icons.broken_image, size: 60, color: HotelDetailsPage.primaryColor.withOpacity(0.7)),
           ),
-          child: Image.network(
-            imageUrl,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => Container(
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Container(
               color: _lightGrayColor,
-              child: Icon(Icons.broken_image, size: 60, color: HotelDetailsPage.primaryColor.withOpacity(0.7)),
-            ),
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) return child;
-              return Container(
-                color: _lightGrayColor,
-                child: Center(
-                  child: CircularProgressIndicator(
-                    color: HotelDetailsPage.primaryColor,
-                    value: loadingProgress.expectedTotalBytes != null
-                        ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                        : null,
-                  ),
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: HotelDetailsPage.primaryColor,
+                  value: loadingProgress.expectedTotalBytes != null
+                      ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                      : null,
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
         Positioned(
           bottom: 16,
@@ -487,7 +489,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  rating.toStringAsFixed(1),
+                  rating.toStringAsFixed(1), // Already English numerals
                   style: TextStyle(
                     color: Colors.black87,
                     fontWeight: FontWeight.bold,
@@ -507,7 +509,8 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
       ],
     );
   }
-  Widget _buildHotelHeader(String name, String address) { /* ... unchanged ... */
+
+  Widget _buildHotelHeader(String name, String address) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -534,7 +537,8 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
       ],
     );
   }
-  Widget _buildRating(double rating, int reviewCount) { /* ... unchanged ... */
+
+  Widget _buildRating(double rating, int reviewCount) {
     return Row(
       children: [
         for (int i = 0; i < 5; i++)
@@ -546,7 +550,8 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
         const SizedBox(width: 8),
         Flexible(
           child: Text(
-            "${rating.toStringAsFixed(1)} (${intl.NumberFormat("#,###", "fa_IR").format(reviewCount)} نظر)",
+            // Changed "fa_IR" to "en_US" for reviewCount formatting
+            "${rating.toStringAsFixed(1)} (${intl.NumberFormat("#,###", "en_US").format(reviewCount)} نظر)",
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54, fontSize: 13),
             overflow: TextOverflow.ellipsis,
           ),
@@ -554,7 +559,8 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
       ],
     );
   }
-  Widget _buildSectionTitle(String title) { /* ... unchanged ... */
+
+  Widget _buildSectionTitle(String title) {
     IconData? mainIcon;
     IconData? secondaryIcon;
     if (title.startsWith("درباره هتل")) {
@@ -611,20 +617,23 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
       ],
     );
   }
-  Widget _buildAmenitiesGrid(List<Amenity> amenities) { /* ... unchanged ... */
+
+  Widget _buildAmenitiesGrid(List<Amenity> amenities) {
     if (amenities.isEmpty) {
       return Text("امکاناتی برای نمایش وجود ندارد.", style: TextStyle(color: Colors.grey[600]), textDirection: TextDirection.rtl);
     }
     return Container(
-      alignment: Alignment.centerRight,
+      alignment: Alignment.centerRight, // Or Alignment.start
       child: Wrap(
-        spacing: 10.0,
-        runSpacing: 10.0,
+        spacing: 10.0, // Horizontal spacing
+        runSpacing: 10.0, // Vertical spacing
         alignment: WrapAlignment.start,
         crossAxisAlignment: WrapCrossAlignment.start,
         children: amenities.map((amenity) {
+          // Each amenity widget uses its own icon and name from the Amenity object.
+          // This effectively acts like the "switch-case" logic based on data.
           return Container(
-            width: (MediaQuery.of(context).size.width - 32 - 30) / 4,
+            width: (MediaQuery.of(context).size.width - 32 - 30) / 4, // For 4 items per row (adjust 30 for total spacing)
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -653,7 +662,6 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
   }
 
   Widget _buildRoomsList() {
-    // ... (unchanged from previous version)
     return FutureBuilder<List<Room>>(
       future: _roomsFuture,
       builder: (context, snapshot) {
@@ -683,7 +691,6 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
   }
 
   Widget _buildRoomCard(Room room) {
-    // ... (unchanged from previous version that had date picker logic)
     return Card(
       elevation: 1.5,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -716,6 +723,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                       const SizedBox(width: 6),
                       Flexible(
                         child: Text(
+                          // room.capacity will be an int, toString() gives English numerals
                           "1 اتاق ${room.capacity} تخته",
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54, fontSize: 12.5, fontFamily: 'Vazirmatn'),
                           overflow: TextOverflow.ellipsis,
@@ -750,7 +758,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                             style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.black54, fontSize: 10, fontFamily: 'Vazirmatn'),
                           ),
                           Text(
-                            "${_formatPrice(room.pricePerNight)} تومان",
+                            "${_formatPrice(room.pricePerNight)} تومان", // _formatPrice now uses English numerals
                             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: HotelDetailsPage.primaryColor,
@@ -766,7 +774,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                           Icon(Icons.thumb_up_alt_rounded, size: 16, color: HotelDetailsPage.primaryColor),
                           const SizedBox(width: 4),
                           Text(
-                            room.rating.toStringAsFixed(1),
+                            room.rating.toStringAsFixed(1), // Already English numerals
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black87, fontWeight: FontWeight.w500, fontSize: 12.5, fontFamily: 'Vazirmatn'),
                           ),
                         ],
@@ -820,7 +828,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
     );
   }
 
-  Widget _buildReviewsList() { /* ... unchanged ... */
+  Widget _buildReviewsList() {
     return FutureBuilder<List<Review>>(
       future: _reviewsFuture,
       builder: (context, snapshot) {
@@ -841,12 +849,13 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
       },
     );
   }
-  Widget _buildReviewCard(Review review) { /* ... unchanged ... */
+
+  Widget _buildReviewCard(Review review) {
     return Card(
       elevation: 0.5,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       margin: const EdgeInsets.symmetric(vertical: 6),
-      color: Colors.white,
+      color: Colors.white, // Was _lightGrayColor, changed to white for better contrast if needed
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
@@ -856,7 +865,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Flexible(child: Text(review.userName, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87, fontSize: 13), overflow: TextOverflow.ellipsis)),
-                Text(review.date, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600], fontSize: 10.5)),
+                Text(review.date, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600], fontSize: 10.5)), // Date string as is from data
               ],
             ),
             const SizedBox(height: 10),
@@ -872,7 +881,10 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
               children: [
                 Icon(Icons.thumb_up_alt_outlined, size: 15, color: HotelDetailsPage.primaryColor),
                 const SizedBox(width: 4),
-                Text(review.rating.toStringAsFixed(1), style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black87, fontWeight: FontWeight.w500, fontSize: 12)),
+                Text(
+                    review.rating.toStringAsFixed(1), // Already English numerals
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black87, fontWeight: FontWeight.w500, fontSize: 12)
+                ),
               ],
             ),
           ],
@@ -880,7 +892,8 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
       ),
     );
   }
-  Widget _buildFeedbackPointDisplay({required IconData icon, required String text, required Color color}) { /* ... unchanged ... */
+
+  Widget _buildFeedbackPointDisplay({required IconData icon, required String text, required Color color}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -890,7 +903,8 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
       ],
     );
   }
-  Widget _buildAddReviewForm() { /* ... unchanged ... */
+
+  Widget _buildAddReviewForm() {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -999,7 +1013,8 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
       ),
     );
   }
-  Widget _buildFeedbackEntrySection({ required String title, required List<TextEditingController> controllers, required VoidCallback onAddField, required Function(int) onRemoveField, required String hintTextPrefix, }) { /* ... unchanged ... */
+
+  Widget _buildFeedbackEntrySection({ required String title, required List<TextEditingController> controllers, required VoidCallback onAddField, required Function(int) onRemoveField, required String hintTextPrefix, }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1033,7 +1048,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                     child: TextField(
                         controller: controllers[index],
                         decoration: InputDecoration(
-                          hintText: "$hintTextPrefix ${index + 1}",
+                          hintText: "$hintTextPrefix ${index + 1}", // Number '1' will be English
                           hintStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
                           filled: true,
                           fillColor: _lightGrayColor.withOpacity(0.7),
@@ -1064,7 +1079,8 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
       ],
     );
   }
-  Future<void> _submitReview() async { /* ... unchanged ... */
+
+  Future<void> _submitReview() async {
     String positiveFeedbacks = _positiveFeedbackControllers
         .where((c) => c.text.trim().isNotEmpty)
         .map((c) => c.text.trim())
@@ -1097,7 +1113,8 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
     final reviewData = Review(
       userId: "currentUser",
       userName: "شما (اتاق: ${_selectedRoomForReview?.name ?? 'نامشخص'})",
-      date: intl.DateFormat('d MMMM yyyy', 'fa_IR').format(DateTime.now()),
+      // Changed "fa_IR" to "en_US" for date formatting (will produce English month names and numerals)
+      date: intl.DateFormat('d MMMM yyyy', 'en_US').format(DateTime.now()),
       positiveFeedback: positiveFeedbacks,
       negativeFeedback: negativeFeedbacks,
       rating: _newReviewRating,
@@ -1126,7 +1143,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
 
     bool success = await _apiService.submitReview(widget.hotelId, reviewData);
 
-    if (mounted) { Navigator.pop(context); }
+    if (mounted) { Navigator.pop(context); } // Close loading dialog
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1156,7 +1173,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
         } else {
           _selectedRoomForReview = null;
         }
-        _reviewsFuture = _apiService.fetchHotelReviews(widget.hotelId);
+        _reviewsFuture = _apiService.fetchHotelReviews(widget.hotelId); // Refresh reviews
       });
 
     } else if (mounted) {
@@ -1166,3 +1183,25 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
     }
   }
 }
+
+// Dummy custom_shamsi_date_picker.dart for compilation
+// Replace with your actual implementation
+/*
+Future<Jalali?> showCustomShamsiDatePickerDialog(
+  BuildContext context, {
+  required Jalali initialDate,
+  required Jalali firstDate,
+  required Jalali lastDate,
+  required String titleText,
+}) async {
+  final picked = await showDatePicker(
+    context: context,
+    initialDate: initialDate.toDateTime(),
+    firstDate: firstDate.toDateTime(),
+    lastDate: lastDate.toDateTime(),
+    // Note: This standard picker does not support Shamsi.
+    // This is just a placeholder. Your custom picker should handle Jalali.
+  );
+  return picked != null ? Jalali.fromDateTime(picked) : null;
+}
+*/
