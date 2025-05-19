@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../home_page/home_page.dart'; // Assuming you have this
+import '../guest_pages/home_page/home_page.dart'; // Assuming you have this
 import 'constants.dart';
 import 'widgets/auth_card.dart'; // Make sure AuthCard has isLoadingResendOtp if you implemented it
 

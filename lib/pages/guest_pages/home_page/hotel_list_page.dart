@@ -1,4 +1,4 @@
-import 'package:bookit/pages/home_page/widgets/hotel_list_card.dart';
+import 'package:bookit/pages/guest_pages/home_page/widgets/hotel_list_card.dart';
 import 'package:flutter/material.dart';
 
 class HotelListPage extends StatefulWidget {

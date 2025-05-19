@@ -1,13 +1,13 @@
+import 'package:bookit/pages/guest_pages/home_page/widgets/image_banner.dart';
+import 'package:bookit/pages/guest_pages/home_page/widgets/section_title.dart';
+import 'package:bookit/pages/guest_pages/home_page/widgets/stay_card.dart';
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import 'hotel_list_page.dart';
+import 'location_selection_modal.dart';
 import 'widgets/filter_chip_row.dart';
 import 'widgets/hotel_card.dart';
-import 'widgets/image_banner.dart';
-import 'widgets/section_title.dart';
-import 'widgets/stay_card.dart';
-import 'location_selection_modal.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

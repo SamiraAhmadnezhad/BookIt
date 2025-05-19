@@ -1,6 +1,6 @@
 
-import 'package:bookit/pages/search_page/search_list_page.dart';
-import 'package:bookit/pages/search_page/widgets/custom_shamsi_date_picker.dart';
+import 'package:bookit/pages/guest_pages/search_page/search_list_page.dart';
+import 'package:bookit/pages/guest_pages/search_page/widgets/custom_shamsi_date_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 

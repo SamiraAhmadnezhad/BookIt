@@ -1,6 +1,6 @@
 
 import 'package:bookit/pages/authentication_page/authentication_page.dart';
-import 'package:bookit/pages/main_screen.dart';
+import 'package:bookit/pages/guest_pages/main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
