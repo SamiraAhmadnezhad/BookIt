@@ -1,5 +1,7 @@
-import 'package:bookit/pages/home_page/widgets/hotel_list_card.dart'; // مسیر ویجت کارت هتل
+
 import 'package:flutter/material.dart';
+
+import '../home_page/widgets/hotel_list_card.dart';
 
 // Enum for sorting options
 enum SortType { none, popular, cheapest, expensive, discount }

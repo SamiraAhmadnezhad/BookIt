@@ -1,8 +1,7 @@
 // main_screen.dart
-import 'package:bookit/pages/search_page/hotel_search_page.dart';
+import 'package:bookit/pages/guest_pages/search_page/hotel_search_page.dart';
 import 'package:flutter/material.dart';
-
-import 'account_pages-guest/user_account_page.dart';
+import 'account_page/user_account_page.dart';
 import 'custom_bottom_nav_bar.dart';
 import 'home_page/home_page.dart';
 
