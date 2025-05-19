@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../guest_pages/home_page/home_page.dart'; // Assuming you have this
 import '../guest_pages/main_screen.dart';
+import '../manger_pages/hotel_info_page/hotel_info_page.dart';
 import 'auth_service.dart';
 import 'constants.dart';
 import 'widgets/auth_card.dart'; // Make sure AuthCard has isLoadingResendOtp if you implemented it
@@ -378,13 +379,19 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
 
     if (!mounted) return;
 
-    if (loginSuccess) {
+    if (loginSuccess && _isLoginAsManager) {
+      _showSnackBar('ورود با موفقیت انجام شد.');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HotelInfoPage()), // یا HomePage
+      );
+    } else if (loginSuccess && !_isLoginAsManager) {
       _showSnackBar('ورود با موفقیت انجام شد.');
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const MainScreen()), // یا HomePage
       );
-    } else {
+    }else {
       _showSnackBar(authService.errorMessage ?? 'خطا در ورود. لطفا دوباره تلاش کنید.', isError: true);
     }
 
