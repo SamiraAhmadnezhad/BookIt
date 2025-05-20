@@ -1,16 +1,16 @@
-// lib/screens/hotel_info_page.dart
+// lib/screens/add_hotel_info.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-class HotelInfoPage extends StatefulWidget {
-  const HotelInfoPage({super.key});
+class AddHotelInfo extends StatefulWidget {
+  const AddHotelInfo({super.key});
 
   @override
-  State<HotelInfoPage> createState() => _HotelInfoPageState();
+  State<AddHotelInfo> createState() => _AddHotelInfoState();
 }
 
-class _HotelInfoPageState extends State<HotelInfoPage> {
+class _AddHotelInfoState extends State<AddHotelInfo> {
   final _formKey = GlobalKey<FormState>();
 
   late TextEditingController _nameController;

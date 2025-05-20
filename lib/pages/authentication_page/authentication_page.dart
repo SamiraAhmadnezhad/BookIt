@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-import '../manger_pages/hotel_info_page/hotel_info_page.dart';
+import '../manger_pages/hotel_info_page/add_hotel_info.dart';
 import 'auth_service.dart';
 import 'constants.dart';
 import 'widgets/auth_card.dart';
@@ -379,13 +379,13 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
       _showSnackBar('ورود با موفقیت انجام شد.');
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HotelInfoPage()), // یا HomePage
+        MaterialPageRoute(builder: (context) => const AddHotelInfo()), // یا HomePage
       );
     } else if (loginSuccess && !_isLoginAsManager) {
       _showSnackBar('ورود با موفقیت انجام شد.');
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HotelInfoPage()), // یا HomePage
+        MaterialPageRoute(builder: (context) => const AddHotelInfo()), // یا HomePage
       );
     }else {
       _showSnackBar(authService.errorMessage ?? 'خطا در ورود. لطفا دوباره تلاش کنید.', isError: true);
