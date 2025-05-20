@@ -1,18 +1,18 @@
-// main_screen.dart
+// guest_main_screen.dart
 import 'package:bookit/pages/guest_pages/search_page/hotel_search_page.dart';
 import 'package:flutter/material.dart';
 import 'account_page/user_account_page.dart';
 import 'custom_bottom_nav_bar.dart';
 import 'home_page/home_page.dart';
 
-class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+class GuestMainScreen extends StatefulWidget {
+  const GuestMainScreen({super.key});
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  State<GuestMainScreen> createState() => _GuestMainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _GuestMainScreenState extends State<GuestMainScreen> {
   int _selectedIndex = 0; // ایندکس صفحه انتخاب شده
 
  static const List<Widget> _widgetOptions = <Widget>[

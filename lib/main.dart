@@ -1,7 +1,9 @@
 // main.dart
 import 'package:bookit/pages/authentication_page/auth_service.dart';
 import 'package:bookit/pages/authentication_page/authentication_page.dart';
-import 'package:bookit/pages/guest_pages/main_screen.dart';
+import 'package:bookit/pages/guest_pages/guest_main_screen.dart';
+import 'package:bookit/pages/manger_pages/hotel_info_page/add_hotel_info.dart';
+import 'package:bookit/pages/manger_pages/manager_main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 // import 'manager_pages/manager_main_screen.dart'; // اگر صفحه اصلی مدیر دارید
@@ -30,12 +32,13 @@ class MyApp extends StatelessWidget {
             // در حال تلاش برای لاگین خودکار یا اولین بارگذاری
             return SplashScreen(); // یک صفحه اسپلش ساده
           } else if (authService.isAuthenticated) {
+            print(authService.userRole);
             // کاربر احراز هویت شده
             if (authService.userRole == 'manager') {
               // return ManagerMainScreen(); // اگر صفحه اصلی مدیر دارید
-              return MainScreen(); // موقتا به همان صفحه اصلی مهمان می‌رود
+              return ManagerMainScreen(); // موقتا به همان صفحه اصلی مهمان می‌رود
             } else {
-              return MainScreen(); // صفحه اصلی مهمان
+              return GuestMainScreen(); // صفحه اصلی مهمان
             }
           } else {
             // کاربر احراز هویت نشده
@@ -45,7 +48,7 @@ class MyApp extends StatelessWidget {
       ),
       routes: {
         '/auth': (ctx) => AuthenticationPage(),
-        '/main': (ctx) => MainScreen(),
+        '/main': (ctx) => GuestMainScreen(),
         // مسیرهای دیگر ...
       },
       debugShowCheckedModeBanner: false,

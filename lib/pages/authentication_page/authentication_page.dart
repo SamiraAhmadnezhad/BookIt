@@ -2,11 +2,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-import '../guest_pages/home_page/home_page.dart'; // Assuming you have this
-import '../guest_pages/main_screen.dart';
+import '../manger_pages/hotel_info_page/add_hotel_info.dart';
 import 'auth_service.dart';
 import 'constants.dart';
-import 'widgets/auth_card.dart'; // Make sure AuthCard has isLoadingResendOtp if you implemented it
+import 'widgets/auth_card.dart';
 
 // --- API Endpoints ---
 const String BASE_URL = 'https://bookit.darkube.app';
@@ -352,11 +351,9 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
   }
 
 
-  // --- Action: Login ---
-// --- Action: Login ---
   Future<void> _handleLogin() async {
     setState(() => _isLoading = true);
-    final String email = _loginEmailController.text.trim();
+    final String email = _loginEmailController.text;
     final String password = _loginPasswordController.text;
 
     if (email.isEmpty || password.isEmpty) {
@@ -377,14 +374,20 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
     }
 
     if (!mounted) return;
-
-    if (loginSuccess) {
+    print("loginSuccess$loginSuccess");
+    if (loginSuccess && _isLoginAsManager) {
       _showSnackBar('ورود با موفقیت انجام شد.');
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const MainScreen()), // یا HomePage
+        MaterialPageRoute(builder: (context) => const AddHotelInfo()), // یا HomePage
       );
-    } else {
+    } else if (loginSuccess && !_isLoginAsManager) {
+      _showSnackBar('ورود با موفقیت انجام شد.');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const AddHotelInfo()), // یا HomePage
+      );
+    }else {
       _showSnackBar(authService.errorMessage ?? 'خطا در ورود. لطفا دوباره تلاش کنید.', isError: true);
     }
 
