@@ -1,25 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// مسیر صحیح AuthService را وارد کنید، فرض می‌کنیم در پوشه authentication_page است
 import '../../authentication_page/auth_service.dart';
 import 'edit_manager_profile_page.dart';
-// اگر صفحه لاگین شما AuthenticationPage نام دارد و در پوشه authentication_page است:
 import '../../authentication_page/authentication_page.dart';
 
+const Color kPrimaryColor = Color(0xFF542545);
+const Color kAccentColor = Color(0xFF7E3F6B);
+const Color kPageBackground = Color(0xFFF4F6F8);
+const Color kCardBackground = Colors.white;
+const Color kLightTextColor = Color(0xFF606060);
+const Color kLighterTextColor = Color(0xFF888888);
+const Color kIconColor = Color(0xFF404040);
+const Color kPositiveColor = Color(0xFF28a745);
+const Color kNegativeColor = Color(0xFFdc3545);
 
-// ... (کلاس‌های مدل ManagerProfileModel, RuleModel, ReviewModel بدون تغییر) ...
 class ManagerProfileModel {
   final String name;
   final String email;
   final String? avatarUrl;
   ManagerProfileModel({required this.name, required this.email, this.avatarUrl});
 }
+
 class RuleModel {
   String id;
   String title;
   String description;
   RuleModel({required this.id, required this.title, required this.description});
 }
+
 class ReviewModel {
   final String id;
   final String date;
@@ -29,9 +37,16 @@ class ReviewModel {
   final List<String> negativePoints;
   final double rating;
   String? managerReplyText;
-  ReviewModel({required this.id, required this.date, required this.userName, required this.roomInfo, required this.positivePoints, required this.negativePoints, required this.rating, this.managerReplyText,});
+  ReviewModel(
+      {required this.id,
+        required this.date,
+        required this.userName,
+        required this.roomInfo,
+        required this.positivePoints,
+        required this.negativePoints,
+        required this.rating,
+        this.managerReplyText});
 }
-
 
 class ManagerAccountPage extends StatefulWidget {
   const ManagerAccountPage({super.key});
@@ -40,19 +55,18 @@ class ManagerAccountPage extends StatefulWidget {
   State<ManagerAccountPage> createState() => _ManagerAccountPageState();
 }
 
-class _ManagerAccountPageState extends State<ManagerAccountPage> {
-  final Color primaryPurple = const Color(0xFF542545);
+class _ManagerAccountPageState extends State<ManagerAccountPage>
+    with SingleTickerProviderStateMixin {
+  TabController? _tabController;
   String _selectedTab = 'قوانین و مقررات';
 
   ManagerProfileModel? _managerProfile;
   List<RuleModel> _rules = [];
-  String _rulesAsTextForEditing = "";
   List<ReviewModel> _reviews = [];
 
   bool _isLoadingProfile = true;
   bool _isLoadingRules = true;
   bool _isLoadingReviews = false;
-  // bool _isLoggingOut = false; // این متغیر دیگر لازم نیست چون از authService.isLoading استفاده می‌کنیم
 
   String? _replyingToReviewId;
   final TextEditingController _replyController = TextEditingController();
@@ -61,17 +75,35 @@ class _ManagerAccountPageState extends State<ManagerAccountPage> {
   bool _isEditingRules = false;
   final TextEditingController _rulesTextController = TextEditingController();
 
+  final List<String> _tabs = const ['قوانین و مقررات', 'پاسخگویی به نظرات'];
 
   @override
   void initState() {
     super.initState();
-    print("ManagerAccountPage: initState - Fetching initial data...");
+    _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController!.addListener(_handleTabSelection);
     _fetchInitialData();
+  }
+
+  void _handleTabSelection() {
+    if (_tabController!.indexIsChanging ||
+        _selectedTab == _tabs[_tabController!.index]) return;
+
+    if (mounted) {
+      setState(() {
+        _selectedTab = _tabs[_tabController!.index];
+        _replyingToReviewId = null;
+        _replyController.clear();
+        if (_isEditingRules) _cancelEditRules();
+      });
+      _fetchDataForSelectedTab();
+    }
   }
 
   @override
   void dispose() {
-    print("ManagerAccountPage: dispose");
+    _tabController?.removeListener(_handleTabSelection);
+    _tabController?.dispose();
     _replyController.dispose();
     _replyFocusNode.dispose();
     _rulesTextController.dispose();
@@ -80,7 +112,10 @@ class _ManagerAccountPageState extends State<ManagerAccountPage> {
 
   Future<void> _fetchInitialData() async {
     await _fetchManagerProfile();
-    // فقط در صورتی که ویجت هنوز mount است، ادامه بده
+    _fetchDataForSelectedTab();
+  }
+
+  Future<void> _fetchDataForSelectedTab() async {
     if (!mounted) return;
     if (_selectedTab == 'قوانین و مقررات') {
       await _fetchRules();
@@ -90,149 +125,156 @@ class _ManagerAccountPageState extends State<ManagerAccountPage> {
   }
 
   Future<void> _fetchManagerProfile() async {
-    print("ManagerAccountPage: _fetchManagerProfile started.");
     if (!mounted) return;
-    setState(() { _isLoadingProfile = true; });
+    setState(() => _isLoadingProfile = true);
     try {
-      // TODO: Fetch real profile data using AuthService for token
-      await Future.delayed(const Duration(seconds: 1)); // Mock
+      await Future.delayed(const Duration(milliseconds: 800));
       if (!mounted) return;
-      _managerProfile = ManagerProfileModel(name: 'تقی تقوی', email: 'taghitaghavi@gmail.com');
-      print("ManagerAccountPage: Profile data mocked.");
+      _managerProfile = ManagerProfileModel(
+          name: 'تقی تقوی',
+          email: 'taghitaghavi@gmail.com',
+          avatarUrl: 'https://i.pravatar.cc/150?u=taghitaghavi');
     } catch (e) {
-      print("ManagerAccountPage: Error fetching manager profile: $e");
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('خطا در بارگذاری پروفایل: ${e.toString()}'), backgroundColor: Colors.red));
-    }
-    finally {
-      if (mounted) {
-        setState(() { _isLoadingProfile = false; });
-        print("ManagerAccountPage: _fetchManagerProfile finished. _isLoadingProfile: $_isLoadingProfile");
-      }
+      _showErrorSnackBar('خطا در بارگذاری پروفایل: ${e.toString()}');
+    } finally {
+      if (mounted) setState(() => _isLoadingProfile = false);
     }
   }
 
   String _convertRulesListToText(List<RuleModel> rules) {
-    return rules.map((rule) => '${rule.title}: ${rule.description}').join('\n\n');
+    return rules
+        .map((rule) => '${rule.title.trim()}: ${rule.description.trim()}')
+        .join('\n\n');
   }
+
   List<RuleModel> _convertTextToRulesList(String text) {
     final List<RuleModel> newRules = [];
-    final lines = text.split('\n');
+    if (text.trim().isEmpty) return newRules;
+
+    final ruleEntries = text.split(RegExp(r'\n\s*\n+'));
     int ruleCounter = 1;
-    String currentTitle = "";
-    String currentDescription = "";
-    for (String line in lines) {
-      line = line.trim();
-      if (line.isEmpty) continue;
-      RegExpMatch? match = RegExp(r'^(\d+\.\s*[^:]+):\s*(.*)$').firstMatch(line);
-      if (match != null && match.groupCount == 2) {
-        if (currentTitle.isNotEmpty) {
-          newRules.add(RuleModel(id: 'local${ruleCounter-1}', title: currentTitle.trim(), description: currentDescription.trim()));
-          currentDescription = "";
+
+    for (String entry in ruleEntries) {
+      if (entry.trim().isEmpty) continue;
+      int colonIndex = entry.indexOf(':');
+      if (colonIndex != -1) {
+        String title = entry.substring(0, colonIndex).trim();
+        String description = entry.substring(colonIndex + 1).trim();
+        if (title.isNotEmpty || description.isNotEmpty) {
+          newRules.add(RuleModel(
+              id: 'local${ruleCounter++}',
+              title: title.isEmpty ? "قانون $ruleCounter" : title,
+              description: description));
         }
-        currentTitle = match.group(1)!;
-        currentDescription = match.group(2)!;
-        ruleCounter++;
       } else {
-        if (currentTitle.isNotEmpty) {
-          currentDescription += (currentDescription.isEmpty ? "" : "\n") + line;
-        } else {
-          currentTitle = "قانون ${ruleCounter}";
-          currentDescription = line;
-          ruleCounter++;
-        }
+        newRules.add(RuleModel(
+            id: 'local${ruleCounter++}',
+            title: "قانون $ruleCounter",
+            description: entry.trim()));
       }
-    }
-    if (currentTitle.isNotEmpty) {
-      newRules.add(RuleModel(id: 'local${ruleCounter-1}', title: currentTitle.trim(), description: currentDescription.trim()));
     }
     return newRules;
   }
 
   Future<void> _fetchRules() async {
-    print("ManagerAccountPage: _fetchRules started.");
-    if (_isEditingRules || !mounted) return;
-    setState(() { _isLoadingRules = true; });
+    if (_isEditingRules || !mounted || _isLoadingRules) return;
+    setState(() => _isLoadingRules = true);
     try {
-      // TODO: Fetch real rules data using AuthService for token
-      await Future.delayed(const Duration(seconds: 1)); // Mock
+      await Future.delayed(const Duration(seconds: 1));
       if (!mounted) return;
       _rules = [
-        RuleModel(id: '1', title: '1. قانون اول', description: 'توضیحات مربوط به قانون اول که می‌تواند طولانی باشد و چند خط را اشغال کند.'),
-        RuleModel(id: '2', title: '2. قانون دوم', description: 'توضیحات قانون دوم در اینجا قرار می‌گیرد.'),
+        RuleModel(
+            id: '1',
+            title: '۱. زمان ورود و خروج',
+            description:
+            'زمان ورود به اتاق ساعت ۱۴:۰۰ و زمان خروج ساعت ۱۲:۰۰ ظهر می‌باشد.'),
+        RuleModel(
+            id: '2',
+            title: '۲. مدارک شناسایی',
+            description:
+            'ارائه کارت ملی و شناسنامه برای تمامی میهمانان الزامی است.'),
+        RuleModel(
+            id: '3',
+            title: '۳. استعمال دخانیات',
+            description:
+            'استعمال دخانیات در تمامی فضاهای داخلی هتل ممنوع می‌باشد.'),
       ];
-      _rulesAsTextForEditing = _convertRulesListToText(_rules);
-      print("ManagerAccountPage: Rules data mocked.");
+      _rulesTextController.text = _convertRulesListToText(_rules);
     } catch (e) {
-      print("ManagerAccountPage: Error fetching rules: $e");
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('خطا در بارگذاری قوانین: ${e.toString()}'), backgroundColor: Colors.red));
-    }
-    finally {
-      if (mounted) {
-        setState(() { _isLoadingRules = false; });
-        print("ManagerAccountPage: _fetchRules finished. _isLoadingRules: $_isLoadingRules");
-      }
+      _showErrorSnackBar('خطا در بارگذاری قوانین: ${e.toString()}');
+    } finally {
+      if (mounted) setState(() => _isLoadingRules = false);
     }
   }
 
   Future<void> _fetchReviews() async {
-    print("ManagerAccountPage: _fetchReviews started.");
-    if ((_selectedTab != 'پاسخگویی به نظرات' && _reviews.isNotEmpty && !_isLoadingReviews) || !mounted) return;
-    setState(() { _isLoadingReviews = true; });
+    if (!mounted || _isLoadingReviews) return;
+    setState(() => _isLoadingReviews = true);
     try {
-      // TODO: Fetch real reviews data using AuthService for token
-      await Future.delayed(const Duration(seconds: 1)); // Mock
+      await Future.delayed(const Duration(seconds: 1));
       if (!mounted) return;
       _reviews = [
-        ReviewModel(id: 'rev1', date: '۱۴ تیر ۱۴۰۲', userName: 'اسم اشخاص', roomInfo: 'اتاق ۵ تخته', positivePoints: ['نکته مثبت اول'], negativePoints: ['نکته منفی اول'], rating: 4.5),
-        ReviewModel(id: 'rev2', date: '۱۲ تیر ۱۴۰۲', userName: 'کاربر دیگر', roomInfo: 'سوییت', positivePoints: ['تمیزی عالی بود'], negativePoints: ['صبحانه می‌توانست بهتر باشد'], rating: 4.0, managerReplyText: 'از نظر شما سپاسگزاریم.'),
+        ReviewModel(
+            id: 'rev1',
+            date: '۱۴ تیر ۱۴۰۲',
+            userName: 'سارا احمدی',
+            roomInfo: 'اتاق دو تخته دابل',
+            positivePoints: ['نظافت عالی اتاق‌ها', 'برخورد خوب پرسنل'],
+            negativePoints: ['تنوع کم صبحانه'],
+            rating: 4.2,
+            managerReplyText:
+            'از اقامت شما سپاسگزاریم. نظرات شما برای بهبود خدمات ما ارزشمند است.'),
+        ReviewModel(
+            id: 'rev2',
+            date: '۱۲ تیر ۱۴۰۲',
+            userName: 'رضا محمدی',
+            roomInfo: 'سوییت یک خوابه',
+            positivePoints: ['منظره زیبای اتاق', 'دسترسی مناسب به مرکز شهر'],
+            negativePoints: ['صدای زیاد از راهرو'],
+            rating: 3.8),
       ];
-      print("ManagerAccountPage: Reviews data mocked.");
     } catch (e) {
-      print("ManagerAccountPage: Error fetching reviews: $e");
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('خطا در بارگذاری نظرات: ${e.toString()}'), backgroundColor: Colors.red));
+      _showErrorSnackBar('خطا در بارگذاری نظرات: ${e.toString()}');
+    } finally {
+      if (mounted) setState(() => _isLoadingReviews = false);
     }
-    finally {
-      if (mounted) {
-        setState(() { _isLoadingReviews = false; });
-        print("ManagerAccountPage: _fetchReviews finished. _isLoadingReviews: $_isLoadingReviews");
-      }
-    }
+  }
+
+  void _showErrorSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating));
   }
 
   Future<void> _submitReply(String reviewId, String replyText) async {
-    if (replyText.isEmpty) return;
-    // TODO: Submit reply to server using AuthService for token
-    print("ManagerAccountPage: Submitting reply for review $reviewId: $replyText");
-    await Future.delayed(const Duration(seconds: 1)); // Mock
+    if (replyText.trim().isEmpty) {
+      _showErrorSnackBar("متن پاسخ نمی‌تواند خالی باشد.");
+      return;
+    }
+    setState(() => _isLoadingReviews = true);
+    await Future.delayed(const Duration(seconds: 1));
     if (!mounted) return;
     setState(() {
       final index = _reviews.indexWhere((r) => r.id == reviewId);
-      if (index != -1) _reviews[index].managerReplyText = replyText;
-      _replyingToReviewId = null; _replyController.clear();
+      if (index != -1) _reviews[index].managerReplyText = replyText.trim();
+      _replyingToReviewId = null;
+      _replyController.clear();
+      _isLoadingReviews = false;
     });
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('پاسخ با موفقیت ثبت شد.'), backgroundColor: Colors.green,));
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('پاسخ با موفقیت ثبت شد.'),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating));
   }
 
-  void _handleTabChange(String newTab) {
-    print("ManagerAccountPage: Tab changed to $newTab");
-    if (_selectedTab != newTab) {
-      if (!mounted) return;
-      setState(() {
-        _selectedTab = newTab;
-        _replyingToReviewId = null; _replyController.clear();
-        if (_isEditingRules) _cancelEditRules();
-      });
-      if (newTab == 'قوانین و مقررات' && (_rules.isEmpty || _isLoadingRules)) _fetchRules();
-      else if (newTab == 'پاسخگویی به نظرات' && (_reviews.isEmpty || _isLoadingReviews)) _fetchReviews();
-    }
-  }
   void _editManagerProfile() {
-    print("ManagerAccountPage: _editManagerProfile called");
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const EditManagerProfilePage()),
-    ).then((value) {
+    Navigator.of(context)
+        .push(MaterialPageRoute(
+        builder: (context) => const EditManagerProfilePage()))
+        .then((value) {
       if (value == true && mounted) {
-        print("ManagerAccountPage: Returned from edit profile with true, fetching profile...");
         _fetchManagerProfile();
       }
     });
@@ -243,9 +285,12 @@ class _ManagerAccountPageState extends State<ManagerAccountPage> {
     setState(() {
       final review = _reviews.firstWhere((r) => r.id == reviewId);
       if (_replyingToReviewId == reviewId) {
-        _replyingToReviewId = null; _replyController.clear(); FocusScope.of(context).unfocus();
+        _replyingToReviewId = null;
+        _replyController.clear();
+        FocusScope.of(context).unfocus();
       } else {
-        _replyingToReviewId = reviewId; _replyController.text = review.managerReplyText ?? '';
+        _replyingToReviewId = reviewId;
+        _replyController.text = review.managerReplyText ?? '';
         Future.delayed(const Duration(milliseconds: 100), () {
           if (mounted) FocusScope.of(context).requestFocus(_replyFocusNode);
         });
@@ -254,197 +299,593 @@ class _ManagerAccountPageState extends State<ManagerAccountPage> {
   }
 
   Future<void> _logoutUser() async {
-    print("ManagerAccountPage: _logoutUser called.");
-    // _isLoggingOut دیگر لازم نیست، از authService.isLoading استفاده می‌کنیم
-    // اما برای اینکه دکمه بلافاصله غیرفعال شود، می‌توانیم یک isLoading محلی هم داشته باشیم
-    // یا به authService.isLoading تکیه کنیم. در اینجا به authService تکیه می‌کنیم.
-
     final authService = Provider.of<AuthService>(context, listen: false);
-
-    // اگر AuthService از قبل در حال انجام عملیات دیگری است، صبر کن یا خطا بده
-    if (authService.isLoading) {
-      print("ManagerAccountPage: AuthService is already busy. Logout request ignored for now.");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('عملیات دیگری در حال انجام است، لطفا صبر کنید.'), backgroundColor: Colors.orange),
-        );
-      }
-      return;
-    }
-
+    if (authService.isLoading) return;
     try {
-      print("ManagerAccountPage: Calling authService.logout(). Current token: ${authService.token}");
       await authService.logout();
-      print("ManagerAccountPage: authService.logout() completed. Error message from service: ${authService.errorMessage}");
-
-      if (!mounted) return; // بررسی مجدد mount بودن بعد از await
-
-      if (authService.errorMessage != null && authService.errorMessage!.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('توجه: ${authService.errorMessage}'), backgroundColor: Colors.orange),
-        );
+      if (!mounted) return;
+      if (authService.errorMessage != null &&
+          authService.errorMessage!.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('توجه: ${authService.errorMessage}'),
+            backgroundColor: Colors.orangeAccent,
+            behavior: SnackBarBehavior.floating));
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('شما با موفقیت از حساب کاربری خود خارج شدید.'), backgroundColor: Colors.green),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('شما با موفقیت از حساب کاربری خود خارج شدید.'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating));
       }
-      // هدایت به صفحه لاگین
-      // مطمئن شوید که AuthenticationPage درست import شده
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const AuthenticationPage()), // صفحه لاگین شما
-            (Route<dynamic> route) => false, // همه صفحات قبلی را حذف کن
+        MaterialPageRoute(builder: (context) => const AuthenticationPage()),
+            (Route<dynamic> route) => false,
       );
-
     } catch (e) {
-      print("ManagerAccountPage: Error in _logoutUser UI catch block: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطای پیش‌بینی نشده هنگام خروج (UI): ${e.toString()}'), backgroundColor: Colors.red),
-        );
-      }
+      _showErrorSnackBar('خطای پیش‌بینی نشده هنگام خروج: ${e.toString()}');
     }
-    // isLoading مربوط به AuthService در خود AuthService مدیریت می‌شود.
   }
 
   void _toggleEditRulesMode() {
     if (!mounted) return;
     setState(() {
       _isEditingRules = !_isEditingRules;
-      if (_isEditingRules) _rulesTextController.text = _convertRulesListToText(_rules);
+      if (_isEditingRules) {
+        _rulesTextController.text = _convertRulesListToText(_rules);
+      }
     });
-  }
-  void _cancelEditRules() {
-    if (!mounted) return;
-    setState(() { _isEditingRules = false; });
-  }
-  Future<void> _saveRules() async {
-    final newRulesText = _rulesTextController.text;
-    // TODO: Save rules to server using AuthService for token
-    print('ManagerAccountPage: Saving rules text: $newRulesText');
-    await Future.delayed(const Duration(seconds: 2)); // Mock
-    if (!mounted) return;
-    setState(() {
-      _rulesAsTextForEditing = newRulesText;
-      _rules = _convertTextToRulesList(newRulesText);
-      _isEditingRules = false;
-    });
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('قوانین با موفقیت ذخیره شد.'), backgroundColor: Colors.green,));
   }
 
-  Widget _buildTabButton(String title) {
-    bool isSelected = _selectedTab == title;
-    return Expanded(child: GestureDetector(onTap: () => _handleTabChange(title), child: Container(padding: const EdgeInsets.symmetric(vertical: 12), margin: const EdgeInsets.symmetric(horizontal: 4), decoration: BoxDecoration(color: isSelected ? primaryPurple : Colors.white, borderRadius: BorderRadius.circular(8), border: isSelected ? null : Border.all(color: Colors.grey.shade300)), child: Text(title, textAlign: TextAlign.center, style: TextStyle(color: isSelected ? Colors.white : primaryPurple, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, fontSize: 13)))));
+  void _cancelEditRules() {
+    if (!mounted) return;
+    setState(() {
+      _isEditingRules = false;
+      _rulesTextController.text = _convertRulesListToText(_rules);
+    });
+  }
+
+  Future<void> _saveRules() async {
+    final newRulesText = _rulesTextController.text;
+    if (newRulesText.trim().isEmpty && _rules.isNotEmpty) {
+      _showErrorSnackBar("متن قوانین نمی‌تواند خالی باشد اگر قبلا قانونی ثبت شده است.");
+      return;
+    }
+    setState(() => _isLoadingRules = true);
+    await Future.delayed(const Duration(seconds: 1));
+    if (!mounted) return;
+    setState(() {
+      _rules = _convertTextToRulesList(newRulesText);
+      _isEditingRules = false;
+      _isLoadingRules = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('قوانین با موفقیت ذخیره شد.'),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating));
   }
 
   @override
   Widget build(BuildContext context) {
-    // دسترسی به AuthService برای بررسی وضعیت لودینگ کلی آن (مخصوصا برای خروج)
-    // استفاده از context.watch باعث می‌شود که این ویجت با هر بار notifyListeners() در AuthService دوباره build شود.
     final authService = context.watch<AuthService>();
-    final bool isAuthServiceLoading = authService.isLoading;
-
-    print("--- ManagerAccountPage Build Method ---");
-    print("Selected Tab: $_selectedTab");
-    print("AuthService isLoading: $isAuthServiceLoading, IsAuthenticated: ${authService.isAuthenticated}, Token: ${authService.token}");
+    final theme = Theme.of(context);
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: kPageBackground,
         appBar: AppBar(
-          backgroundColor: Colors.white, elevation: 0, automaticallyImplyLeading: false,
-          leading: IconButton(icon: Icon(Icons.notifications_none_outlined, color: primaryPurple, size: 28), onPressed: () { /* TODO: Notification action */ }),
+          backgroundColor: kCardBackground,
+          elevation: 0.5,
+          automaticallyImplyLeading: false,
+          titleSpacing: 0,
+          title: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Text(
+              'حساب کاربری مدیر',
+              style: theme.textTheme.titleLarge
+                  ?.copyWith(color: kPrimaryColor, fontWeight: FontWeight.bold),
+            ),
+          ),
           actions: [
             Padding(
-                padding: const EdgeInsets.only(left: 16.0, right: 8.0, top: 8.0, bottom: 8.0),
-                child: ElevatedButton(
-                  // شرط onPressed حالا فقط به isAuthServiceLoading نگاه می‌کند
-                  onPressed: isAuthServiceLoading ? null : _logoutUser,
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryPurple,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))
-                  ),
-                  child: isAuthServiceLoading
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)))
-                      : const Text('خروج از حساب کاربری', style: TextStyle(fontSize: 12)),
-                )
+              padding: const EdgeInsets.only(left: 16.0, right: 8.0),
+              child: IconButton(
+                icon:
+                Icon(Icons.logout_outlined, color: kPrimaryColor, size: 26),
+                onPressed: authService.isLoading ? null : _logoutUser,
+                tooltip: 'خروج از حساب',
+              ),
             )
           ],
         ),
-        body: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20.0),
-              child: _isLoadingProfile
-                  ? const Center(child: CircularProgressIndicator())
-                  : Column(children: [
-                Icon(Icons.account_circle, size: 100, color: primaryPurple.withOpacity(0.8)),
-                const SizedBox(height: 12),
-                Text(_managerProfile?.name ?? 'مدیر', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87)),
-                const SizedBox(height: 4),
-                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Text(_managerProfile?.email ?? '', style: TextStyle(fontSize: 14, color: Colors.grey[600])),
-                  const SizedBox(width: 4),
-                  if (_managerProfile?.email.isNotEmpty ?? false) Icon(Icons.check_circle, color: Colors.green[600], size: 16)
-                ])
-              ]),
-            ),
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(color: Colors.grey[100], borderRadius: const BorderRadius.only(topLeft: Radius.circular(30.0), topRight: Radius.circular(30.0))),
-                child: ListView(
-                  padding: const EdgeInsets.only(top:16.0, bottom: 16.0),
-                  children: [
-                    Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0), child: InkWell(onTap: _editManagerProfile, child: Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade300)), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('ویرایش اطلاعات', style: TextStyle(fontSize: 15, color: Colors.black87)), Icon(Icons.keyboard_arrow_down, color: Colors.grey[600])])))),
-                    const SizedBox(height: 20),
-                    Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0), child: Row(children: [_buildTabButton('پاسخگویی به نظرات'), _buildTabButton('قوانین و مقررات')])),
-                    const SizedBox(height: 24),
-                    _buildSelectedTabContent(),
-                  ],
+        body: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
+            return [
+              SliverToBoxAdapter(child: _buildProfileHeader(theme)),
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _SliverTabBarDelegate(
+                  TabBar(
+                    controller: _tabController,
+                    indicatorColor: kPrimaryColor,
+                    labelColor: kPrimaryColor,
+                    unselectedLabelColor: kLightTextColor,
+                    indicatorWeight: 2.5,
+                    labelStyle: theme.textTheme.titleSmall
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                    unselectedLabelStyle: theme.textTheme.titleSmall,
+                    tabs: _tabs.map((String name) => Tab(text: name)).toList(),
+                  ),
+                  kCardBackground,
                 ),
               ),
+            ];
+          },
+          body: TabBarView(
+            controller: _tabController,
+            children: _tabs.map((String tabName) {
+              return RefreshIndicator(
+                  onRefresh: _fetchDataForSelectedTab,
+                  color: kPrimaryColor,
+                  child: _buildSelectedTabContent(tabName));
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileHeader(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 24.0),
+      color: kCardBackground,
+      child: _isLoadingProfile
+          ? const Center(
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 40.0),
+            child: CircularProgressIndicator(color: kPrimaryColor),
+          ))
+          : Column(
+        children: [
+          CircleAvatar(
+            radius: 48,
+            backgroundColor: kPrimaryColor.withOpacity(0.1),
+            backgroundImage: _managerProfile?.avatarUrl != null
+                ? NetworkImage(_managerProfile!.avatarUrl!)
+                : null,
+            child: _managerProfile?.avatarUrl == null
+                ? Icon(Icons.business_center_outlined,
+                size: 50, color: kPrimaryColor.withOpacity(0.8))
+                : null,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _managerProfile?.name ?? 'مدیر هتل',
+            style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold, color: Colors.black87),
+          ),
+          const SizedBox(height: 6),
+          if (_managerProfile?.email.isNotEmpty ?? false)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  _managerProfile!.email,
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(color: kLightTextColor),
+                ),
+                const SizedBox(width: 6),
+                Icon(Icons.verified_user_outlined,
+                    color: Colors.green[600], size: 16)
+              ],
             ),
+          const SizedBox(height: 20),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.edit_outlined, size: 18),
+            label: const Text('ویرایش پروفایل'),
+            onPressed: _editManagerProfile,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kPrimaryColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 24, vertical: 10),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              textStyle: theme.textTheme.labelLarge
+                  ?.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSelectedTabContent(String tabName) {
+    if (tabName == 'قوانین و مقررات') {
+      if (_isLoadingRules && !_isEditingRules) return _buildLoadingIndicator();
+      if (_rules.isEmpty && !_isEditingRules && !_isLoadingRules) {
+        return _buildEmptyStateWithButton(
+            'هیچ قانونی ثبت نشده است.', 'افزودن قوانین', _toggleEditRulesMode);
+      }
+      return _buildRulesContent();
+    } else if (tabName == 'پاسخگویی به نظرات') {
+      if (_isLoadingReviews) return _buildLoadingIndicator();
+      if (_reviews.isEmpty) return _buildEmptyState('هیچ نظری برای پاسخگویی یافت نشد.');
+      return _buildList(_reviews, _buildReviewItem);
+    }
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildRulesContent() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                child: Text('قوانین و مقررات هتل',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold, color: kPrimaryColor)),
+              ),
+              TextButton.icon(
+                onPressed: _isEditingRules ? _saveRules : _toggleEditRulesMode,
+                icon: Icon(
+                    _isEditingRules
+                        ? Icons.save_outlined
+                        : Icons.edit_outlined,
+                    size: 18,
+                    color: _isEditingRules ? kPositiveColor : kAccentColor),
+                label: Text(_isEditingRules ? 'ذخیره' : 'ویرایش',
+                    style: TextStyle(
+                        color: _isEditingRules ? kPositiveColor : kAccentColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600)),
+                style: TextButton.styleFrom(padding: EdgeInsets.zero),
+              ),
+              if (_isEditingRules)
+                TextButton(
+                  onPressed: _cancelEditRules,
+                  child: const Text('لغو',
+                      style: TextStyle(
+                          color: kNegativeColor,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600)),
+                  style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (_isEditingRules)
+            TextFormField(
+                controller: _rulesTextController,
+                maxLines: null,
+                minLines: 8,
+                keyboardType: TextInputType.multiline,
+                style: TextStyle(
+                    fontSize: 14, color: Colors.grey[850], height: 1.6),
+                decoration: InputDecoration(
+                    hintText:
+                    'قوانین را اینجا وارد کنید. هر قانون با عنوان و توضیحات (مثال: ۱. زمان ورود: ساعت ۱۴). برای جدا کردن قوانین، از یک خط خالی استفاده کنید.',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey.shade300)),
+                    contentPadding: const EdgeInsets.all(12)))
+          else if (!_isLoadingRules)
+            _rules.isEmpty
+                ? const Text("هنوز قانونی ثبت نشده است.")
+                : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: _rules.map((rule) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: RichText(
+                    textAlign: TextAlign.justify,
+                    text: TextSpan(
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(
+                          color: kLightTextColor, height: 1.6),
+                      children: <TextSpan>[
+                        TextSpan(
+                            text: '${rule.title}: ',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87)),
+                        TextSpan(text: rule.description),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingIndicator() {
+    return const Center(
+        child: Padding(
+            padding: EdgeInsets.all(30.0),
+            child: CircularProgressIndicator(color: kPrimaryColor)));
+  }
+
+  Widget _buildEmptyState(String message) {
+    return Center(
+        child: Padding(
+            padding: const EdgeInsets.all(30.0),
+            child: Text(message,
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: kLightTextColor))));
+  }
+
+  Widget _buildEmptyStateWithButton(
+      String message, String buttonText, VoidCallback onPressed) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(30.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(message,
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: kLightTextColor)),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.add_circle_outline, size: 20),
+              label: Text(buttonText),
+              onPressed: onPressed,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kAccentColor,
+                foregroundColor: Colors.white,
+                padding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+              ),
+            )
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSelectedTabContent() {
-    if (_selectedTab == 'قوانین و مقررات') {
-      if (_isLoadingRules && !_isEditingRules) return const Center(child: CircularProgressIndicator());
-      if (_rules.isEmpty && !_isEditingRules && !_isLoadingRules) return const Center(child: Padding(padding: EdgeInsets.all(30.0), child: Text('هیچ قانونی ثبت نشده است.', style: TextStyle(fontSize: 16, color: Colors.grey))));
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+  Widget _buildList<T>(List<T> items, Widget Function(T item) itemBuilder) {
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 80.0),
+      itemCount: items.length,
+      itemBuilder: (context, index) => itemBuilder(items[index]),
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
+    );
+  }
+
+  Widget _buildReviewItem(ReviewModel review) {
+    bool isReplying = _replyingToReviewId == review.id;
+    return Card(
+      elevation: 1.5,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: kCardBackground,
+      child: Padding(
+        padding: const EdgeInsets.all(14.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Flexible(child: Text('قوانین و مقرراتی که مسافران برای اقامت در هتل موظفند رعایت کنند:', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87))), if (!_isEditingRules) TextButton.icon(onPressed: _toggleEditRulesMode, icon: Icon(Icons.edit_outlined, size: 18, color: primaryPurple), label: Text('ویرایش', style: TextStyle(color: primaryPurple, fontSize: 13)), style: TextButton.styleFrom(padding: EdgeInsets.zero),) else Row(children: [TextButton(onPressed: _saveRules, child: Text('ذخیره', style: TextStyle(color: Colors.green[700], fontSize: 13, fontWeight: FontWeight.bold))), TextButton(onPressed: _cancelEditRules, child: Text('لغو', style: TextStyle(color: Colors.red[700], fontSize: 13)))])]),
-            const SizedBox(height: 16),
-            if (_isEditingRules) TextFormField(controller: _rulesTextController, maxLines: 10, minLines: 5, keyboardType: TextInputType.multiline, style: TextStyle(fontSize: 14, color: Colors.grey[800], height: 1.5), decoration: InputDecoration(hintText: 'قوانین را اینجا وارد کنید، هر قانون در یک خط جدید...', filled: true, fillColor: Colors.white, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)), contentPadding: const EdgeInsets.all(12)))
-            else if (!_isLoadingRules) ListView.builder(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), itemCount: _rules.length, itemBuilder: (context, index) { final rule = _rules[index]; return Padding(padding: const EdgeInsets.only(bottom: 10.0), child: RichText(text: TextSpan(style: DefaultTextStyle.of(context).style.copyWith(fontSize: 14, color: Colors.grey[800], height: 1.5), children: <TextSpan>[TextSpan(text: rule.title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)), TextSpan(text: ': ${rule.description}')])));}),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(review.userName,
+                    style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87)),
+                Text(review.date,
+                    style:
+                    TextStyle(fontSize: 12, color: kLighterTextColor)),
+              ],
+            ),
+            Text(review.roomInfo,
+                style: TextStyle(fontSize: 12, color: kLightTextColor)),
+            const SizedBox(height: 10),
+            if (review.positivePoints.isNotEmpty) ...[
+              const Text("نکات مثبت:",
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: kPositiveColor)),
+              ...review.positivePoints
+                  .map((point) => _buildPointRow(point, true)),
+              const SizedBox(height: 6),
+            ],
+            if (review.negativePoints.isNotEmpty) ...[
+              const Text("نکات منفی:",
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: kNegativeColor)),
+              ...review.negativePoints
+                  .map((point) => _buildPointRow(point, false)),
+              const SizedBox(height: 6),
+            ],
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.star_rounded,
+                        size: 20, color: Colors.amber[600]),
+                    const SizedBox(width: 4),
+                    Text(review.rating.toStringAsFixed(1),
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: kLightTextColor)),
+                  ],
+                ),
+                TextButton.icon(
+                  onPressed: () => _toggleReplyForm(review.id),
+                  icon: Icon(
+                      review.managerReplyText != null && !isReplying
+                          ? Icons.edit_note_outlined
+                          : Icons.reply_outlined,
+                      size: 18,
+                      color: kAccentColor),
+                  label: Text(
+                      review.managerReplyText != null && !isReplying
+                          ? 'ویرایش پاسخ'
+                          : (isReplying ? 'بستن' : 'ثبت پاسخ'),
+                      style: TextStyle(
+                          color: kAccentColor,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600)),
+                  style: TextButton.styleFrom(
+                      padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4)),
+                ),
+              ],
+            ),
+            if (review.managerReplyText != null && !isReplying) ...[
+              const Divider(height: 20, thickness: 0.5),
+              Text('پاسخ شما:',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: kPrimaryColor)),
+              const SizedBox(height: 4),
+              Text(review.managerReplyText!,
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[800],
+                      fontStyle: FontStyle.italic,
+                      height: 1.5)),
+            ],
+            if (isReplying) _buildReplyForm(review),
           ],
         ),
-      );
-    } else if (_selectedTab == 'پاسخگویی به نظرات') {
-      if (_isLoadingReviews) return const Center(child: CircularProgressIndicator());
-      if (_reviews.isEmpty) return const Center(child: Padding(padding: EdgeInsets.all(30.0), child: Text('هیچ نظری برای پاسخگویی وجود ندارد.', style: TextStyle(fontSize: 16, color: Colors.grey))));
-      return ListView.builder(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), padding: const EdgeInsets.symmetric(horizontal: 16.0), itemCount: _reviews.length, itemBuilder: (context, index) => _buildReviewItem(_reviews[index]));
-    }
-    return const SizedBox.shrink();
+      ),
+    );
   }
-  Widget _buildReviewItem(ReviewModel review) {
-    bool isReplying = _replyingToReviewId == review.id;
-    return Column(children: [Card(elevation: 2, margin: const EdgeInsets.only(bottom: 12.0), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), color: Colors.white, child: Padding(padding: const EdgeInsets.all(12.0), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(review.userName, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87)), Text(review.date, style: TextStyle(fontSize: 12, color: Colors.grey[600]))]), Text(review.roomInfo, style: TextStyle(fontSize: 12, color: Colors.grey[700])), const SizedBox(height: 10), if (review.positivePoints.isNotEmpty) ...review.positivePoints.map((point) => _buildPointRow(point, true)), if (review.negativePoints.isNotEmpty) ...review.negativePoints.map((point) => _buildPointRow(point, false)), const SizedBox(height: 10), Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Row(children: [Icon(Icons.thumb_up_alt_outlined, size: 18, color: Colors.grey[700]), const SizedBox(width: 4), Text(review.rating.toString(), style: TextStyle(fontSize: 14, color: Colors.grey[700]))]), TextButton.icon(onPressed: () => _toggleReplyForm(review.id), icon: Icon(Icons.reply_outlined, size: 18, color: primaryPurple), label: Text(review.managerReplyText != null ? 'ویرایش پاسخ' : 'ثبت پاسخ', style: TextStyle(color: primaryPurple, fontSize: 13, fontWeight: FontWeight.w600)), style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4)))]), if (review.managerReplyText != null && !isReplying) ...[const Divider(height: 20, thickness: 0.5), Text('پاسخ شما:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: primaryPurple)), const SizedBox(height: 4), Text(review.managerReplyText!, style: TextStyle(fontSize: 13, color: Colors.grey[800], fontStyle: FontStyle.italic))]])),), if (isReplying) _buildReplyForm(review)]);
-  }
+
   Widget _buildPointRow(String point, bool isPositive) {
-    return Padding(padding: const EdgeInsets.only(bottom: 4.0), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(isPositive ? Icons.add_circle_outline : Icons.remove_circle_outline, size: 16, color: isPositive ? Colors.green[600] : Colors.red[600]), const SizedBox(width: 6), Expanded(child: Text(point, style: TextStyle(fontSize: 13, color: Colors.grey[800])))]));
+    return Padding(
+      padding: const EdgeInsets.only(top: 3.0, bottom: 1.0, right: 4.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+              isPositive
+                  ? Icons.check_circle_outline_rounded
+                  : Icons.highlight_off_rounded,
+              size: 16,
+              color: isPositive ? kPositiveColor : kNegativeColor),
+          const SizedBox(width: 6),
+          Expanded(
+              child: Text(point,
+                  style: TextStyle(fontSize: 13, color: Colors.grey[800]))),
+        ],
+      ),
+    );
   }
+
   Widget _buildReplyForm(ReviewModel review) {
-    if (_replyingToReviewId != review.id) return const SizedBox.shrink();
-    return Container(margin: const EdgeInsets.only(bottom: 20.0, top: 0), padding: const EdgeInsets.all(16.0), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.2), spreadRadius: 1, blurRadius: 3)]), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('پاسخ خود را به نظر فوق بنویسید:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87)), const SizedBox(height: 12), TextField(controller: _replyController, focusNode: _replyFocusNode, maxLines: 3, minLines: 3, textInputAction: TextInputAction.newline, decoration: InputDecoration(hintText: 'پاسخ شما...', filled: true, fillColor: Colors.grey[100], border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none), contentPadding: const EdgeInsets.all(10))), const SizedBox(height: 16), SizedBox(width: double.infinity, child: ElevatedButton(onPressed: () => _submitReply(review.id, _replyController.text), style: ElevatedButton.styleFrom(backgroundColor: primaryPurple, padding: const EdgeInsets.symmetric(vertical: 12.0), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0))), child: const Text('ثبت پاسخ', style: TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.bold))))]));
+    return Container(
+      margin: const EdgeInsets.only(top: 12.0),
+      padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 12.0),
+      decoration: BoxDecoration(
+          color: kPrimaryColor.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: kPrimaryColor.withOpacity(0.2))),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('پاسخ به نظر ${review.userName}:',
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: kPrimaryColor)),
+          const SizedBox(height: 10),
+          TextField(
+              controller: _replyController,
+              focusNode: _replyFocusNode,
+              maxLines: 3,
+              minLines: 3,
+              textInputAction: TextInputAction.newline,
+              style: TextStyle(fontSize: 13.5, color: Colors.grey[850]),
+              decoration: InputDecoration(
+                  hintText: 'پاسخ خود را اینجا بنویسید...',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300)),
+                  focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: kAccentColor, width: 1.5)),
+                  contentPadding: const EdgeInsets.all(10))),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _isLoadingReviews
+                  ? null
+                  : () => _submitReply(review.id, _replyController.text),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrimaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 10.0),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0)),
+                  textStyle: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.bold)),
+              child: _isLoadingReviews
+                  ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Colors.white))
+                  : const Text('ثبت پاسخ'),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
+  _SliverTabBarDelegate(this.tabBar, this.backgroundColor);
+
+  final TabBar tabBar;
+  final Color backgroundColor;
+
+  @override
+  double get minExtent => tabBar.preferredSize.height;
+  @override
+  double get maxExtent => tabBar.preferredSize.height;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: backgroundColor,
+      child: Material(
+        elevation: overlapsContent || (shrinkOffset > maxExtent - minExtent) ? 2.0 : 0.0,
+        color: backgroundColor,
+        child: tabBar,
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(_SliverTabBarDelegate oldDelegate) {
+    return tabBar != oldDelegate.tabBar ||
+        backgroundColor != oldDelegate.backgroundColor;
   }
 }

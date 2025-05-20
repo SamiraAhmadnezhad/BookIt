@@ -4,14 +4,21 @@ import '../../authentication_page/auth_service.dart';
 import 'edit_profile_page.dart';
 import '../../authentication_page/authentication_page.dart';
 
+const Color kPrimaryColor = Color(0xFF542545);
+const Color kAccentColor = Color(0xFF7E3F6B);
+const Color kPageBackground = Color(0xFFF4F6F8);
+const Color kCardBackground = Colors.white;
+const Color kLightTextColor = Color(0xFF606060);
+const Color kLighterTextColor = Color(0xFF888888);
+const Color kIconColor = Color(0xFF404040);
 
-// ... (کلاس‌های مدل UserProfileModel, FavoriteHotelModel, BookingModel, PreviousBookingModel بدون تغییر) ...
 class UserProfileModel {
   final String name;
   final String email;
   final String? avatarUrl;
   UserProfileModel({required this.name, required this.email, this.avatarUrl});
 }
+
 class FavoriteHotelModel {
   final String id;
   final String imageUrl;
@@ -22,8 +29,18 @@ class FavoriteHotelModel {
   final String currency;
   final String location;
   final bool isFavorite;
-  FavoriteHotelModel({ required this.id, required this.imageUrl, required this.name, required this.userRating, required this.starRating, required this.priceDisplay, required this.currency, required this.location, this.isFavorite = true });
+  FavoriteHotelModel(
+      {required this.id,
+        required this.imageUrl,
+        required this.name,
+        required this.userRating,
+        required this.starRating,
+        required this.priceDisplay,
+        required this.currency,
+        required this.location,
+        this.isFavorite = true});
 }
+
 class BookingModel {
   final String id;
   final String hotelId;
@@ -34,17 +51,31 @@ class BookingModel {
   final String priceDisplay;
   final String currency;
   final String location;
-  BookingModel({ required this.id, required this.hotelId, required this.imageUrl, required this.hotelName, required this.userRating, required this.starRating, required this.priceDisplay, required this.currency, required this.location });
+  BookingModel(
+      {required this.id,
+        required this.hotelId,
+        required this.imageUrl,
+        required this.hotelName,
+        required this.userRating,
+        required this.starRating,
+        required this.priceDisplay,
+        required this.currency,
+        required this.location});
 }
+
 class PreviousBookingModel {
   final String id;
   final String hotelId;
   final String hotelName;
   final String imageUrl;
   final double? userRating;
-  PreviousBookingModel({ required this.id, required this.hotelId, required this.hotelName, required this.imageUrl, this.userRating});
+  PreviousBookingModel(
+      {required this.id,
+        required this.hotelId,
+        required this.hotelName,
+        required this.imageUrl,
+        this.userRating});
 }
-
 
 class UserAccountPage extends StatefulWidget {
   const UserAccountPage({super.key});
@@ -52,9 +83,10 @@ class UserAccountPage extends StatefulWidget {
   State<UserAccountPage> createState() => _UserAccountPageState();
 }
 
-class _UserAccountPageState extends State<UserAccountPage> {
-  final Color primaryPurple = const Color(0xFF542545);
-  String _selectedTab = 'علاقه‌مندی‌ها'; // تب پیش‌فرض
+class _UserAccountPageState extends State<UserAccountPage>
+    with SingleTickerProviderStateMixin {
+  String _selectedTab = 'علاقه‌مندی‌ها';
+  TabController? _tabController;
 
   UserProfileModel? _userProfile;
   List<FavoriteHotelModel> _favoriteHotels = [];
@@ -65,29 +97,46 @@ class _UserAccountPageState extends State<UserAccountPage> {
   bool _isLoadingFavorites = true;
   bool _isLoadingCurrentBookings = false;
   bool _isLoadingPreviousBookings = false;
-  // bool _isLoggingOut = false; // دیگر لازم نیست، از authService.isLoading استفاده می‌کنیم
 
-  final double _cardWidthHorizontal = 300.0;
-  final double _horizontalListHeight = 390.0;
-  final double _interCardSpacingHorizontal = 12.0;
-  final double _interCardSpacingVertical = 12.0;
-
+  final List<String> _tabs = const [
+    'علاقه‌مندی‌ها',
+    'لیست رزروها',
+    'رزروهای قبلی'
+  ];
 
   @override
   void initState() {
     super.initState();
-    print("UserAccountPage: initState - Fetching initial data...");
+    _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController!.addListener(_handleTabSelection);
     _fetchDataForPage();
+  }
+
+  void _handleTabSelection() {
+    if (_tabController!.indexIsChanging ||
+        _selectedTab == _tabs[_tabController!.index]) return;
+
+    if (mounted) {
+      setState(() {
+        _selectedTab = _tabs[_tabController!.index];
+      });
+      _fetchDataForSelectedTab();
+    }
   }
 
   @override
   void dispose() {
-    print("UserAccountPage: dispose");
+    _tabController?.removeListener(_handleTabSelection);
+    _tabController?.dispose();
     super.dispose();
   }
 
   Future<void> _fetchDataForPage() async {
     await _fetchUserProfile();
+    _fetchDataForSelectedTab();
+  }
+
+  Future<void> _fetchDataForSelectedTab() async {
     if (!mounted) return;
     if (_selectedTab == 'علاقه‌مندی‌ها') {
       await _fetchFavoriteHotels();
@@ -99,312 +148,425 @@ class _UserAccountPageState extends State<UserAccountPage> {
   }
 
   Future<void> _fetchUserProfile() async {
-    print("UserAccountPage: _fetchUserProfile started.");
     if (!mounted) return;
-    setState(() { _isLoadingProfile = true; });
+    setState(() => _isLoadingProfile = true);
     try {
-      // TODO: Fetch real profile data using AuthService for token and correct API service
-      await Future.delayed(const Duration(seconds: 1)); // Mock
+      await Future.delayed(const Duration(milliseconds: 800));
       if (!mounted) return;
-      _userProfile = UserProfileModel(name: 'علی علوی', email: 'alialavi@gmail.com');
-      print("UserAccountPage: User profile data mocked.");
+      _userProfile = UserProfileModel(
+          name: 'علی علوی',
+          email: 'alialavi@gmail.com',
+          avatarUrl: 'https://i.pravatar.cc/150?u=alialavi');
     } catch (e) {
-      print("UserAccountPage: Error fetching user profile: $e");
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('خطا در بارگذاری پروفایل: ${e.toString()}'), backgroundColor: Colors.red));
-    }
-    finally {
-      if (mounted) {
-        setState(() { _isLoadingProfile = false; });
-        print("UserAccountPage: _fetchUserProfile finished. _isLoadingProfile: $_isLoadingProfile");
-      }
+      _showErrorSnackBar('خطا در بارگذاری پروفایل: ${e.toString()}');
+    } finally {
+      if (mounted) setState(() => _isLoadingProfile = false);
     }
   }
 
   Future<void> _fetchFavoriteHotels() async {
-    print("UserAccountPage: _fetchFavoriteHotels started.");
-    if ((_selectedTab != 'علاقه‌مندی‌ها' && _favoriteHotels.isNotEmpty && !_isLoadingFavorites) || !mounted) return;
-    setState(() { _isLoadingFavorites = true; });
+    if (!mounted || _isLoadingFavorites) return;
+    setState(() => _isLoadingFavorites = true);
     try {
-      // TODO: Fetch real favorite hotels using AuthService for token and correct API service
-      await Future.delayed(const Duration(seconds: 1)); // Mock
+      await Future.delayed(const Duration(seconds: 1));
       if (!mounted) return;
-      _favoriteHotels = List.generate(3, (index) => FavoriteHotelModel(id: 'fav${index+1}', imageUrl: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=300', name: 'هتل لوکس مورد علاقه ${index+1}', userRating: 4.8, starRating: 5, priceDisplay: '۵٬${index}۰۰٬۰۰۰', currency: 'تومان', location: 'تهران'));
-      print("UserAccountPage: Favorite hotels data mocked.");
+      _favoriteHotels = List.generate(
+          3,
+              (index) => FavoriteHotelModel(
+              id: 'fav${index + 1}',
+              imageUrl:
+              'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400&h=300&fit=crop',
+              name: 'هتل لوکس مورد علاقه ${index + 1}',
+              userRating: 4.8 - (index * 0.1),
+              starRating: 5,
+              priceDisplay: '۵٬${index}۰۰٬۰۰۰',
+              currency: 'تومان',
+              location: 'تهران، منطقه ${index + 1}'));
     } catch (e) {
-      print("UserAccountPage: Error fetching favorite hotels: $e");
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('خطا در بارگذاری علاقه‌مندی‌ها: ${e.toString()}'), backgroundColor: Colors.red));
-    }
-    finally {
-      if (mounted) {
-        setState(() { _isLoadingFavorites = false; });
-        print("UserAccountPage: _fetchFavoriteHotels finished. _isLoadingFavorites: $_isLoadingFavorites");
-      }
+      _showErrorSnackBar('خطا در بارگذاری علاقه‌مندی‌ها: ${e.toString()}');
+    } finally {
+      if (mounted) setState(() => _isLoadingFavorites = false);
     }
   }
 
   Future<void> _fetchCurrentBookings() async {
-    print("UserAccountPage: _fetchCurrentBookings started.");
-    if ((_selectedTab != 'لیست رزروها' && _currentBookings.isNotEmpty && !_isLoadingCurrentBookings) || !mounted) return;
-    setState(() { _isLoadingCurrentBookings = true; });
+    if (!mounted || _isLoadingCurrentBookings) return;
+    setState(() => _isLoadingCurrentBookings = true);
     try {
-      // TODO: Fetch real current bookings using AuthService for token and correct API service
-      await Future.delayed(const Duration(seconds: 1)); // Mock
+      await Future.delayed(const Duration(seconds: 1));
       if (!mounted) return;
-      _currentBookings = List.generate(3, (index) => BookingModel(id: 'booking${index+1}', hotelId: 'hotel_xyz_${index+1}', imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=300', hotelName: 'هتل رزرو شده ${index+1}', userRating: 4.5, starRating: 4, priceDisplay: '۳٬${index}۵۰٬۰۰۰', currency: 'تومان', location: 'مکان هتل ${index+1}'));
-      print("UserAccountPage: Current bookings data mocked.");
+      _currentBookings = List.generate(
+          2,
+              (index) => BookingModel(
+              id: 'booking${index + 1}',
+              hotelId: 'hotel_xyz_${index + 1}',
+              imageUrl:
+              'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop',
+              hotelName: 'هتل رزرو شده ${index + 1}',
+              userRating: 4.5 - (index * 0.2),
+              starRating: 4,
+              priceDisplay: '۳٬${index}۵۰٬۰۰۰',
+              currency: 'تومان',
+              location: 'مکان هتل ${index + 1}'));
     } catch (e) {
-      print("UserAccountPage: Error fetching current bookings: $e");
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('خطا در بارگذاری رزروهای فعلی: ${e.toString()}'), backgroundColor: Colors.red));
-    }
-    finally {
-      if (mounted) {
-        setState(() { _isLoadingCurrentBookings = false; });
-        print("UserAccountPage: _fetchCurrentBookings finished. _isLoadingCurrentBookings: $_isLoadingCurrentBookings");
-      }
+      _showErrorSnackBar('خطا در بارگذاری رزروهای فعلی: ${e.toString()}');
+    } finally {
+      if (mounted) setState(() => _isLoadingCurrentBookings = false);
     }
   }
 
   Future<void> _fetchPreviousBookings() async {
-    print("UserAccountPage: _fetchPreviousBookings started.");
-    if ((_selectedTab != 'رزروهای قبلی' && _previousBookings.isNotEmpty && !_isLoadingPreviousBookings) || !mounted) return;
-    setState(() { _isLoadingPreviousBookings = true; });
+    if (!mounted || _isLoadingPreviousBookings) return;
+    setState(() => _isLoadingPreviousBookings = true);
     try {
-      // TODO: Fetch real previous bookings using AuthService for token and correct API service
-      await Future.delayed(const Duration(seconds: 1)); // Mock
+      await Future.delayed(const Duration(seconds: 1));
       if (!mounted) return;
-      _previousBookings = List.generate(5, (index) => PreviousBookingModel(id: 'prev_booking_${index+1}', hotelId: 'hotel_abc_${index+1}', hotelName: 'اسم هتل در حالت طولانی برای رزرو قبلی شماره ${index+1}', imageUrl: 'https://images.unsplash.com/photo-1582719478250-c89caE4dc85b?w=100&h=100&fit=crop', userRating: (index % 2 == 0) ? 4.5 : null ));
-      print("UserAccountPage: Previous bookings data mocked.");
+      _previousBookings = List.generate(
+          4,
+              (index) => PreviousBookingModel(
+              id: 'prev_booking_${index + 1}',
+              hotelId: 'hotel_abc_${index + 1}',
+              hotelName:
+              'اسم هتل طولانی برای رزرو قبلی شماره ${index + 1}',
+              imageUrl:
+              'https://images.unsplash.com/photo-1582719478250-c89caE4dc85b?w=150&h=150&fit=crop',
+              userRating: (index % 2 == 0) ? 4.5 - (index * 0.3) : null));
     } catch (e) {
-      print("UserAccountPage: Error fetching previous bookings: $e");
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('خطا در بارگذاری رزروهای قبلی: ${e.toString()}'), backgroundColor: Colors.red));
-    }
-    finally {
-      if (mounted) {
-        setState(() { _isLoadingPreviousBookings = false; });
-        print("UserAccountPage: _fetchPreviousBookings finished. _isLoadingPreviousBookings: $_isLoadingPreviousBookings");
-      }
+      _showErrorSnackBar('خطا در بارگذاری رزروهای قبلی: ${e.toString()}');
+    } finally {
+      if (mounted) setState(() => _isLoadingPreviousBookings = false);
     }
   }
 
-  // ***** تابع خروج از حساب کاربری *****
-  Future<void> _logoutUser() async {
-    print("UserAccountPage: _logoutUser called.");
-    final authService = Provider.of<AuthService>(context, listen: false);
+  void _showErrorSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating));
+  }
 
-    if (authService.isLoading) {
-      print("UserAccountPage: AuthService is already busy. Logout request ignored.");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('عملیات دیگری در حال انجام است، لطفا صبر کنید.'), backgroundColor: Colors.orange),
-        );
-      }
-      return;
-    }
+  Future<void> _logoutUser() async {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    if (authService.isLoading) return;
 
     try {
-      print("UserAccountPage: Calling authService.logout(). Current token: ${authService.token}");
       await authService.logout();
-      print("UserAccountPage: authService.logout() completed. Error from service: ${authService.errorMessage}");
-
       if (!mounted) return;
 
-      if (authService.errorMessage != null && authService.errorMessage!.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('توجه: ${authService.errorMessage}'), backgroundColor: Colors.orange),
-        );
+      if (authService.errorMessage != null &&
+          authService.errorMessage!.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('توجه: ${authService.errorMessage}'),
+            backgroundColor: Colors.orangeAccent,
+            behavior: SnackBarBehavior.floating));
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('شما با موفقیت از حساب کاربری خود خارج شدید.'), backgroundColor: Colors.green),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('شما با موفقیت از حساب کاربری خود خارج شدید.'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating));
       }
-      // هدایت به صفحه لاگین
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const AuthenticationPage()), // صفحه لاگین شما
+        MaterialPageRoute(builder: (context) => const AuthenticationPage()),
             (Route<dynamic> route) => false,
       );
-
     } catch (e) {
-      print("UserAccountPage: Error in _logoutUser UI catch block: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطای پیش‌بینی نشده هنگام خروج (UI): ${e.toString()}'), backgroundColor: Colors.red),
-        );
-      }
+      _showErrorSnackBar('خطای پیش‌بینی نشده هنگام خروج: ${e.toString()}');
     }
-    // isLoading مربوط به AuthService در خود AuthService مدیریت می‌شود و نیازی به setState محلی نیست.
   }
 
   void _editProfile() {
-    print("UserAccountPage: _editProfile called");
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const EditProfilePage(
-          // initialProfileData: _userProfile, // پاس دادن اطلاعات فعلی در صورت نیاز
-        ),
-      ),
-    ).then((value) {
-      if (value == true && mounted) { // اگر صفحه ویرایش با موفقیت بسته شد
-        print("UserAccountPage: Returned from edit profile, fetching profile again...");
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (context) => const EditProfilePage()))
+        .then((value) {
+      if (value == true && mounted) {
         _fetchUserProfile();
       }
     });
   }
 
   void _viewBookingDetails(String bookingId) {
-    print("UserAccountPage: View details for booking $bookingId");
-    // TODO: Navigate to booking details page
+    debugPrint("View details for booking $bookingId");
   }
-  Future<void> _toggleFavoriteStatus(String hotelId, bool currentStatus) async {
-    print("UserAccountPage: Toggle favorite for hotel $hotelId, current status: $currentStatus");
-    // TODO: Call API to toggle favorite status
-    // Mock behavior:
-    await Future.delayed(const Duration(milliseconds: 500));
+
+  Future<void> _toggleFavoriteStatus(
+      String hotelId, bool currentStatus) async {
+    debugPrint("Toggle favorite for hotel $hotelId, current status: $currentStatus");
+    await Future.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
     setState(() {
       final index = _favoriteHotels.indexWhere((h) => h.id == hotelId);
       if (index != -1) {
-        // این روش ساده‌انگارانه است. در عمل، باید لیست را از سرور دوباره fetch کنید
-        // یا پاسخ API را برای به‌روزرسانی دقیق به کار ببرید.
-        // برای این مثال، فقط وضعیت isFavorite را در آیتم محلی تغییر می‌دهیم
-        // و سپس لیست را فیلتر می‌کنیم تا آیتم حذف شده (اگر دیگر favorite نیست) نمایش داده نشود.
-        var hotel = _favoriteHotels[index];
-        _favoriteHotels[index] = FavoriteHotelModel(
-            id: hotel.id, imageUrl: hotel.imageUrl, name: hotel.name, userRating: hotel.userRating,
-            starRating: hotel.starRating, priceDisplay: hotel.priceDisplay, currency: hotel.currency,
-            location: hotel.location, isFavorite: !currentStatus
-        );
-        // اگر می‌خواهید آیتم بلافاصله از لیست حذف شود وقتی دیگر favorite نیست:
-        if (!currentStatus == false) { // یعنی اگر از favorite به non-favorite تغییر کرد
-          _favoriteHotels.removeAt(index);
-        }
+        _favoriteHotels.removeAt(index);
       }
     });
   }
+
   void _reserveFavoriteHotel(String hotelId) {
-    print("UserAccountPage: Reserve favorite hotel $hotelId");
-    // TODO: Navigate to hotel details/booking page for this hotelId
-  }
-  void _ratePreviousBooking(String previousBookingId) {
-    print("UserAccountPage: Rate previous booking $previousBookingId");
-    // TODO: Navigate to rating page for this previousBookingId
+    debugPrint("Reserve favorite hotel $hotelId");
   }
 
-  Widget _buildTabButton(String title) {
-    bool isSelected = _selectedTab == title;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          if (_selectedTab != title) {
-            if (!mounted) return;
-            setState(() { _selectedTab = title; });
-            if (title == 'علاقه‌مندی‌ها' && (_favoriteHotels.isEmpty || _isLoadingFavorites)) {
-              _fetchFavoriteHotels();
-            } else if (title == 'لیست رزروها' && (_currentBookings.isEmpty || _isLoadingCurrentBookings)) {
-              _fetchCurrentBookings();
-            } else if (title == 'رزروهای قبلی' && (_previousBookings.isEmpty || _isLoadingPreviousBookings)) {
-              _fetchPreviousBookings();
-            }
-          }
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12), margin: const EdgeInsets.symmetric(horizontal: 4),
-          decoration: BoxDecoration(color: isSelected ? primaryPurple : Colors.white, borderRadius: BorderRadius.circular(8), border: isSelected ? null : Border.all(color: Colors.grey.shade300)),
-          child: Text(title, textAlign: TextAlign.center, style: TextStyle(color: isSelected ? Colors.white : primaryPurple, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, fontSize: 13)),
-        ),
-      ),
-    );
+  void _ratePreviousBooking(String previousBookingId) {
+    debugPrint("Rate previous booking $previousBookingId");
   }
 
   @override
   Widget build(BuildContext context) {
     final authService = context.watch<AuthService>();
-    final bool isAuthServiceLoading = authService.isLoading;
-
-    print("--- UserAccountPage Build Method ---");
-    print("Selected Tab: $_selectedTab");
-    print("AuthService isLoading: $isAuthServiceLoading, IsAuthenticated: ${authService.isAuthenticated}, Token: ${authService.token}");
+    final theme = Theme.of(context);
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: kPageBackground,
         appBar: AppBar(
-          backgroundColor: Colors.white, elevation: 0, automaticallyImplyLeading: false,
-          leading: IconButton(icon: Icon(Icons.notifications_none_outlined, color: primaryPurple, size: 28), onPressed: () { /* TODO: Notification action */ }),
+          backgroundColor: kCardBackground,
+          elevation: 0.5,
+          automaticallyImplyLeading: false,
+          titleSpacing: 0,
+          title: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Text(
+              'حساب کاربری',
+              style: theme.textTheme.titleLarge?.copyWith(
+                  color: kPrimaryColor, fontWeight: FontWeight.bold),
+            ),
+          ),
           actions: [
             Padding(
-                padding: const EdgeInsets.only(left: 16.0, right: 8.0, top: 8.0, bottom: 8.0),
-                child: ElevatedButton(
-                  onPressed: isAuthServiceLoading ? null : _logoutUser,
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryPurple,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))
-                  ),
-                  child: isAuthServiceLoading
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)))
-                      : const Text('خروج از حساب کاربری', style: TextStyle(fontSize: 12)),
-                )
+              padding: const EdgeInsets.only(left: 16.0, right: 8.0),
+              child: IconButton(
+                icon: Icon(Icons.logout_outlined, color: kPrimaryColor, size: 26),
+                onPressed: authService.isLoading ? null : _logoutUser,
+                tooltip: 'خروج از حساب',
+              ),
             )
           ],
         ),
-        body: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20.0),
-              child: _isLoadingProfile
-                  ? const Center(child: CircularProgressIndicator())
-                  : Column(children: [
-                // TODO: Use _userProfile?.avatarUrl for CircleAvatar if available
-                Icon(Icons.account_circle, size: 100, color: primaryPurple.withOpacity(0.8)),
-                const SizedBox(height: 12),
-                Text(_userProfile?.name ?? 'کاربر مهمان', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87)),
-                const SizedBox(height: 4),
-                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Text(_userProfile?.email ?? '', style: TextStyle(fontSize: 14, color: Colors.grey[600])),
-                  const SizedBox(width: 4),
-                  if (_userProfile?.email.isNotEmpty ?? false) Icon(Icons.check_circle, color: Colors.green[600], size: 16)
-                ])
-              ]),
-            ),
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(color: Colors.grey[100], borderRadius: const BorderRadius.only(topLeft: Radius.circular(30.0), topRight: Radius.circular(30.0))),
-                child: ListView(
-                  padding: const EdgeInsets.only(top:16.0, bottom: 16.0),
-                  children: [
-                    Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: InkWell(
-                            onTap: _editProfile,
-                            child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade300)),
-                                child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Text('ویرایش اطلاعات', style: TextStyle(fontSize: 15, color: Colors.black87)),
-                                      Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
-                                    ]
-                                )
-                            )
-                        )
-                    ),
-                    const SizedBox(height: 20),
-                    Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Row(children: [
-                          _buildTabButton('رزروهای قبلی'),
-                          _buildTabButton('لیست رزروها'),
-                          _buildTabButton('علاقه‌مندی‌ها')
-                        ])
-                    ),
-                    const SizedBox(height: 24),
-                    _buildSelectedTabContent(),
-                  ],
+        body: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
+            return [
+              SliverToBoxAdapter(child: _buildProfileHeader(theme)),
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _SliverTabBarDelegate(
+                  TabBar(
+                    controller: _tabController,
+                    indicatorColor: kPrimaryColor,
+                    labelColor: kPrimaryColor,
+                    unselectedLabelColor: kLightTextColor,
+                    indicatorWeight: 2.5,
+                    labelStyle: theme.textTheme.titleSmall
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                    unselectedLabelStyle: theme.textTheme.titleSmall,
+                    tabs: _tabs.map((String name) => Tab(text: name)).toList(),
+                  ),
+                  kCardBackground,
                 ),
+              ),
+            ];
+          },
+          body: TabBarView(
+            controller: _tabController,
+            children: _tabs.map((String tabName) {
+              return RefreshIndicator(
+                  onRefresh: _fetchDataForSelectedTab,
+                  color: kPrimaryColor,
+                  child: _buildSelectedTabContent(tabName));
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileHeader(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(20.0),
+      color: kCardBackground,
+      child: _isLoadingProfile
+          ? const Center(
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 30.0),
+            child: CircularProgressIndicator(color: kPrimaryColor),
+          ))
+          : Column(
+        children: [
+          CircleAvatar(
+            radius: 45,
+            backgroundColor: kPrimaryColor.withOpacity(0.1),
+            backgroundImage: _userProfile?.avatarUrl != null
+                ? NetworkImage(_userProfile!.avatarUrl!)
+                : null,
+            child: _userProfile?.avatarUrl == null
+                ? Icon(Icons.person_outline,
+                size: 50, color: kPrimaryColor.withOpacity(0.8))
+                : null,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _userProfile?.name ?? 'کاربر',
+            style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold, color: Colors.black87),
+          ),
+          const SizedBox(height: 6),
+          if (_userProfile?.email.isNotEmpty ?? false)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  _userProfile!.email,
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(color: kLightTextColor),
+                ),
+                const SizedBox(width: 6),
+                Icon(Icons.verified_user_outlined,
+                    color: Colors.green[600], size: 16)
+              ],
+            ),
+          const SizedBox(height: 20),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.edit_outlined, size: 18),
+            label: const Text('ویرایش پروفایل'),
+            onPressed: _editProfile,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kPrimaryColor,
+              foregroundColor: Colors.white,
+              padding:
+              const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              textStyle: theme.textTheme.labelLarge
+                  ?.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSelectedTabContent(String tabName) {
+    if (tabName == 'علاقه‌مندی‌ها') {
+      if (_isLoadingFavorites) return _buildLoadingIndicator();
+      if (_favoriteHotels.isEmpty) return _buildEmptyState('موردی در علاقه‌مندی‌ها یافت نشد.');
+      return _buildList(_favoriteHotels, _buildFavoriteItemCard);
+    } else if (tabName == 'لیست رزروها') {
+      if (_isLoadingCurrentBookings) return _buildLoadingIndicator();
+      if (_currentBookings.isEmpty) return _buildEmptyState('هیچ رزرو فعالی ندارید.');
+      return _buildList(_currentBookings, _buildBookingItemCard);
+    } else if (tabName == 'رزروهای قبلی') {
+      if (_isLoadingPreviousBookings) return _buildLoadingIndicator();
+      if (_previousBookings.isEmpty) return _buildEmptyState('هیچ رزرو قبلی یافت نشد.');
+      return _buildList(_previousBookings, _buildPreviousBookingItemCard);
+    }
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildLoadingIndicator() {
+    return const Center(
+        child: Padding(
+            padding: EdgeInsets.all(30.0),
+            child: CircularProgressIndicator(color: kPrimaryColor)));
+  }
+
+  Widget _buildEmptyState(String message) {
+    return Center(
+        child: Padding(
+            padding: const EdgeInsets.all(30.0),
+            child: Text(message,
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: kLightTextColor))));
+  }
+
+  Widget _buildList<T>(List<T> items, Widget Function(T item) itemBuilder) {
+    return ListView.separated(
+      padding: const EdgeInsets.all(16.0),
+      itemCount: items.length,
+      itemBuilder: (context, index) => itemBuilder(items[index]),
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
+    );
+  }
+
+  Widget _buildPreviousBookingItemCard(PreviousBookingModel item) {
+    return Card(
+      elevation: 1.5,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: kCardBackground,
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                item.imageUrl,
+                width: 80,
+                height: 80,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                    width: 80,
+                    height: 80,
+                    color: kPageBackground,
+                    child: Icon(Icons.image_not_supported_outlined,
+                        color: kLighterTextColor.withOpacity(0.7))),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.hotelName,
+                    style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Text(
+                          item.userRating?.toStringAsFixed(1) ?? 'بدون امتیاز',
+                          style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: item.userRating != null
+                                  ? kLightTextColor
+                                  : kLighterTextColor)),
+                      if (item.userRating != null) ...[
+                        const SizedBox(width: 4),
+                        Icon(Icons.thumb_up_alt_outlined,
+                            size: 15, color: kLightTextColor)
+                      ]
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  InkWell(
+                    onTap: () => _ratePreviousBooking(item.id),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.star_outline_rounded,
+                              color: kAccentColor, size: 18),
+                          const SizedBox(width: 6),
+                          Text('ثبت نظر و امتیاز',
+                              style: TextStyle(
+                                  color: kAccentColor,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600))
+                        ],
+                      ),
+                    ),
+                  )
+                ],
               ),
             ),
           ],
@@ -413,64 +575,263 @@ class _UserAccountPageState extends State<UserAccountPage> {
     );
   }
 
-  Widget _buildSelectedTabContent() {
-    if (_selectedTab == 'رزروهای قبلی') {
-      if (_isLoadingPreviousBookings) return const Center(child: CircularProgressIndicator());
-      if (_previousBookings.isEmpty) return const Center(child: Padding(padding: EdgeInsets.all(30.0), child: Text('هیچ رزرو قبلی وجود ندارد.', style: TextStyle(fontSize: 16, color: Colors.grey))));
-      return ListView.builder(
-        shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        itemCount: _previousBookings.length,
-        itemBuilder: (context, index) => Padding(padding: EdgeInsets.only(bottom: index < _previousBookings.length - 1 ? _interCardSpacingVertical : 0.0), child: _buildPreviousBookingItemCard(_previousBookings[index])),
-      );
-    }
-    else if (_selectedTab == 'لیست رزروها') {
-      if (_isLoadingCurrentBookings) return const Center(child: CircularProgressIndicator());
-      if (_currentBookings.isEmpty) return const Center(child: Padding(padding: EdgeInsets.all(30.0), child: Text('هیچ رزرو فعالی وجود ندارد.', style: TextStyle(fontSize: 16, color: Colors.grey))));
-      // برای لیست رزروها، به جای SizedBox با ارتفاع ثابت، از ListView با shrinkWrap و physics استفاده می‌کنیم تا به اندازه محتوا ارتفاع بگیرد
-      return ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          itemCount: _currentBookings.length,
-          itemBuilder: (context, index) =>
-              Padding(
-                padding: EdgeInsets.only(bottom: index < _currentBookings.length - 1 ? _interCardSpacingVertical : 0.0),
-                child: _buildBookingItemCard(_currentBookings[index]),
-              )
-      );
-    } else if (_selectedTab == 'علاقه‌مندی‌ها') {
-      if (_isLoadingFavorites) return const Center(child: CircularProgressIndicator());
-      if (_favoriteHotels.isEmpty) return const Center(child: Padding(padding: EdgeInsets.all(30.0), child: Text('موردی برای نمایش در علاقه‌مندی‌ها وجود ندارد.', style: TextStyle(fontSize: 16, color: Colors.grey))));
-      // برای لیست علاقه‌مندی‌ها هم مشابه لیست رزروها
-      return ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          itemCount: _favoriteHotels.length,
-          itemBuilder: (context, index) =>
-              Padding(
-                padding: EdgeInsets.only(bottom: index < _favoriteHotels.length - 1 ? _interCardSpacingVertical : 0.0),
-                child: _buildFavoriteItemCard(_favoriteHotels[index]),
-              )
-      );
-    }
-    return const SizedBox.shrink();
-  }
-
-  // ویجت‌های مربوط به آیتم‌ها (بدون تغییر زیاد، فقط چک کردن null بودن _userProfile)
-  Widget _buildPreviousBookingItemCard(PreviousBookingModel item) {
-    return Card(elevation: 2, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), color: Colors.white, child: Padding(padding: const EdgeInsets.all(12.0), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(item.imageUrl, width: 80, height: 80, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => Container(width: 80, height: 80, color: Colors.grey[200], child: Icon(Icons.image_not_supported, color: Colors.grey[400])))), const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(item.hotelName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87), maxLines: 2, overflow: TextOverflow.ellipsis), const SizedBox(height: 8), Row(children: [Text(item.userRating?.toStringAsFixed(1) ?? 'بدون امتیاز', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: item.userRating != null ? Colors.grey[700] : Colors.grey[500])), if(item.userRating != null) ...[const SizedBox(width: 4), Icon(Icons.thumb_up, size: 16, color: Colors.grey[700])]]), const SizedBox(height: 12), InkWell(onTap: () => _ratePreviousBooking(item.id), child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.star_border_outlined, color: primaryPurple, size: 20), const SizedBox(width: 6), Text('ثبت نظر و امتیازدهی', style: TextStyle(color: primaryPurple, fontSize: 13, fontWeight: FontWeight.w600))]))]))])));
-  }
-
   Widget _buildBookingItemCard(BookingModel booking) {
-    // این ویجت چون برای نمایش افقی طراحی شده بود، اگر عمودی استفاده شود، width آن را حذف می‌کنیم
-    // return SizedBox(width: _cardWidthHorizontal, child: Card(...))
-    return Card(elevation: 2, margin: const EdgeInsets.symmetric(vertical: 0), /* قبلا vertical: 4.0 بود */ shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), color: Colors.white, child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [Stack(children: [ClipRRect(borderRadius: const BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12)), child: Image.network(booking.imageUrl, height: 180, width: double.infinity, fit: BoxFit.cover, errorBuilder: (c,e,s) => Container(height: 180, color: Colors.grey[200], child: Center(child: Icon(Icons.broken_image, color: Colors.grey[400], size: 40))))), Positioned(top: 12, right: 12, child: Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5), decoration: BoxDecoration(color: Colors.black.withOpacity(0.5), borderRadius: BorderRadius.circular(12)), child: Row(mainAxisSize: MainAxisSize.min, children: [Text(booking.userRating.toStringAsFixed(1), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)), const SizedBox(width: 4), const Icon(Icons.thumb_up_alt_rounded, color: Colors.white, size: 14)])))]), Padding(padding: const EdgeInsets.all(12.0), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(booking.hotelName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87), maxLines: 2, overflow: TextOverflow.ellipsis), const SizedBox(height: 6), Row(children: List.generate(5, (index) => Icon(index < booking.starRating ? Icons.star_rounded : Icons.star_border_rounded, color: const Color(0xFFFFC107), size: 20))), const SizedBox(height: 10), Row(children: [Icon(Icons.account_balance_wallet_outlined, color: Colors.grey[700], size: 18), const SizedBox(width: 6), const Text('قیمت پرداخت شده', style: TextStyle(fontSize: 13, color: Colors.black54)), const Spacer(), Text(booking.priceDisplay, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)), const SizedBox(width: 3), Text(booking.currency, style: TextStyle(fontSize: 11, color: Colors.grey[700]))]), const SizedBox(height: 6), Row(children: [Icon(Icons.location_on_outlined, color: Colors.grey[700], size: 18), const SizedBox(width: 6), Expanded(child: Text(booking.location, style: TextStyle(fontSize: 13, color: Colors.grey[700]), overflow: TextOverflow.ellipsis))]), const SizedBox(height: 16), InkWell(onTap: () => _viewBookingDetails(booking.id), child: Container(padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12), decoration: BoxDecoration(color: primaryPurple.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.receipt_long_outlined, color: primaryPurple, size: 20), const SizedBox(width: 8), Text('مشاهده جزئیات رزرو', style: TextStyle(color: primaryPurple, fontSize: 13, fontWeight: FontWeight.bold))])))]))]));
+    return Card(
+      elevation: 1.5,
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: kCardBackground,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
+            children: [
+              Image.network(
+                booking.imageUrl,
+                height: 160,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (c, e, s) => Container(
+                    height: 160,
+                    color: kPageBackground,
+                    child: Center(
+                        child: Icon(Icons.broken_image_outlined,
+                            color: kLighterTextColor.withOpacity(0.7), size: 40))),
+              ),
+              Positioned(
+                top: 10,
+                right: 10,
+                child: _buildRatingBadge(booking.userRating.toStringAsFixed(1)),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  booking.hotelName,
+                  style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Row(
+                    children: List.generate(
+                        5,
+                            (index) => Icon(
+                            index < booking.starRating
+                                ? Icons.star_rounded
+                                : Icons.star_border_rounded,
+                            color: Colors.amber,
+                            size: 18))),
+                const SizedBox(height: 8),
+                _buildInfoRow(Icons.location_on_outlined, booking.location),
+                const SizedBox(height: 4),
+                _buildInfoRow(Icons.monetization_on_outlined,
+                    '${booking.priceDisplay} ${booking.currency} (پرداخت شده)'),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    icon: Icon(Icons.receipt_long_outlined,
+                        color: kPrimaryColor, size: 18),
+                    label: Text('مشاهده جزئیات',
+                        style: TextStyle(
+                            color: kPrimaryColor,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold)),
+                    onPressed: () => _viewBookingDetails(booking.id),
+                    style: TextButton.styleFrom(
+                      padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      backgroundColor: kPrimaryColor.withOpacity(0.08),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildFavoriteItemCard(FavoriteHotelModel hotel) {
-    // این ویجت چون برای نمایش افقی طراحی شده بود، اگر عمودی استفاده شود، width آن را حذف می‌کنیم
-    return Card(elevation: 2, margin: const EdgeInsets.symmetric(vertical: 0), /* قبلا vertical: 4.0 بود */ shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), color: Colors.white, child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [Stack(children: [ClipRRect(borderRadius: const BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12)), child: Image.network(hotel.imageUrl, height: 180, width: double.infinity, fit: BoxFit.cover, errorBuilder: (c,e,s) => Container(height: 180, color: Colors.grey[200], child: Center(child: Icon(Icons.broken_image, color: Colors.grey[400], size: 40))))), Positioned(top: 12, left: 12, child: InkWell(onTap: () => _toggleFavoriteStatus(hotel.id, hotel.isFavorite), child: Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.white.withOpacity(0.9), shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 3)]), child: Icon(hotel.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded, color: hotel.isFavorite ? Colors.redAccent : primaryPurple, size: 22)))), Positioned(top: 12, right: 12, child: Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5), decoration: BoxDecoration(color: Colors.black.withOpacity(0.5), borderRadius: BorderRadius.circular(12)), child: Row(mainAxisSize: MainAxisSize.min, children: [Text(hotel.userRating.toStringAsFixed(1), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)), const SizedBox(width: 4), const Icon(Icons.thumb_up_alt_rounded, color: Colors.white, size: 14)])))]), Padding(padding: const EdgeInsets.all(12.0), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(hotel.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87), maxLines: 2, overflow: TextOverflow.ellipsis), const SizedBox(height: 6), Row(children: List.generate(5, (index) => Icon(index < hotel.starRating ? Icons.star_rounded : Icons.star_border_rounded, color: const Color(0xFFFFC107), size: 20))), const SizedBox(height: 10), Row(children: [Icon(Icons.account_balance_wallet_outlined, color: Colors.grey[700], size: 18), const SizedBox(width: 6), const Text('شروع قیمت از', style: TextStyle(fontSize: 13, color: Colors.black54)), const Spacer(), Text(hotel.priceDisplay, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)), const SizedBox(width: 3), Text(hotel.currency, style: TextStyle(fontSize: 11, color: Colors.grey[700]))]), const SizedBox(height: 6), Row(children: [Icon(Icons.location_on_outlined, color: Colors.grey[700], size: 18), const SizedBox(width: 6), Expanded(child: Text(hotel.location, style: TextStyle(fontSize: 13, color: Colors.grey[700]), overflow: TextOverflow.ellipsis))]), const SizedBox(height: 16), ElevatedButton.icon(onPressed: () => _reserveFavoriteHotel(hotel.id), icon: const Icon(Icons.arrow_back_ios_new, size: 14, textDirection: TextDirection.ltr /* برای آیکون فلش رو به چپ */), label: const Text('رزرو این هتل', style: TextStyle(fontSize: 14)), style: ElevatedButton.styleFrom(backgroundColor: primaryPurple, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))))]))]));
+    return Card(
+      elevation: 1.5,
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: kCardBackground,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
+            children: [
+              Image.network(
+                hotel.imageUrl,
+                height: 160,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (c, e, s) => Container(
+                    height: 160,
+                    color: kPageBackground,
+                    child: Center(
+                        child: Icon(Icons.broken_image_outlined,
+                            color: kLighterTextColor.withOpacity(0.7), size: 40))),
+              ),
+              Positioned(
+                top: 10,
+                left: 10,
+                child: InkWell(
+                  onTap: () => _toggleFavoriteStatus(hotel.id, hotel.isFavorite),
+                  child: Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                        color: kCardBackground.withOpacity(0.9),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1))
+                        ]),
+                    child: Icon(
+                        hotel.isFavorite
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                        color: hotel.isFavorite ? Colors.redAccent : kPrimaryColor,
+                        size: 22),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 10,
+                right: 10,
+                child: _buildRatingBadge(hotel.userRating.toStringAsFixed(1)),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  hotel.name,
+                  style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Row(
+                    children: List.generate(
+                        5,
+                            (index) => Icon(
+                            index < hotel.starRating
+                                ? Icons.star_rounded
+                                : Icons.star_border_rounded,
+                            color: Colors.amber,
+                            size: 18))),
+                const SizedBox(height: 8),
+                _buildInfoRow(Icons.location_on_outlined, hotel.location),
+                const SizedBox(height: 4),
+                _buildInfoRow(Icons.sell_outlined,
+                    'شروع قیمت از ${hotel.priceDisplay} ${hotel.currency}'),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: ElevatedButton(
+                    onPressed: () => _reserveFavoriteHotel(hotel.id),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: kPrimaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                        textStyle: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600)),
+                    child: const Text('رزرو این هتل'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRatingBadge(String rating) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.6),
+          borderRadius: BorderRadius.circular(12)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(rating,
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13)),
+          const SizedBox(width: 3),
+          const Icon(Icons.thumb_up_alt_rounded, color: Colors.white, size: 13)
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, color: kIconColor, size: 16),
+        const SizedBox(width: 6),
+        Expanded(
+            child: Text(text,
+                style: TextStyle(fontSize: 13, color: kLightTextColor),
+                overflow: TextOverflow.ellipsis))
+      ],
+    );
+  }
+}
+
+class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
+  _SliverTabBarDelegate(this.tabBar, this.backgroundColor);
+
+  final TabBar tabBar;
+  final Color backgroundColor;
+
+  @override
+  double get minExtent => tabBar.preferredSize.height;
+  @override
+  double get maxExtent => tabBar.preferredSize.height;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: backgroundColor,
+      child: tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_SliverTabBarDelegate oldDelegate) {
+    return tabBar != oldDelegate.tabBar ||
+        backgroundColor != oldDelegate.backgroundColor;
   }
 }

@@ -91,7 +91,7 @@ extension FacilityExtension on Facility {
         // مقایسه displayName انگلیسی (پس از تبدیل به حروف کوچک و حذف کاراکترهای خاص)
         // با رشته نرمال شده
         String normalizedDisplayName = '';
-        if (facility == Facility.Wifi) normalizedDisplayName = "wifi";
+        if (facility == Facility.Wifi) normalizedDisplayName = "Wi-Fi";
         else if (facility == Facility.CoffeShop) normalizedDisplayName = "coffeeshop";
         else if (facility == Facility.RoomService) normalizedDisplayName = "roomservice";
         else if (facility == Facility.LaundryService) normalizedDisplayName = "laundryservice";

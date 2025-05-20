@@ -4,18 +4,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
-// این ثابت‌ها را از AuthenticationPage.dart به اینجا منتقل کنید یا import کنید
 const String BASE_URL = 'https://bookit.darkube.app';
 const String GUEST_LOGIN_ENDPOINT = '$BASE_URL/auth/login/';
 const String MANAGER_LOGIN_ENDPOINT = '$BASE_URL/hotelManager-api/get/';
-const String LOGOUT_ENDPOINT = '$BASE_URL/auth/logout/'; // !!! آدرس endpoint خروج را تایید و در صورت نیاز اصلاح کنید !!!
-
-
+const String LOGOUT_ENDPOINT = '$BASE_URL/auth/logout/';
 class AuthService with ChangeNotifier {
   final _storage = const FlutterSecureStorage();
   String? _token;
-  String? _userRole; // برای اینکه بدانیم کاربر مهمان است یا مدیر
+  String? _userRole;
   bool _isLoading = false;
   String? _errorMessage;
 

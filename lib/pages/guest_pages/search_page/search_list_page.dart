@@ -1,7 +1,9 @@
 
+import 'package:bookit/pages/guest_pages/search_page/widgets/hotel_search_list_card.dart';
 import 'package:flutter/material.dart';
 
-import '../home_page/widgets/hotel_list_card.dart';
+import '../reservation_detail_page/reservation_detail_page.dart';
+
 
 // Enum for sorting options
 enum SortType { none, popular, cheapest, expensive, discount }
@@ -48,7 +50,7 @@ class _SearchListPageState extends State<SearchListPage> {
       // ... (همان لیست هتل‌های شما)
       {
         "imageUrl": "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=500&q=60",
-        "name": "اسم هتل در حالت طولانی اسم هتل خیلی طولانی",
+        "name": "اسم اتاق در حالت طولانی اسم هتل خیلی طولانی",
         "location": "تهران",
         "rating": 4.0,
         "isFavorite": true,
@@ -519,7 +521,7 @@ class _SearchListPageState extends State<SearchListPage> {
                 final hotel = _filteredHotels[index];
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6.0),
-                  child: HotelListCard(
+                  child: HotelSearchListCard(
                     imageUrl: hotel["imageUrl"]!,
                     name: hotel["name"]!,
                     location: hotel["location"]!,
@@ -539,7 +541,14 @@ class _SearchListPageState extends State<SearchListPage> {
                         hotel["isFavorite"] = !hotel["isFavorite"]!;
                       });
                     },
-                    onReserveTap: () { /* ... */ },
+                    onReserveTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ReservationDetailPage(hotelId: '1234', numberOfAdults: 2,),
+                        ),
+                      );
+                    },
                   ),
                 );
               },

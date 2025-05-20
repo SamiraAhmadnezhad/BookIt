@@ -1,8 +1,29 @@
-import 'dart:io'; // برای کار با File
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart'; // برای انتخاب تصویر
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+import 'package:http_parser/http_parser.dart';
+
 import '../models/hotel_model.dart';
-import '../models/facility_enum.dart'; // enum امکانات
+import '../models/facility_enum.dart';
+import '../../../authentication_page/auth_service.dart'; // مسیر AuthService
+
+// --- ثابت‌های رنگی و استایل ---
+const Color kPrimaryColor = Color(0xFF542545);
+const Color kAccentColor = Color(0xFF7E3F6B);
+const Color kPageBackground = Color(0xFFF4F6F8);
+const Color kCardBackground = Colors.white;
+const Color kTextFieldBackground = Color(0xFFFAFAFA);
+const Color kHintColor = Colors.grey;
+const Color kIconColor = Colors.grey;
+const Color kErrorColor = Colors.redAccent;
+const Color kInputBorderColor = Color(0xFFD0D0D0);
+
+// TODO: آدرس‌های واقعی API خود را برای افزودن/ویرایش هتل اینجا قرار دهید
+const String ADD_HOTEL_ENDPOINT = 'https://bookit.darkube.app/hotel-api/create/'; // مثال: Endpoint برای ایجاد
+const String EDIT_HOTEL_ENDPOINT_PREFIX = 'https://bookit.darkube.app/hotel-api/create/'; // پیشوند برای ویرایش، ID به آن اضافه می‌شود
 
 class AddHotelScreen extends StatefulWidget {
   final Hotel? hotel;
@@ -20,36 +41,39 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
   late TextEditingController _nameController;
   late TextEditingController _descriptionController;
   late TextEditingController _locationController;
-  late TextEditingController _ratingController;
   late TextEditingController _ibanController;
+  // این کنترلرها را نگه می‌داریم اما فعلاً در ارسال به سرور استفاده نمی‌شوند
+  late TextEditingController _ratingController;
   late TextEditingController _roomCountController;
 
-  String? _mainImageSource;
-  String? _licenseImageSource;
 
   XFile? _selectedMainImageFile;
+  String? _existingMainImageUrl;
+
   XFile? _selectedLicenseImageFile;
+  String? _existingLicenseImageUrl;
 
   Set<Facility> _selectedAmenities = {};
+  bool _isLoading = false;
 
-  final Color _customPurpleColor = const Color(0xFF542545);
   bool get _isEditing => widget.hotel != null;
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.hotel?.name);
-    _ratingController = TextEditingController(text: widget.hotel?.rating.toString());
-    _ibanController = TextEditingController(text: widget.hotel?.iban);
+    _nameController = TextEditingController(text: widget.hotel?.name ?? '');
+    _descriptionController = TextEditingController(text: widget.hotel?.description ?? '');
+    _locationController = TextEditingController(text: widget.hotel?.location ?? '');
+    _ibanController = TextEditingController(text: widget.hotel?.iban ?? '');
+    // مقداردهی اولیه برای فیلدهایی که فعلا ارسال نمی‌شوند
+    _ratingController = TextEditingController(text: widget.hotel?.rating.toString() ?? '');
     _roomCountController = TextEditingController(text: widget.hotel?.roomCount?.toString() ?? '');
 
-    _descriptionController = TextEditingController(text: widget.hotel?.description ?? '');
-    _locationController = TextEditingController(text: widget.hotel?.location ?? ''); //  مقداردهی اولیه با فرض non-null
 
     if (_isEditing && widget.hotel != null) {
       _selectedAmenities = widget.hotel!.amenities.toSet();
-      _mainImageSource = widget.hotel!.imageUrl;
-      _licenseImageSource = widget.hotel!.licenseImageUrl;
+      _existingMainImageUrl = widget.hotel!.imageUrl;
+      _existingLicenseImageUrl = widget.hotel!.licenseImageUrl;
     }
   }
 
@@ -58,460 +82,527 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
     _nameController.dispose();
     _descriptionController.dispose();
     _locationController.dispose();
-    _ratingController.dispose();
     _ibanController.dispose();
+    _ratingController.dispose();
     _roomCountController.dispose();
     super.dispose();
   }
 
+  void _showSnackBar(String message, {bool isError = false, int durationSeconds = 3}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(color: Colors.white)),
+        backgroundColor: isError ? kErrorColor : Colors.green,
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: durationSeconds),
+      ),
+    );
+  }
+
   Future<void> _pickImage(ImageSource source, {required bool isMainImage}) async {
+    if (_isLoading) return;
     try {
-      final XFile? pickedFile = await _picker.pickImage(source: source, imageQuality: 70);
+      final XFile? pickedFile = await _picker.pickImage(
+        source: source,
+        imageQuality: 70,
+        maxWidth: 1024,
+        maxHeight: 1024,
+      );
       if (pickedFile != null) {
         setState(() {
           if (isMainImage) {
             _selectedMainImageFile = pickedFile;
-            _mainImageSource = pickedFile.path;
+            _existingMainImageUrl = null;
           } else {
             _selectedLicenseImageFile = pickedFile;
-            _licenseImageSource = pickedFile.path;
+            _existingLicenseImageUrl = null;
           }
         });
       }
     } catch (e) {
-      print("خطا در انتخاب تصویر: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطا در انتخاب تصویر: $e')),
-        );
-      }
+      debugPrint("خطا در انتخاب تصویر: $e");
+      if (mounted) _showSnackBar('خطا در انتخاب تصویر. لطفاً دسترسی‌ها را بررسی کنید.', isError: true);
     }
   }
 
   void _showImageSourceActionSheet({required bool isMainImage}) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (BuildContext context) {
         return SafeArea(
-          child: Wrap(
-            children: <Widget>[
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('گالری'),
-                onTap: () {
-                  _pickImage(ImageSource.gallery, isMainImage: isMainImage);
-                  Navigator.of(context).pop();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_camera),
-                title: const Text('دوربین'),
-                onTap: () {
-                  _pickImage(ImageSource.camera, isMainImage: isMainImage);
-                  Navigator.of(context).pop();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.link),
-                title: const Text('وارد کردن URL'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _showUrlInputDialog(isMainImage: isMainImage);
-                },
-              ),
-              if ((isMainImage && _mainImageSource != null) || (!isMainImage && _licenseImageSource != null))
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Wrap(
+              children: <Widget>[
                 ListTile(
-                  leading: const Icon(Icons.delete_outline, color: Colors.red),
-                  title: const Text('حذف تصویر', style: TextStyle(color: Colors.red)),
+                  leading: const Icon(Icons.photo_library_outlined, color: kPrimaryColor),
+                  title: const Text('انتخاب از گالری', style: TextStyle(fontWeight: FontWeight.w500)),
                   onTap: () {
-                    setState(() {
-                      if (isMainImage) {
-                        _selectedMainImageFile = null;
-                        _mainImageSource = null;
-                      } else {
-                        _selectedLicenseImageFile = null;
-                        _licenseImageSource = null;
-                      }
-                    });
+                    _pickImage(ImageSource.gallery, isMainImage: isMainImage);
                     Navigator.of(context).pop();
                   },
                 ),
-            ],
+                ListTile(
+                  leading: const Icon(Icons.camera_alt_outlined, color: kPrimaryColor),
+                  title: const Text('گرفتن عکس با دوربین', style: TextStyle(fontWeight: FontWeight.w500)),
+                  onTap: () {
+                    _pickImage(ImageSource.camera, isMainImage: isMainImage);
+                    Navigator.of(context).pop();
+                  },
+                ),
+                if ((isMainImage && (_selectedMainImageFile != null || _existingMainImageUrl != null)) ||
+                    (!isMainImage && (_selectedLicenseImageFile != null || _existingLicenseImageUrl != null)))
+                  ListTile(
+                    leading: const Icon(Icons.delete_outline, color: kErrorColor),
+                    title: const Text('حذف تصویر', style: TextStyle(color: kErrorColor, fontWeight: FontWeight.w500)),
+                    onTap: () {
+                      setState(() {
+                        if (isMainImage) {
+                          _selectedMainImageFile = null;
+                          _existingMainImageUrl = null;
+                        } else {
+                          _selectedLicenseImageFile = null;
+                          _existingLicenseImageUrl = null;
+                        }
+                      });
+                      Navigator.of(context).pop();
+                    },
+                  ),
+              ],
+            ),
           ),
         );
       },
     );
   }
 
-  void _showUrlInputDialog({required bool isMainImage}) {
-    TextEditingController urlController = TextEditingController();
-    if (isMainImage && _mainImageSource != null && Uri.tryParse(_mainImageSource!)?.isAbsolute == true) {
-      urlController.text = _mainImageSource!;
-    } else if (!isMainImage && _licenseImageSource != null && Uri.tryParse(_licenseImageSource!)?.isAbsolute == true) {
-      urlController.text = _licenseImageSource!;
+  Future<void> _submitHotelData() async {
+    if (!_formKey.currentState!.validate()) {
+      _showSnackBar('لطفاً تمام موارد الزامی را تکمیل کنید و خطاهای فرم را برطرف نمایید.', isError: true, durationSeconds: 4);
+      return;
+    }
+    if (_selectedAmenities.isEmpty) {
+      _showSnackBar('لطفاً حداقل یک امکان برای هتل انتخاب کنید.', isError: true);
+      return;
+    }
+    if (_selectedMainImageFile == null && _existingMainImageUrl == null) {
+      _showSnackBar('عکس اصلی هتل الزامی است.', isError: true);
+      return;
+    }
+    if (_selectedLicenseImageFile == null && _existingLicenseImageUrl == null) {
+      _showSnackBar('عکس مجوز هتل الزامی است.', isError: true);
+      return;
     }
 
-    showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text(isMainImage ? 'URL عکس اصلی' : 'URL عکس مجوز'),
-            content: TextField(
-              controller: urlController,
-              decoration: const InputDecoration(hintText: "https://example.com/image.png"),
-              keyboardType: TextInputType.url,
-            ),
-            actions: [
-              TextButton(
-                child: const Text("لغو"),
-                onPressed: () => Navigator.pop(context),
-              ),
-              TextButton(
-                child: const Text("تایید"),
-                onPressed: () {
-                  if (Uri.tryParse(urlController.text)?.hasAbsolutePath ?? false) {
-                    setState(() {
-                      if (isMainImage) {
-                        _mainImageSource = urlController.text;
-                        _selectedMainImageFile = null;
-                      } else {
-                        _licenseImageSource = urlController.text;
-                        _selectedLicenseImageFile = null;
-                      }
-                    });
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('آدرس URL وارد شده معتبر نیست.'), backgroundColor: Colors.red),
-                    );
-                  }
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          );
-        });
-  }
+    setState(() => _isLoading = true);
 
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final String? token = authService.token;
 
-  Future<void> _saveHotelInfo() async {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
+    if (token == null) {
+      _showSnackBar('توکن احراز هویت یافت نشد. لطفاً مجددا وارد شوید.', isError: true);
+      setState(() => _isLoading = false);
+      return;
+    }
 
-      String? finalMainImageUrl = _mainImageSource;
-      String? finalLicenseImageUrl = _licenseImageSource;
+    String url = _isEditing ? '$EDIT_HOTEL_ENDPOINT_PREFIX${widget.hotel!.id}/' : ADD_HOTEL_ENDPOINT;
+    var request = http.MultipartRequest(_isEditing ? 'PUT' : 'POST', Uri.parse(url));
+    request.headers['Authorization'] = 'Bearer $token';
 
-      if (_selectedMainImageFile != null) {
-        print("عکس اصلی برای آپلود: ${_selectedMainImageFile!.path}");
-        // finalMainImageUrl = await uploadImageAndGetUrl(_selectedMainImageFile!); // تابع فرضی آپلود
-      }
-      if (_selectedLicenseImageFile != null) {
-        print("عکس مجوز برای آپلود: ${_selectedLicenseImageFile!.path}");
-        // finalLicenseImageUrl = await uploadImageAndGetUrl(_selectedLicenseImageFile!); // تابع فرضی آپلود
-      }
+    request.fields['name'] = _nameController.text;
+    request.fields['location'] = _locationController.text;
+    request.fields['description'] = _descriptionController.text;
+    request.fields['hotel_iban_number'] = _ibanController.text;
+    request.fields['facilities'] = jsonEncode(_selectedAmenities.map((f) => f.name).toList());
+    if (_selectedMainImageFile != null) {
+      request.files.add(await http.MultipartFile.fromPath(
+        'image',
+        _selectedMainImageFile!.path,
+        contentType: MediaType('image', _selectedMainImageFile!.path.split('.').last),
+      ));
+    }
 
-      final newHotel = Hotel(
-        id: _isEditing ? widget.hotel!.id : DateTime.now().millisecondsSinceEpoch.toString(),
-        name: _nameController.text,
-        imageUrl: finalMainImageUrl,
-        description: _descriptionController.text,
-        location: _locationController.text, //  مقداردهی location با توجه به ضروری بودن
-        amenities: _selectedAmenities.toList(),
-        rating: double.tryParse(_ratingController.text) ?? 0.0,
-        iban: _ibanController.text,
-        licenseImageUrl: finalLicenseImageUrl,
-        roomCount: int.tryParse(_roomCountController.text),
-      );
+    if (_selectedLicenseImageFile != null) {
+      request.files.add(await http.MultipartFile.fromPath(
+        'hotel_license',
+        _selectedLicenseImageFile!.path,
+        contentType: MediaType('image', _selectedLicenseImageFile!.path.split('.').last),
+      ));
+    }
 
-      if (mounted) {
-        Navigator.pop(context, newHotel);
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('لطفاً خطاهای فرم را برطرف کنید.'), backgroundColor: Colors.red),
+    try {
+      final streamedResponse = await request.send().timeout(const Duration(seconds: 45)); // افزایش تایم‌اوت
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (!mounted) return;
+
+      final String responseBodyString = utf8.decode(response.bodyBytes);
+      debugPrint("Submit Hotel Response Status: ${response.statusCode}");
+      debugPrint("Submit Hotel Response Body: $responseBodyString");
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        _showSnackBar(
+          _isEditing ? 'اطلاعات هتل با موفقیت ویرایش شد.' : 'هتل جدید با موفقیت اضافه شد.',
+          isError: false,
         );
+        Navigator.pop(context, true); // بازگشت با مقدار true برای نشان دادن موفقیت
+      } else {
+        String errorMessage = 'خطا در ارسال اطلاعات هتل.';
+        try {
+          final errorData = jsonDecode(responseBodyString);
+          if (errorData is Map && errorData.isNotEmpty) {
+            errorMessage = errorData.entries.map((e) => '${e.key}: ${e.value is List ? (e.value as List).join(', ') : e.value}').join('\n');
+          } else if (errorData is String) {
+            errorMessage = errorData;
+          }
+        } catch (e) {
+          errorMessage = responseBodyString;
+        }
+        _showSnackBar('$errorMessage (کد: ${response.statusCode})', isError: true, durationSeconds: 5);
       }
+    } catch (e) {
+      debugPrint("خطا در ارسال اطلاعات هتل: $e");
+      if (mounted) _showSnackBar('خطا در برقراری ارتباط با سرور: $e', isError: true);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  Widget _buildImagePicker(
-      {required String label, required bool isMainImage, String? currentImageSource, XFile? selectedFile}) {
-    Widget imageWidget;
-    if (selectedFile != null) {
-      imageWidget = Image.file(File(selectedFile.path), fit: BoxFit.cover);
-    } else if (currentImageSource != null && Uri.tryParse(currentImageSource)?.isAbsolute == true) {
-      imageWidget = Image.network(currentImageSource, fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 40, color: Colors.grey),
-      );
-    } else if (currentImageSource != null) {
-      try {
-        imageWidget = Image.file(File(currentImageSource), fit: BoxFit.cover);
-      } catch (e) {
-        imageWidget = const Icon(Icons.broken_image, size: 40, color: Colors.grey);
-      }
-    }
-    else {
-      imageWidget = const Icon(Icons.image_search, size: 40, color: Colors.grey);
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(right: 4.0, bottom: 8.0),
-          child: Text(
-            label,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.black87),
-          ),
-        ),
-        InkWell(
-          onTap: () => _showImageSourceActionSheet(isMainImage: isMainImage),
-          child: Container(
-            height: 150,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(12.0),
-              border: Border.all(color: Colors.grey.shade400),
+  Widget _buildFormSection({required String title, required List<Widget> children}) {
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+      color: kCardBackground,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: kPrimaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.right,
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(11.0),
-              child: imageWidget,
-            ),
-          ),
+            const SizedBox(height: 16.0),
+            ...children,
+          ],
         ),
-        if(isMainImage && (_mainImageSource == null && _selectedMainImageFile == null))
-          Padding(
-            padding: const EdgeInsets.only(top: 4.0, right: 4.0),
-            child: Text('عکس اصلی هتل الزامی است.', style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12)),
-          ),
-        const SizedBox(height: 20),
-      ],
+      ),
     );
   }
 
-  Widget _buildCustomTextField({
-    required String label,
+  Widget _buildCustomTextFormField({
     required TextEditingController controller,
+    required String labelText,
+    String? hintText,
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
     int maxLines = 1,
-    double fieldHeight = 55.0,
     bool isLtr = false,
-    bool isOptional = false,
+    IconData? prefixIcon,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(right: 4.0, bottom: 8.0),
-          child: Text(
-            label + (isOptional ? ' (اختیاری)' : ''),
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.black87),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        maxLines: maxLines,
+        textAlign: isLtr ? TextAlign.left : TextAlign.right,
+        textDirection: isLtr ? TextDirection.ltr : TextDirection.rtl,
+        style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w500),
+        decoration: InputDecoration(
+          labelText: '$labelText *',
+          labelStyle: const TextStyle(color: kPrimaryColor, fontWeight: FontWeight.w500),
+          hintText: hintText,
+          hintStyle: const TextStyle(color: kHintColor),
+          prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: kIconColor, textDirection: isLtr ? TextDirection.ltr : TextDirection.rtl) : null,
+          filled: true,
+          fillColor: kTextFieldBackground,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: const BorderSide(color: kInputBorderColor, width: 1.0),
           ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: const BorderSide(color: kInputBorderColor, width: 1.0),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: const BorderSide(color: kAccentColor, width: 1.8),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: const BorderSide(color: kErrorColor, width: 1.5),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: const BorderSide(color: kErrorColor, width: 1.8),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
         ),
-        Container(
-          height: maxLines > 1 ? null : fieldHeight,
-          constraints: maxLines > 1 ? BoxConstraints(minHeight: fieldHeight * 1.5) : null,
-          decoration: BoxDecoration(
-            color: Colors.grey[200],
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          child: TextFormField(
-            controller: controller,
-            keyboardType: keyboardType,
-            maxLines: maxLines,
-            textAlign: isLtr ? TextAlign.left : TextAlign.right,
-            textDirection: isLtr ? TextDirection.ltr : TextDirection.rtl,
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(
-                vertical: maxLines > 1 ? 12.0 : (fieldHeight - 28) / 2,
-                horizontal: 16.0,
-              ),
-              hintText: isLtr ? 'Enter $label' : null,
-              hintStyle: const TextStyle(color: Colors.grey),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return '$labelText نمی‌تواند خالی باشد';
+          }
+          return validator?.call(value);
+        },
+      ),
+    );
+  }
+
+  Widget _buildImagePickerCard({
+    required String title,
+    required bool isMainImage,
+    XFile? selectedFile,
+    String? existingImageUrl,
+  }) {
+    Widget imageDisplay;
+    bool hasImage = false;
+
+    if (selectedFile != null) {
+      imageDisplay = Image.file(File(selectedFile.path), fit: BoxFit.cover, key: ValueKey(selectedFile.path));
+      hasImage = true;
+    } else if (existingImageUrl != null && existingImageUrl.isNotEmpty) {
+      imageDisplay = Image.network(existingImageUrl, fit: BoxFit.cover, key: ValueKey(existingImageUrl),
+        errorBuilder: (context, error, stackTrace) => Icon(Icons.broken_image_outlined, size: 48, color: kHintColor.withOpacity(0.7)),
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Center(child: CircularProgressIndicator(
+            value: loadingProgress.expectedTotalBytes != null
+                ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                : null,
+            strokeWidth: 2.5,
+            color: kAccentColor,
+          ));
+        },
+      );
+      hasImage = true;
+    } else {
+      imageDisplay = Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.image_search_outlined, size: 48, color: kHintColor.withOpacity(0.7)),
+          const SizedBox(height: 8),
+          Text("تصویری انتخاب نشده", style: TextStyle(color: kHintColor.withOpacity(0.9))),
+        ],
+      );
+      hasImage = false;
+    }
+
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+      color: kCardBackground,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '$title *',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: kPrimaryColor, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.right,
             ),
-            validator: validator ?? (value) { //  از validator پیش‌فرض استفاده می‌شود
-              if (value == null || value.isEmpty) {
-                return '$label نمی‌تواند خالی باشد';
-              }
-              return null;
-            },
-          ),
+            const SizedBox(height: 12),
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: InkWell(
+                onTap: () => _showImageSourceActionSheet(isMainImage: isMainImage),
+                borderRadius: BorderRadius.circular(8.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: kTextFieldBackground,
+                    borderRadius: BorderRadius.circular(8.0),
+                    border: Border.all(color: hasImage ? Colors.transparent : kInputBorderColor.withOpacity(0.7), width: 1),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(7.0),
+                    child: imageDisplay,
+                  ),
+                ),
+              ),
+            ),
+            if (!hasImage && _formKey.currentState != null && !_formKey.currentState!.validate())
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Text('این تصویر الزامی است.', style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12)),
+              ),
+          ],
         ),
-        const SizedBox(height: 20),
-      ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_isEditing ? 'ویرایش اطلاعات هتل' : 'افزودن هتل جدید', style: TextStyle(color: _customPurpleColor, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        elevation: 1,
-        iconTheme: IconThemeData(color: _customPurpleColor),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
-          child: Padding(
+    final theme = Theme.of(context);
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: kPageBackground,
+        appBar: AppBar(
+          title: Text(
+            _isEditing ? 'ویرایش اطلاعات هتل' : 'افزودن هتل جدید',
+            style: const TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold),
+          ),
+          backgroundColor: kCardBackground,
+          elevation: 1.5,
+          iconTheme: const IconThemeData(color: kPrimaryColor),
+          actions: [
+            if (_isLoading)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5, valueColor: AlwaysStoppedAnimation<Color>(kAccentColor)))),
+              )
+          ],
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  _buildCustomTextField(
-                    label: 'نام هتل',
-                    controller: _nameController,
-                  ),
-                  _buildImagePicker(
-                    label: 'عکس اصلی هتل',
-                    isMainImage: true,
-                    currentImageSource: _mainImageSource,
-                    selectedFile: _selectedMainImageFile,
-                  ),
-                  _buildCustomTextField(
-                    label: 'توضیحات هتل',
-                    controller: _descriptionController,
-                    maxLines: 3,
-                    isOptional: true,
-                  ),
-                  _buildCustomTextField(
-                    label: 'موقعیت مکانی',
-                    controller: _locationController,
-                    maxLines: 2,
-                    isOptional: false, // موقعیت الزامی
-                    // ولیدیتور، به صورت پیش‌فرض به درستی عمل می‌کند، اما می‌توانید سفارشی‌سازی کنید
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(right: 4.0, bottom: 8.0, top: 10.0),
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        'امکانات',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 700),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      _buildFormSection(
+                        title: 'اطلاعات اصلی هتل',
+                        children: [
+                          _buildCustomTextFormField(
+                            controller: _nameController,
+                            labelText: 'نام هتل',
+                            hintText: 'مثال: هتل بزرگ تهران',
+                            prefixIcon: Icons.business_outlined,
+                          ),
+                          _buildCustomTextFormField(
+                            controller: _locationController,
+                            labelText: 'موقعیت مکانی',
+                            hintText: 'مثال: تهران، خیابان ولیعصر',
+                            prefixIcon: Icons.location_on_outlined,
+                            maxLines: 2,
+                          ),
+                          _buildCustomTextFormField(
+                            controller: _descriptionController,
+                            labelText: 'توضیحات هتل',
+                            hintText: 'توضیحاتی درباره هتل و امکانات آن بنویسید...',
+                            prefixIcon: Icons.description_outlined,
+                            maxLines: 3,
+                          ),
+                        ],
                       ),
-                    ),
-                  ),
-                  Wrap(
-                    spacing: 8.0,
-                    runSpacing: 0.0,
-                    alignment: WrapAlignment.end,
-                    children: Facility.values.map((facility) {
-                      return SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.42,
-                        child: CheckboxListTile(
-                          title: Text(facility.displayName, style: const TextStyle(fontSize: 14)),
-                          value: _selectedAmenities.contains(facility),
-                          onChanged: (bool? value) {
-                            setState(() {
-                              if (value == true) {
-                                _selectedAmenities.add(facility);
-                              } else {
-                                _selectedAmenities.remove(facility);
+                      _buildImagePickerCard(
+                        title: 'عکس اصلی هتل',
+                        isMainImage: true,
+                        selectedFile: _selectedMainImageFile,
+                        existingImageUrl: _existingMainImageUrl,
+                      ),
+                      _buildFormSection(
+                        title: 'امکانات هتل',
+                        children: [
+                          GridView.count(
+                            crossAxisCount: 2,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            childAspectRatio: 3.5,
+                            mainAxisSpacing: 0,
+                            crossAxisSpacing: 8,
+                            children: Facility.values.map((facility) {
+                              return CheckboxListTile(
+                                title: Text(facility.displayName, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
+                                value: _selectedAmenities.contains(facility),
+                                onChanged: (bool? value) {
+                                  setState(() {
+                                    if (value == true) {
+                                      _selectedAmenities.add(facility);
+                                    } else {
+                                      _selectedAmenities.remove(facility);
+                                    }
+                                  });
+                                },
+                                activeColor: kPrimaryColor,
+                                controlAffinity: ListTileControlAffinity.leading,
+                                contentPadding: EdgeInsets.zero,
+                                dense: true,
+                              );
+                            }).toList(),
+                          ),
+                          if (_selectedAmenities.isEmpty && _formKey.currentState != null && !_formKey.currentState!.validate())
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                'انتخاب حداقل یک امکان الزامی است.',
+                                style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12),
+                              ),
+                            ),
+                        ],
+                      ),
+                      _buildFormSection(
+                        title: 'اطلاعات مالی',
+                        children: [
+                          _buildCustomTextFormField(
+                            controller: _ibanController,
+                            labelText: 'شماره شبا',
+                            hintText: 'مثال: 123456789012345678901234',
+                            prefixIcon: Icons.account_balance_outlined,
+                            keyboardType: TextInputType.number, // شماره شبا فقط عدد است
+                            isLtr: true, // برای نمایش صحیح اعداد
+                            validator: (value) {
+                              if (value == null || value.isEmpty) return 'شماره شبا الزامی است';
+                              if (!RegExp(r'^[0-9]{24}$').hasMatch(value)) { // فقط ۲۴ رقم عددی
+                                return 'فرمت شماره شبا صحیح نیست (۲۴ رقم)';
                               }
-                            });
-                          },
-                          activeColor: _customPurpleColor,
-                          controlAffinity: ListTileControlAffinity.leading,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  ValueListenableBuilder<Set<Facility>>(
-                    valueListenable: ValueNotifier(_selectedAmenities),
-                    builder: (context, value, child) {
-                      if (value.isEmpty && (_formKey.currentState != null && !_formKey.currentState!.validate() && ModalRoute.of(context)?.isCurrent == true)) {
-                        // خطای امکانات
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
-
-                  const SizedBox(height: 20),
-                  _buildCustomTextField(
-                    label: 'امتیاز (0 تا 5)',
-                    controller: _ratingController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    isLtr: true,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) return 'امتیاز الزامی است';
-                      final val = double.tryParse(value);
-                      if (val == null) return 'امتیاز باید عددی باشد';
-                      if (val < 0 || val > 5) return 'امتیاز باید بین 0 و 5 باشد';
-                      return null;
-                    },
-                  ),
-                  _buildCustomTextField(
-                    label: 'تعداد اتاق‌ها',
-                    controller: _roomCountController,
-                    keyboardType: TextInputType.number,
-                    isLtr: true,
-                    isOptional: true,
-                    validator: (value) {
-                      if (value != null && value.isNotEmpty) {
-                        final val = int.tryParse(value);
-                        if (val == null) return 'تعداد اتاق باید عدد صحیح باشد';
-                        if (val < 0) return 'تعداد اتاق نمی‌تواند منفی باشد';
-                      }
-                      return null;
-                    },
-                  ),
-                  _buildCustomTextField(
-                    label: 'شماره شبا (IBAN)',
-                    controller: _ibanController,
-                    keyboardType: TextInputType.text,
-                    isLtr: true,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) return 'شماره شبا الزامی است';
-                      if (!RegExp(r'^IR[0-9]{24}$').hasMatch(value.toUpperCase())) {
-                        return 'فرمت شماره شبا صحیح نیست (مثال: IR120120000000001234567890)';
-                      }
-                      return null;
-                    },
-                  ),
-                  _buildImagePicker(
-                    label: 'عکس مجوز هتل',
-                    isMainImage: false,
-                    currentImageSource: _licenseImageSource,
-                    selectedFile: _selectedLicenseImageFile,
-                  ),
-                  const SizedBox(height: 30),
-                  Center(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _customPurpleColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 14),
-                        textStyle: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                        ),
+                              return null;
+                            },
+                          ),
+                        ],
                       ),
-                      onPressed: () {
-                        if (_selectedAmenities.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('لطفاً حداقل یک امکان برای هتل انتخاب کنید.'), backgroundColor: Colors.red),
-                          );
-                          return;
-                        }
-                        _saveHotelInfo();
-                      },
-                      child: Text(_isEditing ? 'ذخیره‌ی تغییرات' : 'افزودن هتل'),
-                    ),
+                      _buildImagePickerCard(
+                        title: 'عکس مجوز هتل',
+                        isMainImage: false,
+                        selectedFile: _selectedLicenseImageFile,
+                        existingImageUrl: _existingLicenseImageUrl,
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        icon: _isLoading
+                            ? Container(
+                          width: 24,
+                          height: 24,
+                          padding: const EdgeInsets.all(2.0),
+                          child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                        )
+                            : Icon(_isEditing ? Icons.save_outlined : Icons.add_circle_outline_outlined),
+                        label: Text(
+                          _isEditing ? 'ذخیره‌ی تغییرات' : 'افزودن هتل',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: kPrimaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                          elevation: 2,
+                        ),
+                        onPressed: _isLoading ? null : _submitHotelData,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                   ),
-                  const SizedBox(height: 10),
-                ],
+                ),
               ),
             ),
           ),
