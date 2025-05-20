@@ -3,6 +3,7 @@ import 'package:bookit/pages/authentication_page/auth_service.dart';
 import 'package:bookit/pages/authentication_page/authentication_page.dart';
 import 'package:bookit/pages/guest_pages/guest_main_screen.dart';
 import 'package:bookit/pages/manger_pages/hotel_info_page/add_hotel_info.dart';
+import 'package:bookit/pages/guest_pages/hotel_detail_page/hotel_detail_page.dart';
 import 'package:bookit/pages/manger_pages/manager_main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
