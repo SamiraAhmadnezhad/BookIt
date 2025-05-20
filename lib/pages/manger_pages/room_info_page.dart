@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'add_room_page.dart';
-import 'hotel_info_page/discount_page.dart';
+import 'discount_page.dart';
 
 const Color kManagerPrimaryColor = Color(0xFF542545);
 const Color kPageBackgroundColor = Color(0xFFF0F0F0);

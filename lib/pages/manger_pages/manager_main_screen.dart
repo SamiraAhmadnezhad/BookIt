@@ -1,10 +1,9 @@
 // guest_main_screen.dart
 import 'package:bookit/pages/guest_pages/search_page/hotel_search_page.dart';
-import 'package:bookit/pages/manger_pages/hotel_info_page/add_hotel_info.dart';
 import 'package:flutter/material.dart';
 import '../guest_pages/custom_bottom_nav_bar.dart';
 import 'account_page/manager_account_page.dart';
-import 'hotel_info_page/hotel_list_screen.dart';
+import 'hotel_info_page/screens/hotel_list_screen.dart';
 class ManagerMainScreen extends StatefulWidget {
   const ManagerMainScreen({super.key});
 
@@ -17,7 +16,7 @@ class _ManagerMainScreenState extends State<ManagerMainScreen> {
 
  static final List<Widget> _widgetOptions = <Widget>[
     HotelListScreen(),
-   AddHotelInfo(),
+   ManagerAccountPage(),
     ManagerAccountPage(),
   ];
 
@@ -28,9 +27,9 @@ class _ManagerMainScreenState extends State<ManagerMainScreen> {
       activeIcon: const Icon(Icons.add_home_work_sharp), // یا Icons.home
     ),
     NavBarItemData(
-      label: 'افزودن اتاق',
-      icon: const Icon(Icons.add_home_outlined), // یا فقط Icons.search
-      activeIcon: const Icon(Icons.add_home_sharp), // آیکون متفاوت برای فعال
+      label: 'گزارشات',
+      icon: const Icon(Icons.library_books_outlined), // یا فقط Icons.search
+      activeIcon: const Icon(Icons.library_books_rounded), // آیکون متفاوت برای فعال
     ),
     NavBarItemData(
       label: 'پروفایل',

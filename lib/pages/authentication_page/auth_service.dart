@@ -102,6 +102,7 @@ class AuthService with ChangeNotifier {
   Future<bool> loginManager(String email, String password) async {
     _isLoading = true;
     _errorMessage = null;
+    print("salam");
     notifyListeners();
     try {
       final response = await http.post(
@@ -109,6 +110,7 @@ class AuthService with ChangeNotifier {
         headers: <String, String>{'Content-Type': 'application/json; charset=UTF-8'},
         body: jsonEncode(<String, String>{'email': email.trim(), 'password': password}),
       ).timeout(const Duration(seconds: 15));
+      print(response.statusCode);
       return await _processLoginResponse(response, 'manager');
     } catch (e) {
       print('Error during guest login request: $e');
