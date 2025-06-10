@@ -4,20 +4,18 @@ import 'auth_tab_bar.dart';
 import 'forms/login_form.dart';
 import 'forms/manager_signup_form.dart';
 import 'forms/guest_signup_form.dart';
-import 'forms/otp_form.dart'; // Make sure OtpForm accepts isLoadingResend
+import 'forms/otp_form.dart';
 
 class AuthCard extends StatelessWidget {
-  // State Variables passed down
   final int selectedTab;
   final bool isLoginAsManager;
   final ValueChanged<bool?> onLoginUserTypeBoolChanged;
   final bool otpSend;
   final String otpTabLabel;
-  final bool isChecked; // For terms checkbox
-  final bool isLoading; // For main action button
-  final bool isLoadingResendOtp; // <<< NEW: For OTP resend button
+  final bool isChecked;
+  final bool isLoading;
+  final bool isLoadingResendOtp;
 
-  // Controllers passed down
   final TextEditingController loginUsernameController;
   final TextEditingController loginPasswordController;
   final TextEditingController managerUsernameController;
@@ -37,13 +35,12 @@ class AuthCard extends StatelessWidget {
   final TextEditingController otp3Controller;
   final TextEditingController otp4Controller;
 
-  // Callbacks passed down
   final ValueChanged<int> onTabChanged;
   final ValueChanged<bool?> onTermsChanged;
   final VoidCallback onLoginPressed;
   final VoidCallback onForgotPasswordPressed;
-  final VoidCallback onContinuePressed; // For Manager/Guest signup initial step
-  final VoidCallback onSignupSubmitPressed; // For final OTP submission
+  final VoidCallback onContinuePressed;
+  final VoidCallback onSignupSubmitPressed;
   final VoidCallback onResendOtpPressed;
 
   const AuthCard({
@@ -55,7 +52,7 @@ class AuthCard extends StatelessWidget {
     required this.otpTabLabel,
     required this.isChecked,
     required this.isLoading,
-    required this.isLoadingResendOtp, // <<< NEW
+    required this.isLoadingResendOtp,
     required this.loginUsernameController,
     required this.loginPasswordController,
     required this.managerUsernameController,
@@ -89,15 +86,15 @@ class AuthCard extends StatelessWidget {
     final Color primaryTextColor = getPrimaryTextColorInsideCard(selectedTab);
     final Color buttonBackgroundColor = getPrimaryColor(selectedTab);
     final Color buttonTextColor = getSecondaryTextColorForButton(selectedTab);
+    const double formContentHeight = 330.0;
 
     String buttonText = '';
     VoidCallback? buttonAction;
     Widget formContent;
 
     if (otpSend && (selectedTab == 1 || selectedTab == 2)) {
-      // OTP Stage for Manager or Guest Signup
-      buttonText = 'تایید و ثبت نام'; // Or "تایید کد" or similar
-      buttonAction = onSignupSubmitPressed; // Final signup action (verify OTP)
+      buttonText = 'تایید و ثبت نام';
+      buttonAction = onSignupSubmitPressed;
       formContent = OtpForm(
         otpLabel: otpTabLabel,
         otp1Controller: otp1Controller,
@@ -106,27 +103,24 @@ class AuthCard extends StatelessWidget {
         otp4Controller: otp4Controller,
         onResendOtp: onResendOtpPressed,
         textColor: primaryTextColor,
-        isLoadingResend: isLoadingResendOtp, // <<< Pass specific loading state for resend
+        isLoadingResend: isLoadingResendOtp,
       );
     } else {
-      // Initial Login or Signup Stage
       switch (selectedTab) {
-        case 0: // Login
+        case 0:
           buttonText = 'ورود';
           buttonAction = onLoginPressed;
           formContent = LoginForm(
             isManager: isLoginAsManager,
-            onUserTypeChanged: (bool? val) {
-              onLoginUserTypeBoolChanged(val);
-            },
+            onUserTypeChanged: onLoginUserTypeBoolChanged,
             usernameController: loginUsernameController,
             passwordController: loginPasswordController,
             onForgotPassword: onForgotPasswordPressed,
             textColor: primaryTextColor,
           );
           break;
-        case 1: // Manager Signup (Initial)
-          buttonText = 'ادامه'; // This button now triggers initial registration and then OTP request
+        case 1:
+          buttonText = 'ادامه';
           buttonAction = onContinuePressed;
           formContent = ManagerSignupForm(
             emailController: managerUsernameController,
@@ -140,10 +134,11 @@ class AuthCard extends StatelessWidget {
             onTermsChanged: onTermsChanged,
             textColor: primaryTextColor,
             selectedTab: selectedTab,
+            formHeight: formContentHeight,
           );
           break;
-        case 2: // Guest Signup (Initial)
-          buttonText = 'ادامه'; // This button now triggers initial registration and then OTP request
+        case 2:
+          buttonText = 'ادامه';
           buttonAction = onContinuePressed;
           formContent = GuestSignupForm(
             nameController: guestNameController,
@@ -155,9 +150,10 @@ class AuthCard extends StatelessWidget {
             onTermsChanged: onTermsChanged,
             textColor: primaryTextColor,
             selectedTab: selectedTab,
+            formHeight: formContentHeight,
           );
           break;
-        default: // Should not happen
+        default:
           formContent = const Text('خطای داخلی');
           buttonText = 'خطا';
           buttonAction = null;
@@ -185,9 +181,12 @@ class AuthCard extends StatelessWidget {
             onTabChanged: onTabChanged,
           ),
           const SizedBox(height: 24),
-          formContent, // Display the relevant form widget
+          SizedBox(
+            height: formContentHeight,
+            child: formContent,
+          ),
           const SizedBox(height: 20),
-          SizedBox( // Action Button
+          SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -196,8 +195,8 @@ class AuthCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 elevation: 3,
               ),
-              onPressed: isLoading ? null : buttonAction, // Main button uses 'isLoading'
-              child: isLoading // Main button uses 'isLoading'
+              onPressed: isLoading ? null : buttonAction,
+              child: isLoading
                   ? SizedBox(
                 height: 20,
                 width: 20,

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../reusable_form_fields.dart';
-import '../../constants.dart'; // To get colors for checkbox
+import '../../constants.dart';
 
-class GuestSignupForm extends StatelessWidget {
+class GuestSignupForm extends StatefulWidget {
   final TextEditingController nameController;
   final TextEditingController lastNameController;
   final TextEditingController emailController;
@@ -11,7 +11,8 @@ class GuestSignupForm extends StatelessWidget {
   final bool isChecked;
   final ValueChanged<bool?> onTermsChanged;
   final Color textColor;
-  final int selectedTab; // Needed to determine checkbox colors
+  final int selectedTab;
+  final double formHeight;
 
   const GuestSignupForm({
     super.key,
@@ -24,31 +25,65 @@ class GuestSignupForm extends StatelessWidget {
     required this.onTermsChanged,
     required this.textColor,
     required this.selectedTab,
+    required this.formHeight,
   });
 
   @override
+  State<GuestSignupForm> createState() => _GuestSignupFormState();
+}
+
+class _GuestSignupFormState extends State<GuestSignupForm> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        CustomTextField(label: 'ایمیل', controller: emailController, inputType: TextInputType.emailAddress, textColor: textColor),
-        const SizedBox(height: 12),
-        CustomTextField(label: 'نام', controller: nameController, textColor: textColor),
-        const SizedBox(height: 12),
-        CustomTextField(label: 'نام خانوادگی', controller: lastNameController, textColor: textColor),
-        const SizedBox(height: 12),
-        CustomPasswordField(label: 'رمز عبور', controller: passwordController, textColor: textColor),
-        const SizedBox(height: 12),
-        CustomPasswordField(label: 'تکرار رمزعبور', controller: confirmPasswordController, textColor: textColor),
-        const SizedBox(height: 10),
-        TermsAndConditionsCheckbox(
-          isChecked: isChecked,
-          onChanged: onTermsChanged,
-          textColor: textColor,
-          // Checkbox colors depend on the main theme (signup theme)
-          checkColor: getSecondaryColor(selectedTab), // Checkmark uses the background color of the card
-          activeColor: getPrimaryColor(selectedTab), // Box uses the contrasting color
+    const double scrollbarThickness = 4.0;
+    const double contentHorizontalPadding = 12.0;
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: widget.formHeight),
+      child: Scrollbar(
+        controller: _scrollController, // <--- اتصال کنترلر به اسکرول بار
+        thumbVisibility: true,
+        thickness: scrollbarThickness,
+        radius: const Radius.circular(scrollbarThickness / 2),
+        child: SingleChildScrollView(
+          controller: _scrollController, // <--- اتصال همان کنترلر به ویجت اسکرول
+          padding: const EdgeInsets.fromLTRB(
+            contentHorizontalPadding,
+            0,
+            contentHorizontalPadding,
+            8,
+          ),
+          child: Column(
+            children: [
+              CustomTextField(label: 'ایمیل', controller: widget.emailController, inputType: TextInputType.emailAddress, textColor: widget.textColor),
+              const SizedBox(height: 12),
+              CustomTextField(label: 'نام', controller: widget.nameController, textColor: widget.textColor),
+              const SizedBox(height: 12),
+              CustomTextField(label: 'نام خانوادگی', controller: widget.lastNameController, textColor: widget.textColor),
+              const SizedBox(height: 12),
+              CustomPasswordField(label: 'رمز عبور', controller: widget.passwordController, textColor: widget.textColor),
+              const SizedBox(height: 12),
+              CustomPasswordField(label: 'تکرار رمزعبور', controller: widget.confirmPasswordController, textColor: widget.textColor),
+              const SizedBox(height: 10),
+              TermsAndConditionsCheckbox(
+                isChecked: widget.isChecked,
+                onChanged: widget.onTermsChanged,
+                textColor: widget.textColor,
+                checkColor: getSecondaryColor(widget.selectedTab),
+                activeColor: getPrimaryColor(widget.selectedTab),
+              ),
+            ],
+          ),
         ),
-      ],
+      ),
     );
   }
 }

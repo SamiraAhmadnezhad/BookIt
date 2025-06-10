@@ -1,4 +1,3 @@
-// lib/pages/authentication_page/widgets/forms/login_form.dart
 import 'package:flutter/material.dart';
 import '../reusable_form_fields.dart';
 
@@ -6,16 +5,15 @@ class LoginForm extends StatelessWidget {
   final TextEditingController usernameController;
   final TextEditingController passwordController;
   final VoidCallback onForgotPassword;
-  final Color textColor; // برای متن‌های دیگر فرم و متن غیرفعال دکمه
+  final Color textColor;
   final bool isManager;
   final ValueChanged<bool> onUserTypeChanged;
 
-  // --- رنگ‌های ثابت و استایل‌ها ---
-  static const Color _activeSegmentColor = Color(0xFF542545); // رنگ بنفش شما برای حالت فعال
-  static const Color _inactiveSegmentColor = Colors.white; // پس‌زمینه غیرفعال سفید
+  static const Color _activeSegmentColor = Color(0xFF542545);
+  static const Color _inactiveSegmentColor = Colors.white;
   static const Color _activeTextColor = Colors.white;
   static const double _segmentControlHeight = 38.0;
-  static const double _segmentControlBorderRadius = 18.0; // شعاع گردی بیشتر
+  static const double _segmentControlBorderRadius = 18.0;
   static const double _segmentFontSize = 12.5;
 
   const LoginForm({
@@ -132,20 +130,23 @@ class LoginForm extends StatelessWidget {
           controller: passwordController,
           textColor: textColor,
         ),
-        const SizedBox(height: 20),
+        const Spacer(),
         Align(
           alignment: Alignment.centerRight,
           child: InkWell(
             onTap: onForgotPassword,
-            child: Text(
-              'رمز عبورت رو فراموش کردی؟',
-              textDirection: TextDirection.rtl,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: textColor,
-                decoration: TextDecoration.underline,
-                decorationColor: textColor,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
+                'رمز عبورت رو فراموش کردی؟',
+                textDirection: TextDirection.rtl,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: textColor,
+                  decoration: TextDecoration.underline,
+                  decorationColor: textColor,
+                ),
               ),
             ),
           ),
