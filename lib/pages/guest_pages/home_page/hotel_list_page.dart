@@ -41,7 +41,7 @@ class _HotelListPageState extends State<HotelListPage> {
         "price": 4100000,
       },
       {
-        "imageUrl": "bad_url_to_test_error.jpg", // To demonstrate errorBuilder
+        "imageUrl": "bad_url_to_test_error.jpg",
         "name": "هتل با تصویر خراب شده",
         "location": "یزد",
         "rating": 3.1,

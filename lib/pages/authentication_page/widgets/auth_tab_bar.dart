@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../constants.dart'; // Import constants
+import '../constants.dart';
 
 class AuthTabBar extends StatelessWidget {
   final int selectedTab;
@@ -15,7 +15,7 @@ class AuthTabBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white, // Tab bar background is always white
+        color: Colors.white,
         borderRadius: BorderRadius.circular(30),
       ),
       child: Padding(
@@ -33,15 +33,8 @@ class AuthTabBar extends StatelessWidget {
 
   Widget _buildTabButton(BuildContext context, String text, int index) {
     final bool isActive = selectedTab == index;
-    // Determine colors based on the *overall* selectedTab state
     final Color buttonBgColor = isActive ? getSecondaryColor(selectedTab) : Colors.white;
-    final Color buttonTextColor;
-
-    if (selectedTab == 0) { // Login mode
-      buttonTextColor = isActive ? Colors.black : getPrimaryTextColorInsideCard(selectedTab);
-    } else { // Signup mode
-      buttonTextColor = isActive ? getPrimaryTextColorInsideCard(selectedTab) : getSecondaryTextColorForButton(selectedTab);
-    }
+    final Color buttonTextColor=Colors.black;
 
 
     return Expanded(

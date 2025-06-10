@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../reusable_form_fields.dart';
 import '../../constants.dart';
 
-class ManagerSignupForm extends StatelessWidget {
+class ManagerSignupForm extends StatefulWidget {
   final TextEditingController emailController;
   final TextEditingController nameController;
   final TextEditingController lastNameController;
@@ -14,11 +14,7 @@ class ManagerSignupForm extends StatelessWidget {
   final ValueChanged<bool?> onTermsChanged;
   final Color textColor;
   final int selectedTab;
-
-  static const double _approximateRowHeight = 50.0;
-  static const int _visibleFieldsCount = 5;
-  static const double _scrollbarThickness = 4.0;
-  static const double _contentHorizontalPadding = 12.0;
+  final double formHeight;
 
   const ManagerSignupForm({
     super.key,
@@ -33,49 +29,65 @@ class ManagerSignupForm extends StatelessWidget {
     required this.onTermsChanged,
     required this.textColor,
     required this.selectedTab,
+    required this.formHeight,
   });
 
   @override
+  State<ManagerSignupForm> createState() => _ManagerSignupFormState();
+}
+
+class _ManagerSignupFormState extends State<ManagerSignupForm> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    const double checkboxAreaHeight = 12.0 + 40.0 + 10.0;
-    final double scrollableAreaMaxHeight = (_visibleFieldsCount * _approximateRowHeight) + checkboxAreaHeight;
+    const double scrollbarThickness = 4.0;
+    const double contentHorizontalPadding = 12.0;
 
     return ConstrainedBox(
       constraints: BoxConstraints(
-        maxHeight: scrollableAreaMaxHeight,
+        maxHeight: widget.formHeight,
       ),
       child: Scrollbar(
+        controller: _scrollController, // <--- اتصال کنترلر به اسکرول بار
         thumbVisibility: true,
-        thickness: _scrollbarThickness, // <--- استفاده از ضخامت جدید
-        radius: const Radius.circular(_scrollbarThickness / 2), // شعاع گردی متناسب با ضخامت
+        thickness: scrollbarThickness,
+        radius: const Radius.circular(scrollbarThickness / 2),
         child: SingleChildScrollView(
+          controller: _scrollController, // <--- اتصال همان کنترلر به ویجت اسکرول
           padding: const EdgeInsets.fromLTRB(
-              _contentHorizontalPadding, // فاصله از چپ
-              0,
-              _contentHorizontalPadding, // فاصله از راست
-              8
+            contentHorizontalPadding,
+            0,
+            contentHorizontalPadding,
+            8,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CustomTextField(label: 'ایمیل', controller: emailController, textColor: textColor),
+              CustomTextField(label: 'ایمیل', controller: widget.emailController, textColor: widget.textColor),
               const SizedBox(height: 12),
-              CustomTextField(label: 'نام', controller: nameController, textColor: textColor),
+              CustomTextField(label: 'نام', controller: widget.nameController, textColor: widget.textColor),
               const SizedBox(height: 12),
-              CustomTextField(label: 'نام خانوادگی', controller: lastNameController, textColor: textColor),
+              CustomTextField(label: 'نام خانوادگی', controller: widget.lastNameController, textColor: widget.textColor),
               const SizedBox(height: 12),
-              CustomTextField(label: 'کد ملی', controller: nationalIdController, inputType: TextInputType.number, textColor: textColor),
+              CustomTextField(label: 'کد ملی', controller: widget.nationalIdController, inputType: TextInputType.number, textColor: widget.textColor),
               const SizedBox(height: 12),
-              CustomPasswordField(label: 'رمز عبور', controller: passwordController, textColor: textColor),
+              CustomPasswordField(label: 'رمز عبور', controller: widget.passwordController, textColor: widget.textColor),
               const SizedBox(height: 12),
-              CustomPasswordField(label: 'تکرار رمزعبور', controller: confirmPasswordController, textColor: textColor),
+              CustomPasswordField(label: 'تکرار رمزعبور', controller: widget.confirmPasswordController, textColor: widget.textColor),
               const SizedBox(height: 10),
               TermsAndConditionsCheckbox(
-                isChecked: isChecked,
-                onChanged: onTermsChanged,
-                textColor: textColor,
-                checkColor: getSecondaryColor(selectedTab),
-                activeColor: getPrimaryColor(selectedTab),
+                isChecked: widget.isChecked,
+                onChanged: widget.onTermsChanged,
+                textColor: widget.textColor,
+                checkColor: getSecondaryColor(widget.selectedTab),
+                activeColor: getPrimaryColor(widget.selectedTab),
               ),
             ],
           ),

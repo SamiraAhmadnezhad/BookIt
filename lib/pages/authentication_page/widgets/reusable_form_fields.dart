@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 
-// --- ثابت‌های مربوط به استایل فیلدها ---
-const double kFieldBorderRadius = 45.0; // شعاع گردی برای فیلدهای متنی
-const Color kCursorColor = Color(0xFF542545);   // رنگ قرمز برای نشانگر نوشتن
-const double kFieldHeight = 48.0;       // ارتفاع استاندارد برای فیلدهای متنی
-const EdgeInsets kFieldContentPadding = EdgeInsets.symmetric(horizontal: 18, vertical: 14); // Padding داخلی فیلدها (عمودی کمی بیشتر شد)
+const double kFieldBorderRadius = 45.0;
+const Color kCursorColor = Color(0xFF542545);
+const double kFieldHeight = 48.0;
+const EdgeInsets kFieldContentPadding = EdgeInsets.symmetric(horizontal: 18, vertical: 14);
 
-// --- Custom Text Field ---
 class CustomTextField extends StatelessWidget {
   final String label;
   final TextEditingController controller;
   final TextInputType inputType;
-  final Color textColor; // رنگ متن برای لیبل بالای فیلد
+  final Color textColor;
 
   const CustomTextField({
     super.key,
@@ -41,25 +39,25 @@ class CustomTextField extends StatelessWidget {
             keyboardType: inputType,
             textDirection: TextDirection.rtl,
             textAlign: TextAlign.right,
-            style: const TextStyle(color: Colors.black, fontSize: 14), // رنگ متن داخل فیلد
-            cursorColor: kCursorColor, // تنظیم رنگ نشانگر
+            style: const TextStyle(color: Colors.black, fontSize: 14),
+            cursorColor: kCursorColor,
             decoration: InputDecoration(
               filled: true,
-              fillColor: Colors.white, // رنگ پس‌زمینه فیلد
-              border: OutlineInputBorder( // حاشیه پیش‌فرض
-                borderRadius: BorderRadius.circular(kFieldBorderRadius),
-                borderSide: BorderSide.none, // بدون خط حاشیه
-              ),
-              enabledBorder: OutlineInputBorder( // حاشیه وقتی فیلد فعال نیست
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(kFieldBorderRadius),
                 borderSide: BorderSide.none,
               ),
-              focusedBorder: OutlineInputBorder( // حاشیه وقتی فیلد فوکوس دارد
+              enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(kFieldBorderRadius),
-                borderSide: BorderSide.none, // در صورت تمایل: BorderSide(color: kCursorColor.withOpacity(0.5), width: 1.5)
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(kFieldBorderRadius),
+                borderSide: BorderSide.none,
               ),
               contentPadding: kFieldContentPadding,
-              isDense: true, // برای کاهش ارتفاع پیش‌فرض و استفاده از contentPadding
+              isDense: true,
             ),
           ),
         ),
@@ -68,11 +66,10 @@ class CustomTextField extends StatelessWidget {
   }
 }
 
-// --- Custom Password Field ---
 class CustomPasswordField extends StatefulWidget {
   final String label;
   final TextEditingController controller;
-  final Color textColor; // رنگ متن برای لیبل بالای فیلد
+  final Color textColor;
 
   const CustomPasswordField({
     super.key,
@@ -114,8 +111,8 @@ class _CustomPasswordFieldState extends State<CustomPasswordField> {
             obscureText: _isObscured,
             textDirection: TextDirection.rtl,
             textAlign: TextAlign.right,
-            style: const TextStyle(color: Colors.black, fontSize: 14), // رنگ متن داخل فیلد
-            cursorColor: kCursorColor, // تنظیم رنگ نشانگر
+            style: const TextStyle(color: Colors.black, fontSize: 14),
+            cursorColor: kCursorColor,
             decoration: InputDecoration(
               filled: true,
               fillColor: Colors.white,
@@ -129,18 +126,18 @@ class _CustomPasswordFieldState extends State<CustomPasswordField> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(kFieldBorderRadius),
-                borderSide: BorderSide.none, // در صورت تمایل: BorderSide(color: kCursorColor.withOpacity(0.5), width: 1.5)
+                borderSide: BorderSide.none,
               ),
               contentPadding: kFieldContentPadding,
               isDense: true,
-              prefixIcon: IconButton( // آیکون نمایش/عدم نمایش رمز عبور
+              prefixIcon: IconButton(
                 icon: Icon(
                   _isObscured ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                  color: Colors.grey.shade600, // رنگ آیکون
+                  color: Colors.grey.shade600,
                 ),
                 onPressed: _toggleVisibility,
-                padding: EdgeInsets.zero, // حذف padding اضافی دور آیکون
-                constraints: const BoxConstraints(), // حذف محدودیت‌های اندازه پیش‌فرض آیکون
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
               ),
             ),
           ),
@@ -150,14 +147,12 @@ class _CustomPasswordFieldState extends State<CustomPasswordField> {
   }
 }
 
-// --- Terms and Conditions Checkbox ---
-// (این ویجت بدون تغییر نسبت به درخواست‌های اخیر شما باقی می‌ماند)
 class TermsAndConditionsCheckbox extends StatelessWidget {
   final bool isChecked;
   final ValueChanged<bool?> onChanged;
-  final Color textColor; // رنگ متن برای لیبل کنار چک‌باکس
-  final Color checkColor; // رنگ خود علامت تیک
-  final Color activeColor; // رنگ پس‌زمینه چک‌باکس وقتی فعال است
+  final Color textColor;
+  final Color checkColor;
+  final Color activeColor;
 
   const TermsAndConditionsCheckbox({
     super.key,
@@ -171,35 +166,35 @@ class TermsAndConditionsCheckbox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.end, // هم‌راستایی به راست
+      mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        Flexible( // برای اینکه متن اگر طولانی بود، به خط بعدی برود
+        Flexible(
           child: Text(
             'قوانین و مقررات اپلیکیشن را می‌پذیرم.',
             textDirection: TextDirection.rtl,
             style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: textColor),
-            overflow: TextOverflow.ellipsis, // نمایش ... اگر متن خیلی طولانی باشد
+            overflow: TextOverflow.ellipsis,
           ),
         ),
-        SizedBox( // برای کنترل اندازه و padding چک‌باکس
+        SizedBox(
           width: 40,
           height: 40,
           child: Checkbox(
             value: isChecked,
             onChanged: onChanged,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)), // شکل چک‌باکس
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
             activeColor: activeColor,
             checkColor: checkColor,
-            side: MaterialStateBorderSide.resolveWith( // حاشیه چک‌باکس
+            side: MaterialStateBorderSide.resolveWith(
                   (states) => BorderSide(width: 1.5, color: textColor),
             ),
-            fillColor: MaterialStateProperty.resolveWith<Color>((states) { // رنگ پر شدن چک‌باکس
+            fillColor: MaterialStateProperty.resolveWith<Color>((states) {
               if (states.contains(MaterialState.selected)) {
                 return activeColor;
               }
-              return Colors.white; // پس‌زمینه سفید وقتی انتخاب نشده
+              return Colors.white;
             }),
-            materialTapTargetSize: MaterialTapTargetSize.padded, // افزایش محدوده قابل کلیک
+            materialTapTargetSize: MaterialTapTargetSize.padded,
           ),
         ),
       ],
