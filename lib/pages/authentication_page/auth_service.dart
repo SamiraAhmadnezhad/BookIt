@@ -3,7 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-const String BASE_URL = 'https://bookit.darkube.app';
+const String BASE_URL = 'https://bookit-web.onrender.com';
 const String GUEST_LOGIN_ENDPOINT = '$BASE_URL/auth/login/';
 const String MANAGER_LOGIN_ENDPOINT = '$BASE_URL/hotelManager-api/get/';
 const String LOGOUT_ENDPOINT = '$BASE_URL/auth/logout/';

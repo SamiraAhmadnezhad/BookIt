@@ -7,7 +7,7 @@ import 'auth_service.dart';
 import 'constants.dart';
 import 'widgets/auth_card.dart';
 
-const String BASE_URL = 'https://bookit.darkube.app';
+const String BASE_URL = 'https://bookit-web.onrender.com';
 const String INITIAL_MANAGER_REGISTER_ENDPOINT='$BASE_URL/hotelManager-api/create/';
 const String INITIAL_GUEST_REGISTER_ENDPOINT='$BASE_URL/auth/register/';
 const String RESEND_OTP_ENDPOINT = '$BASE_URL/auth/resend-verification-code/';
