@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class StayCard extends StatelessWidget {
+class StayCard extends StatefulWidget {
   final String imageUrl;
   final String name;
   final String price;
@@ -17,83 +17,98 @@ class StayCard extends StatelessWidget {
   });
 
   @override
+  State<StayCard> createState() => _StayCardState();
+}
+
+class _StayCardState extends State<StayCard> {
+  bool _isHovering = false;
+
+  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
-        color: Colors.white,
-        elevation: 2.0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
-        child: SizedBox(
-          width: 285, // Fixed width
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.all(Radius.circular(20.0),),
-                  child: Image.network(
-                    imageUrl,
-                    height: double.infinity,
-                    width: 90,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      height: 90,
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.broken_image, size: 40, color: Colors.grey),
+    const Color customPurple = Color(0xFF542545);
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovering = true),
+      onExit: (_) => setState(() => _isHovering = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          transform: _isHovering ? (Matrix4.identity()..translate(0, -5, 0)) : Matrix4.identity(),
+          child: Card(
+            color: Colors.white,
+            elevation: _isHovering ? 6.0 : 2.0,
+            shadowColor: Colors.black.withOpacity(0.15),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+            child: SizedBox(
+              width: 285,
+              child: Row(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.all(Radius.circular(10.0)),
+                      child: Image.network(
+                        widget.imageUrl,
+                        height: double.infinity,
+                        width: 90,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          width: 90,
+                          color: Colors.grey[200],
+                          child: const Icon(Icons.broken_image, size: 40, color: Colors.grey),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(8.0, 8.0, 0, 8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'تومان',
-                            style: TextStyle(fontSize: 10, color: Color(0xFF542545), fontWeight: FontWeight.bold),
+                            widget.name,
+                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
+                          const Spacer(),
                           Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.thumb_up_alt, size: 20, color:Color(0xFF542545)),
+                                  const Icon(Icons.thumb_up_alt_outlined, size: 16, color: customPurple),
                                   const SizedBox(width: 4),
                                   Text(
-                                    rating.toString(),
-                                    style: TextStyle(fontSize: 12, color: Colors.black),
+                                    widget.rating.toString(),
+                                    style: const TextStyle(fontSize: 12, color: Colors.black87, fontWeight: FontWeight.bold),
                                   ),
                                 ],
                               ),
-                              Text(
-                                '$price',
-                                style: TextStyle(fontSize: 14, color: Color(0xFF542545), fontWeight: FontWeight.bold),
+                              RichText(
+                                text: TextSpan(
+                                  style: const TextStyle(fontFamily: 'Vazirmatn', color: Colors.black87),
+                                  children: [
+                                    TextSpan(text: widget.price, style: const TextStyle(fontSize: 14, color: customPurple, fontWeight: FontWeight.bold)),
+                                    const TextSpan(text: ' تومان', style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w600)),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
                         ],
-                      )
-                    ],
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

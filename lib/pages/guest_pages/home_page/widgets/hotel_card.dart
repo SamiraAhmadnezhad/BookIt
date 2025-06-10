@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class HotelCard extends StatelessWidget {
+class HotelCard extends StatefulWidget {
   final String id;
   final String imageUrl;
   final String name;
@@ -27,189 +27,145 @@ class HotelCard extends StatelessWidget {
   });
 
   @override
+  State<HotelCard> createState() => _HotelCardState();
+}
+
+class _HotelCardState extends State<HotelCard> {
+  bool _isHovering = false;
+
+  @override
   Widget build(BuildContext context) {
     const Color customPurple = Color(0xFF542545);
-    const Color discountRedText = Color(0xFF542545);
-    const Color discountRedIcon = Color(0xFF542545);
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
-        color: Colors.white,
-        elevation: 3.0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)), // کمی گردتر
-        clipBehavior: Clip.antiAlias,
-        child: SizedBox(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child:ClipRRect(
-                      borderRadius: BorderRadius.circular(20.0), //  مقدار شعاع گردی را به دلخواه تنظیم کنید
-                      child: Image.network(
-                        imageUrl,
-                        height: 155,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovering = true),
+      onExit: (_) => setState(() => _isHovering = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          transform: _isHovering ? (Matrix4.identity()..scale(1.03)) : Matrix4.identity(),
+          child: Card(
+            color: Colors.white,
+            elevation: _isHovering ? 8.0 : 3.0,
+            shadowColor: Colors.black.withOpacity(0.2),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Stack(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12.0),
+                        child: Image.network(
+                          widget.imageUrl,
                           height: 155,
-                           alignment: Alignment.center,
-                          child: const Icon(Icons.broken_image_rounded, size: 40, color: Colors.grey),
-                        ),
-                      ),
-                    )
-                  ),
-                  Positioned(
-                    top: 20,
-                    left: 20,
-                    child: GestureDetector(
-                      onTap: onFavoriteToggle,
-                      child: Container(
-                        padding: const EdgeInsets.all(5),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.15),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            )
-                          ],
-                        ),
-                        child: Icon(
-                          Icons.favorite,
-                          color: isFavorite ? customPurple : Colors.grey.shade400
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            height: 155,
+                            alignment: Alignment.center,
+                            child: const Icon(Icons.broken_image_rounded, size: 40, color: Colors.grey),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 12.0, left: 12.0,top: 10,bottom: 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          fontFamily: 'Vazirmatn',
-                          color: Colors.black,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.start,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.location_on, size: 20, color: Color(0xFF542545)),
-                              const SizedBox(width: 4),
-                              Text(
-                                location,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Vazirmatn',
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.start,
-                              ),
+                    Positioned(
+                      top: 20,
+                      left: 20,
+                      child: GestureDetector(
+                        onTap: widget.onFavoriteToggle,
+                        child: Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 4, offset: const Offset(0, 2)),
                             ],
                           ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: List.generate(5, (index) {
-                              IconData starIcon;
-                              if (index < rating.floor()) {
-                                starIcon = Icons.star_rounded;
-                              } else if (index < rating && index == rating.floor()) {
-                                starIcon = Icons.star_half_rounded;
-                              } else {
-                                starIcon = Icons.star_border_rounded;
-                              }
-                              return Icon(
-                                starIcon,
-                                color:Color(0xFF542545),
-                                size: 15,
-                              );
-                            }),
-                          ),
-                        ],
+                          child: Icon(Icons.favorite, color: widget.isFavorite ? customPurple : Colors.grey.shade400),
+                        ),
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Container(
-                            child: Row(
-                              textDirection: TextDirection.ltr,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  '$discount% تخفیف', // متن عکس: 73% تخفیف
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: discountRedText,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: 'Vazirmatn',
-                                  ),
-                                ),
-                                const SizedBox(width: 3),
-                                const Icon(
-                                  Icons.local_fire_department, // یا Icons.local_offer_outlined
-                                  size: 20,
-                                  color: discountRedIcon,
-                                ),
-                              ],
+                    ),
+                  ],
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12.0, 0, 12.0, 10.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Text(
+                          widget.name,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                widget.location,
+                                style: const TextStyle(fontSize: 12, color: Colors.black54, fontWeight: FontWeight.w600),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
-                          InkWell(
-                            onTap: onReserveTap,
-                            borderRadius: BorderRadius.circular(8),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 2.0),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: const [
+                            Row(
+                              children: List.generate(5, (index) => Icon(
+                                index < widget.rating.floor() ? Icons.star_rounded : (index < widget.rating ? Icons.star_half_rounded : Icons.star_border_rounded),
+                                color: customPurple,
+                                size: 15,
+                              )),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            if (widget.discount > 0)
+                              Row(
+                                children: [
+                                  const Icon(Icons.local_fire_department, size: 20, color: Colors.redAccent),
+                                  const SizedBox(width: 3),
                                   Text(
-                                    'رزرو',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: customPurple,
-                                      fontWeight: FontWeight.bold,
-                                      fontFamily: 'Vazirmatn',
-                                    ),
-                                  ),
-                                  SizedBox(width: 2),
-                                  Icon(
-                                    Icons.arrow_forward, // این آیکون در RTL به چپ اشاره می کند
-                                    size: 20,
-                                    color: customPurple,
+                                    '${widget.discount}% تخفیف',
+                                    style: const TextStyle(fontSize: 14, color: Colors.redAccent, fontWeight: FontWeight.bold),
                                   ),
                                 ],
                               ),
+                            InkWell(
+                              onTap: widget.onReserveTap,
+                              borderRadius: BorderRadius.circular(8),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 2.0),
+                                child: Row(
+                                  children: const [
+                                    Text('رزرو', style: TextStyle(fontSize: 14, color: customPurple, fontWeight: FontWeight.bold)),
+                                    SizedBox(width: 2),
+                                    Icon(Icons.arrow_forward, size: 20, color: customPurple),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

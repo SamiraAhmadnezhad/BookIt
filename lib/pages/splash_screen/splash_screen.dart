@@ -20,7 +20,6 @@ class _SplashScreenState extends State<SplashScreen> {
     // تایمر برای نمایش اسپلش به مدت 3 ثانیه
     Timer(const Duration(seconds: 3), () {
       if (mounted) {
-        // پس از 3 ثانیه، به صفحه تصمیم‌گیرنده منتقل شو
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (context) => const _AuthWrapper(),
@@ -41,7 +40,6 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // لوگوی "بوکیت"
             Text.rich(
               TextSpan(
                 text: 'بوکیت',
@@ -64,7 +62,6 @@ class _SplashScreenState extends State<SplashScreen> {
               textDirection: TextDirection.rtl,
             ),
             const SizedBox(height: 120),
-            // انیمیشن بارگذاری
             SizedBox(
               height: 24,
               width: 24,
@@ -81,24 +78,31 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
+// ... (کدهای بالای فایل splash_screen.dart بدون تغییر باقی می‌مانند) ...
+
 // این ویجت خصوصی، منطق Consumer را از main.dart به اینجا منتقل می‌کند
 class _AuthWrapper extends StatelessWidget {
   const _AuthWrapper({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // از Consumer برای بررسی وضعیت لاگین استفاده می‌کنیم
+    // --- برای تست، مستقیما به صفحه اصلی بروید ---
+    // شما می‌توانید بین GuestMainScreen و ManagerMainScreen انتخاب کنید
+    //return const GuestMainScreen();
+    // یا اگر می‌خواهید صفحه مدیر را تست کنید:
+    // return const ManagerMainScreen();
+
+
+
+    // --- منطق اصلی که موقتا کامنت شده است ---
     final authService = Provider.of<AuthService>(context);
 
-    // اگر در حال بارگذاری اولیه است، یک لودر ساده نشان بده
-    // این حالت خیلی سریع رد می‌شود چون اسپلش 3 ثانیه فرصت داده است.
     if (authService.isLoading && authService.token == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    // اگر کاربر لاگین است
     if (authService.isAuthenticated) {
       if (authService.userRole == 'manager') {
         return const ManagerMainScreen();
@@ -106,9 +110,9 @@ class _AuthWrapper extends StatelessWidget {
         return const GuestMainScreen();
       }
     }
-    // اگر کاربر لاگین نیست
     else {
       return const AuthenticationPage();
     }
+
   }
 }
