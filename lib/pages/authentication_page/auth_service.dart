@@ -3,7 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-const String BASE_URL = 'http://newbookit.darkube.app';
+const String BASE_URL = 'https://newbookit.darkube.app';
 const String GUEST_LOGIN_ENDPOINT = '$BASE_URL/auth/login/';
 const String MANAGER_LOGIN_ENDPOINT = '$BASE_URL/hotelManager-api/get/';
 const String LOGOUT_ENDPOINT = '$BASE_URL/auth/logout/';
@@ -72,27 +72,13 @@ class AuthService with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
     try {
-      var uri = Uri.parse(GUEST_LOGIN_ENDPOINT);
-      final body = jsonEncode(<String, String>{'email': email, 'password': password});
-      final headers = <String, String>{'Content-Type': 'application/json; charset=UTF-8'};
-
-      var response = await http.post(uri, headers: headers, body: body)
-          .timeout(const Duration(seconds: 15));
-
-      // بررسی و دنبال کردن ریدایرکت 308
-      if (response.statusCode == 308) {
-        final newUrl = response.headers['location'];
-        if (newUrl != null) {
-          print('Redirecting to: $newUrl');
-          // ارسال درخواست مجدد به آدرس جدید
-          response = await http.post(Uri.parse(newUrl), headers: headers, body: body)
-              .timeout(const Duration(seconds: 15));
-        }
-      }
-
-      print(response.body); // این بار باید پاسخ اصلی را ببینید
+      final response = await http.post(
+        Uri.parse(GUEST_LOGIN_ENDPOINT),
+        headers: <String, String>{'Content-Type': 'application/json; charset=UTF-8'},
+        body: jsonEncode(<String, String>{'email': email, 'password': password}),
+      ).timeout(const Duration(seconds: 15));
+      print(response.statusCode);
       return await _processLoginResponse(response, 'guest');
-
     } catch (e) {
       _errorMessage = 'خطا در برقراری ارتباط با سرور.';
       return false;
