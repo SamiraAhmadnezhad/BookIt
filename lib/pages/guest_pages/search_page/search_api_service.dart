@@ -32,8 +32,8 @@ class SearchApiService {
         }
       ]
     });
-
-    try {
+print(body);
+try {
       final response = await http.post(
         Uri.parse(_searchUrl),
         headers: headers,

@@ -28,8 +28,7 @@ class _HotelCardState extends State<HotelCard> {
   @override
   Widget build(BuildContext context) {
     const Color customPurple = Color(0xFF542545);
-    final double discount = widget.hotel.discount ?? 0;
-
+    final double discount = double.tryParse(widget.hotel.discount?.toString() ?? '0') ?? 0.0;
     void goToDetailsPage() {
       Navigator.push(
         context,
