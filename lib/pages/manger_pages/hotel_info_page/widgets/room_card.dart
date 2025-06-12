@@ -1,6 +1,7 @@
+// فایل: widgets/room_card.dart
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../models/room_model.dart';
-import '../utils/colors.dart';
 
 class RoomCard extends StatelessWidget {
   final Room room;
@@ -9,74 +10,89 @@ class RoomCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    const primaryColor = Color(0xFF542545);
+    final priceFormat = NumberFormat("#,###", "en_US");
+
     return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 4.0,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(12.0),
-              topRight: Radius.circular(12.0),
-            ),
-            child: Image.network(
-              room.imageUrl,
-              height: 160,
+          SizedBox(
+            height: 180,
+            child: (room.imageUrl != null && room.imageUrl!.isNotEmpty)
+                ? Image.network(
+              room.imageUrl!,
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  height: 160,
-                  color: Colors.grey[200],
-                  child: const Icon(Icons.image_not_supported_outlined, color: Colors.grey, size: 40),
-                );
-              },
-            ),
+              errorBuilder: (context, error, stackTrace) => _buildImagePlaceholder(),
+              loadingBuilder: (context, child, progress) => progress == null
+                  ? child
+                  : const Center(child: CircularProgressIndicator(color: primaryColor)),
+            )
+                : _buildImagePlaceholder(),
           ),
           Padding(
-            padding: const EdgeInsets.all(12.0),
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  room.name,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Icon(Icons.people_alt_outlined, size: 18, color: Colors.grey[700]),
-                    const SizedBox(width: 6),
-                    Text(
-                      room.type,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ],
+                  room.name, // نمایش نام اتاق (مثلا "رویال")
+                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Row(
+                  children: [
+                    Icon(Icons.tag, size: 18, color: Colors.grey[700]),
+                    const SizedBox(width: 6),
+                    Text(
+                      "شماره ${room.roomNumber}", // نمایش شماره اتاق
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    const SizedBox(width: 16),
+                    Icon(Icons.king_bed_outlined, size: 18, color: Colors.grey[700]),
+                    const SizedBox(width: 6),
+                    Text(
+                      room.roomType, // نمایش نوع اتاق
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+                const Divider(height: 24),
+                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
-                      '${room.pricePerNight} تومان',
-                      style: TextStyle(
-                        color: customPurple,
+                      '${priceFormat.format(room.pricePerNight)} تومان',
+                      style: const TextStyle(
+                        color: primaryColor,
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                        fontSize: 18,
                       ),
                     ),
-                    Text(
-                      'برای ۱ شب',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+                    Text('برای هر شب', style: theme.textTheme.bodySmall),
                   ],
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildImagePlaceholder() {
+    return Container(
+      color: Colors.grey[200],
+      child: Icon(
+          Icons.image_not_supported_outlined,
+          color: Colors.grey[400],
+          size: 50
       ),
     );
   }
