@@ -48,7 +48,6 @@ class _RoomListScreenState extends State<RoomListScreen> {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
-      // این خط تضمین می‌کند که اگر خطای "یافت نشد" رخ داد، لیست خالی نمایش داده شود
       _hotelRooms = [];
     });
 

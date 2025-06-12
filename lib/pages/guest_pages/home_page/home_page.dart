@@ -1,16 +1,17 @@
-import 'package:bookit/pages/guest_pages/home_page/model/hotel_model.dart';
+// فایل: pages/home_page.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+
 import '../../authentication_page/auth_service.dart';
 import 'hotel_api_service.dart';
+import 'model/hotel_model.dart';
 import 'widgets/category_card.dart';
 import 'widgets/hotel_card.dart';
 import 'widgets/image_banner.dart';
 import 'widgets/section_title.dart';
 import 'location_selection_modal.dart';
-import '../hotel_detail_page/hotel_detail_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -20,20 +21,23 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final PageController _bannerController = PageController();
-
-  // _apiService بعدا در initState مقداردهی می‌شود
   late final HotelApiService _apiService;
+
+  // *** تغییر: برای هر لیست، یک متغیر خطا و وضعیت لودینگ جداگانه در نظر می‌گیریم ***
+  List<Hotel>? _hotelsByCity;
+  List<Hotel>? _discountedHotels;
+  List<Hotel>? _topRatedHotels;
+
+  bool _isCityLoading = true;
+  bool _isDiscountLoading = true;
+  bool _isTopRatedLoading = true;
+
+  String? _globalErrorMessage;
 
   String _selectedCity = 'تهران';
   final List<String> _allCities = ['تهران', 'مشهد', 'اصفهان', 'شیراز', 'تبریز', 'کیش', 'قشم'];
 
-  List<Hotel> _hotelsByCity = [];
-  List<Hotel> _discountedHotels = [];
-  List<Hotel> _topRatedHotels = [];
-  bool _isLoading = true;
-  String? _errorMessage;
-
+  final PageController _bannerController = PageController();
   final List<String> bannerImages = ['https://picsum.photos/seed/banner1/800/400', 'https://picsum.photos/seed/banner2/800/400', 'https://picsum.photos/seed/banner3/800/400'];
   final List<Map<String, dynamic>> categories = [
     {'icon': Icons.hotel, 'label': 'هتل', 'color': Colors.blue}, {'icon': Icons.house_rounded, 'label': 'ویلا', 'color': Colors.green},
@@ -44,61 +48,80 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     final authService = Provider.of<AuthService>(context, listen: false);
-    // 2. HotelApiService را با تزریق authService می‌سازیم
     _apiService = HotelApiService(authService);
-    // 3. حالا داده‌ها را با سرویسِ آماده‌شده، فراخوانی می‌کنیم
     _fetchInitialData();
   }
 
+  // *** بخش کلیدی: بازنویسی کامل این تابع برای مدیریت مستقل درخواست‌ها ***
   Future<void> _fetchInitialData() async {
     setState(() {
-      _isLoading = true;
-      _errorMessage = null;
+      _isCityLoading = true;
+      _isDiscountLoading = true;
+      _isTopRatedLoading = true;
+      _globalErrorMessage = null;
     });
+
+    // --- دریافت هتل‌های شهر ---
     try {
-      final results = await Future.wait([
-        _apiService.fetchHotels(city: _selectedCity),
-        _apiService.fetchHotels(hasDiscount: true),
-        _apiService.fetchHotels(minRate: 4),
-      ]);
-      if (mounted) {
-        setState(() {
-          _hotelsByCity = results[0];
-          _discountedHotels = results[1];
-          _topRatedHotels = results[2];
-          _isLoading = false;
-        });
-      }
+      final cityHotels = await _apiService.fetchHotelsByLocation(_selectedCity);
+      if (mounted) setState(() => _hotelsByCity = cityHotels);
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = 'خطا در دریافت اطلاعات: $e';
-          _isLoading = false;
-        });
-      }
+      print("Error fetching city hotels: $e");
+      if (mounted) setState(() => _hotelsByCity = null); // null به معنی خطا است
+    } finally {
+      if (mounted) setState(() => _isCityLoading = false);
+    }
+
+    // --- دریافت هتل‌های تخفیف‌دار ---
+    try {
+      final discountHotels = await _apiService.fetchHotelsWithDiscount();
+      if (mounted) setState(() => _discountedHotels = discountHotels);
+    } catch (e) {
+      print("Error fetching discount hotels: $e");
+      if (mounted) setState(() => _discountedHotels = null);
+    } finally {
+      if (mounted) setState(() => _isDiscountLoading = false);
+    }
+
+    // --- دریافت هتل‌های برتر (این بخش همچنان خطا خواهد داد تا بک‌اند اصلاح شود) ---
+    try {
+      final topHotels = await _apiService.fetchTopRatedHotels();
+      if (mounted) setState(() => _topRatedHotels = topHotels);
+    } catch (e) {
+      print("Error fetching top rated hotels: $e");
+      if (mounted) setState(() => _topRatedHotels = null);
+    } finally {
+      if (mounted) setState(() => _isTopRatedLoading = false);
     }
   }
 
   void _onCityChanged(String newCity) {
     if (newCity == _selectedCity) return;
-    setState(() { _selectedCity = newCity; _hotelsByCity = []; });
-    _apiService.fetchHotels(city: newCity).then((hotels) {
+    setState(() {
+      _selectedCity = newCity;
+      _isCityLoading = true; // نمایش لودر فقط برای لیست شهر
+      _hotelsByCity = [];
+    });
+
+    _apiService.fetchHotelsByLocation(newCity).then((hotels) {
       if (mounted) setState(() => _hotelsByCity = hotels);
     }).catchError((e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('خطا در دریافت هتل‌های شهر: $e')));
+      if (mounted) {
+        setState(() => _hotelsByCity = null); // مدیریت خطا
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('خطا در دریافت هتل‌های شهر: $e')));
+      }
+    }).whenComplete(() {
+      if (mounted) setState(() => _isCityLoading = false);
     });
   }
 
+  // بقیه متدها بدون تغییر...
   void _showLocationModal() {
     showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25.0))),
       builder: (modalContext) => LocationSelectionModal(
-        allCities: _allCities,
-        currentCity: _selectedCity,
-        onCitySelected: _onCityChanged,
+        allCities: _allCities, currentCity: _selectedCity, onCitySelected: _onCityChanged,
       ),
     );
   }
@@ -111,28 +134,31 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // بقیه کد UI بدون هیچ تغییری باقی می‌ماند
-    double maxContentWidth = MediaQuery.of(context).size.width > 1200 ? 1200 : MediaQuery.of(context).size.width;
     const Color primaryColor = Color(0xFF542545);
     const Color backgroundColor = Color(0xFFF8F9FA);
+
+    bool showGlobalLoader = _isCityLoading && _isDiscountLoading && _isTopRatedLoading;
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: backgroundColor,
-        body: _isLoading
+        body: showGlobalLoader
             ? const Center(child: CircularProgressIndicator(color: primaryColor))
-            : _errorMessage != null
-            ? Center(child: Text(_errorMessage!))
+            : _globalErrorMessage != null
+            ? Center(child: Text(_globalErrorMessage!)) // اینجا خطای کلی نمایش داده می‌شود
             : Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: maxContentWidth),
-            child: CustomScrollView(
-              slivers: [
-                _buildSliverAppBar(primaryColor),
-                SliverToBoxAdapter(child: _buildBodyContent(primaryColor)),
-              ],
+            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width > 1200 ? 1200 : MediaQuery.of(context).size.width),
+            child: RefreshIndicator(
+              onRefresh: _fetchInitialData,
+              child: CustomScrollView(
+                slivers: [
+                  _buildSliverAppBar(primaryColor),
+                  SliverToBoxAdapter(child: _buildBodyContent(primaryColor)),
+                ],
+              ),
             ),
           ),
         ),
@@ -140,6 +166,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // ... (متدهای _buildSliverAppBar و _buildBodyContent بدون تغییر)
   SliverAppBar _buildSliverAppBar(Color primaryColor) {
     return SliverAppBar(
       pinned: true, floating: true, snap: true,
@@ -199,15 +226,18 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 32),
             Padding(padding: const EdgeInsets.symmetric(horizontal: 24.0), child: SectionTitle(title: 'هتل‌های شهر $_selectedCity')),
             const SizedBox(height: 16),
-            _buildHotelList(_hotelsByCity),
+            _buildHotelList(_hotelsByCity, _isCityLoading), // پاس دادن وضعیت لودینگ
+
             const SizedBox(height: 32),
             Padding(padding: const EdgeInsets.symmetric(horizontal: 24.0), child: SectionTitle(title: 'پیشنهادهای شگفت‌انگیز')),
             const SizedBox(height: 16),
-            _buildHotelList(_discountedHotels),
+            _buildHotelList(_discountedHotels, _isDiscountLoading),
+
             const SizedBox(height: 32),
             Padding(padding: const EdgeInsets.symmetric(horizontal: 24.0), child: SectionTitle(title: 'محبوب‌ترین‌ها')),
             const SizedBox(height: 16),
-            _buildHotelList(_topRatedHotels),
+            _buildHotelList(_topRatedHotels, _isTopRatedLoading),
+
             const SizedBox(height: 32),
           ],
         ),
@@ -215,12 +245,27 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildHotelList(List<Hotel> hotelList) {
+
+  // *** بخش کلیدی: بازنویسی این تابع برای مدیریت حالت‌های مختلف هر لیست ***
+  Widget _buildHotelList(List<Hotel>? hotelList, bool isLoading) {
+    const listHeight = 310.0;
+
+    if (isLoading) {
+      return const SizedBox(height: listHeight, child: Center(child: CircularProgressIndicator()));
+    }
+
+    if (hotelList == null) {
+      // حالت خطا برای این لیست خاص
+      return const SizedBox(height: 100, child: Center(child: Text('خطا در دریافت اطلاعات این بخش')));
+    }
+
     if (hotelList.isEmpty) {
+      // حالت لیست خالی
       return const SizedBox(height: 100, child: Center(child: Text('هتلی برای نمایش یافت نشد.')));
     }
+
     return SizedBox(
-      height: 310,
+      height: listHeight,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -229,21 +274,7 @@ class _HomePageState extends State<HomePage> {
           final hotel = hotelList[index];
           return _buildAnimatedListItem(
             index: index,
-            child: SizedBox(
-              width: 280,
-              child: HotelCard(
-                imageUrl: hotel.imageUrl ?? 'https://picsum.photos/seed/${hotel.id}/400/300',
-                name: hotel.name,
-                location: hotel.location,
-                rating: 4.0,
-                isFavorite: false,
-                discount: 0,
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => HotelDetailsPage(hotelId: hotel.id.toString()))),
-                onFavoriteToggle: () {},
-                onReserveTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => HotelDetailsPage(hotelId: hotel.id.toString()))),
-                id: hotel.id.toString(),
-              ),
-            ),
+            child: HotelCard(hotel: hotel),
           );
         },
       ),
