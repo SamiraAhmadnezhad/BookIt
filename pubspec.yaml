@@ -68,6 +68,16 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  fonts:
+    - family: Vazirmatn  # نام خانواده فونت شما
+      fonts:
+        - asset: fonts/Vazirmatn-Regular.ttf
+          weight: 400  # وزن معمولی
+        - asset: fonts/Vazirmatn-Medium.ttf
+          weight: 500  # وزن متوسط
+        - asset: fonts/Vazirmatn-Bold.ttf
+          weight: 700
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

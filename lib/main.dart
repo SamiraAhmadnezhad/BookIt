@@ -20,9 +20,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Bookit App',
       theme: ThemeData(
-        fontFamily: 'Vazir', // فونت خود را اینجا تنظیم کنید
+        fontFamily: 'Vazirmatn',
       ),
-      // برنامه همیشه با SplashScreen شروع می‌شود
       home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
     );
