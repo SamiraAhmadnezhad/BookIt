@@ -42,15 +42,12 @@ class HotelApiService {
           throw Exception('فرمت پاسخ سرور نامعتبر است.');
         }
 
-        // 3. لیست استخراج شده را به لیست Hotel تبدیل می‌کنیم
         return data.map((json) => Hotel.fromJson(json)).toList();
 
       } else {
-        // خطاهای HTTP مثل 404, 500 و ... در اینجا مدیریت می‌شوند
         throw Exception('Failed to load data from $endpoint. Status: ${response.statusCode}, Body: ${response.body}');
       }
     } catch (e) {
-      // خطاهای شبکه یا پردازش JSON در اینجا مدیریت می‌شوند
       throw Exception('Failed to connect or process data for $endpoint: $e');
     }
   }
