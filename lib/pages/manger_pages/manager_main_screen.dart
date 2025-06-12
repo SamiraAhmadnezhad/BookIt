@@ -16,7 +16,7 @@ class _ManagerMainScreenState extends State<ManagerMainScreen> {
 
  static final List<Widget> _widgetOptions = <Widget>[
     HotelListScreen(),
-   ManagerAccountPage(),
+   //ManagerSettingsPage(),
     ManagerAccountPage(),
   ];
 

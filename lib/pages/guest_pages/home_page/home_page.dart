@@ -1,7 +1,9 @@
 import 'package:bookit/pages/guest_pages/home_page/model/hotel_model.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import '../../authentication_page/auth_service.dart';
 import 'hotel_api_service.dart';
 import 'widgets/category_card.dart';
 import 'widgets/hotel_card.dart';
@@ -9,7 +11,6 @@ import 'widgets/image_banner.dart';
 import 'widgets/section_title.dart';
 import 'location_selection_modal.dart';
 import '../hotel_detail_page/hotel_detail_page.dart';
-import 'hotel_list_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -20,19 +21,19 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final PageController _bannerController = PageController();
-  final HotelApiService _apiService = HotelApiService();
+
+  // _apiService بعدا در initState مقداردهی می‌شود
+  late final HotelApiService _apiService;
 
   String _selectedCity = 'تهران';
   final List<String> _allCities = ['تهران', 'مشهد', 'اصفهان', 'شیراز', 'تبریز', 'کیش', 'قشم'];
 
-  // State variables for data from server
   List<Hotel> _hotelsByCity = [];
   List<Hotel> _discountedHotels = [];
   List<Hotel> _topRatedHotels = [];
   bool _isLoading = true;
   String? _errorMessage;
 
-  // Mock data (for UI placeholders if needed)
   final List<String> bannerImages = ['https://picsum.photos/seed/banner1/800/400', 'https://picsum.photos/seed/banner2/800/400', 'https://picsum.photos/seed/banner3/800/400'];
   final List<Map<String, dynamic>> categories = [
     {'icon': Icons.hotel, 'label': 'هتل', 'color': Colors.blue}, {'icon': Icons.house_rounded, 'label': 'ویلا', 'color': Colors.green},
@@ -42,6 +43,10 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    final authService = Provider.of<AuthService>(context, listen: false);
+    // 2. HotelApiService را با تزریق authService می‌سازیم
+    _apiService = HotelApiService(authService);
+    // 3. حالا داده‌ها را با سرویسِ آماده‌شده، فراخوانی می‌کنیم
     _fetchInitialData();
   }
 
@@ -54,7 +59,7 @@ class _HomePageState extends State<HomePage> {
       final results = await Future.wait([
         _apiService.fetchHotels(city: _selectedCity),
         _apiService.fetchHotels(hasDiscount: true),
-        _apiService.fetchHotels(minRate: 4), // امتیاز بالای 4
+        _apiService.fetchHotels(minRate: 4),
       ]);
       if (mounted) {
         setState(() {
@@ -76,22 +81,11 @@ class _HomePageState extends State<HomePage> {
 
   void _onCityChanged(String newCity) {
     if (newCity == _selectedCity) return;
-
-    setState(() {
-      _selectedCity = newCity;
-      _hotelsByCity = []; // لیست را خالی می‌کنیم تا لودر نمایش داده شود
-    });
-
+    setState(() { _selectedCity = newCity; _hotelsByCity = []; });
     _apiService.fetchHotels(city: newCity).then((hotels) {
-      if (mounted) {
-        setState(() {
-          _hotelsByCity = hotels;
-        });
-      }
+      if (mounted) setState(() => _hotelsByCity = hotels);
     }).catchError((e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('خطا در دریافت هتل‌های شهر: $e')));
-      }
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('خطا در دریافت هتل‌های شهر: $e')));
     });
   }
 
@@ -117,6 +111,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // بقیه کد UI بدون هیچ تغییری باقی می‌ماند
     double maxContentWidth = MediaQuery.of(context).size.width > 1200 ? 1200 : MediaQuery.of(context).size.width;
     const Color primaryColor = Color(0xFF542545);
     const Color backgroundColor = Color(0xFFF8F9FA);
@@ -192,7 +187,6 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 12),
             Center(child: SmoothPageIndicator(controller: _bannerController, count: bannerImages.length, effect: ExpandingDotsEffect(dotHeight: 8, dotWidth: 8, activeDotColor: primaryColor, dotColor: Colors.grey.shade300))),
             const SizedBox(height: 32),
-
             const Padding(padding: EdgeInsets.symmetric(horizontal: 24.0), child: SectionTitle(title: 'انتخاب نوع اقامتگاه')),
             const SizedBox(height: 16),
             Padding(
@@ -203,21 +197,15 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 32),
-
-            // لیست هتل‌های شهر انتخاب شده
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 24.0), child: SectionTitle(title: 'هتل‌های شهر $_selectedCity',)),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 24.0), child: SectionTitle(title: 'هتل‌های شهر $_selectedCity')),
             const SizedBox(height: 16),
             _buildHotelList(_hotelsByCity),
             const SizedBox(height: 32),
-
-            // لیست هتل‌های تخفیف‌دار
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 24.0), child: SectionTitle(title: 'پیشنهادهای شگفت‌انگیز',),),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 24.0), child: SectionTitle(title: 'پیشنهادهای شگفت‌انگیز')),
             const SizedBox(height: 16),
             _buildHotelList(_discountedHotels),
             const SizedBox(height: 32),
-
-            // لیست هتل‌های محبوب (امتیاز بالا)
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 24.0), child: SectionTitle(title: 'محبوب‌ترین‌ها',),),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 24.0), child: SectionTitle(title: 'محبوب‌ترین‌ها')),
             const SizedBox(height: 16),
             _buildHotelList(_topRatedHotels),
             const SizedBox(height: 32),
@@ -247,16 +235,11 @@ class _HomePageState extends State<HomePage> {
                 imageUrl: hotel.imageUrl ?? 'https://picsum.photos/seed/${hotel.id}/400/300',
                 name: hotel.name,
                 location: hotel.location,
-                // --- شروع تغییرات برای رفع خطا ---
-                rating: 4.0, // مقدار ثابت چون hotel.rate وجود ندارد
-                isFavorite: false, // مقدار ثابت چون hotel.isFavorite وجود ندارد
-                discount: 0, // مقدار ثابت چون hotel.discount وجود ندارد
-                // --- پایان تغییرات ---
+                rating: 4.0,
+                isFavorite: false,
+                discount: 0,
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => HotelDetailsPage(hotelId: hotel.id.toString()))),
-                onFavoriteToggle: () {
-                  // این بخش کار نخواهد کرد تا زمانی که isFavorite به مدل اضافه شود
-                  // setState(() => hotel.isFavorite = !hotel.isFavorite);
-                },
+                onFavoriteToggle: () {},
                 onReserveTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => HotelDetailsPage(hotelId: hotel.id.toString()))),
                 id: hotel.id.toString(),
               ),

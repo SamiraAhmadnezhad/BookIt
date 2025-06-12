@@ -5,7 +5,7 @@ import 'dart:convert';
 
 const String BASE_URL = 'https://newbookit.darkube.app';
 const String GUEST_LOGIN_ENDPOINT = '$BASE_URL/auth/login/';
-const String MANAGER_LOGIN_ENDPOINT = '$BASE_URL/hotelManager-api/get/';
+const String MANAGER_LOGIN_ENDPOINT = '$BASE_URL/hotelManager-api/login/';
 const String LOGOUT_ENDPOINT = '$BASE_URL/auth/logout/';
 
 class AuthService with ChangeNotifier {

@@ -1,235 +1,273 @@
+// فایل: widgets/hotel_card.dart
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
-
+import 'package:url_launcher/url_launcher.dart'; // برای باز کردن لینک مجوز
 import '../models/hotel_model.dart';
-import '../models/facility_enum.dart'; // <<--- Import FacilityExtension
-import '../screens/room_list_screen.dart';
-import '../screens/add_hotel_screen.dart';
-import '../data/app_data.dart';
-import '../utils/colors.dart';
-import '../utils/amenity_icons.dart';
+import '../models/facility_enum.dart';
 
 class HotelCard extends StatelessWidget {
   final Hotel hotel;
-  final VoidCallback? onHotelUpdated;
-  final VoidCallback? onManageRooms;
+  final VoidCallback onHotelUpdated;
+  final VoidCallback onManageRooms;
 
   const HotelCard({
     super.key,
     required this.hotel,
-    this.onHotelUpdated,
-    this.onManageRooms,
+    required this.onHotelUpdated,
+    required this.onManageRooms,
   });
-
-  Future<void> _launchURL(String? urlString) async {
-    if (urlString == null || urlString.isEmpty) {
-      print('URL مجوز موجود نیست.');
-      return;
-    }
-    final Uri url = Uri.parse(urlString);
-    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      print('Could not launch $url');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final hotelRoomCount = sampleRooms.where((room) => room.hotelId == hotel.id).length;
+    const primaryColor = Color(0xFF542545);
+    const accentColor = Color(0xFF7E3F6B);
 
     return Card(
-      elevation: 4,
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16.0),
-      ),
+      elevation: 4.0,
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(16.0),
-              topRight: Radius.circular(16.0),
-            ),
-            // مدیریت null بودن hotel.imageUrl
-            child: hotel.imageUrl != null && hotel.imageUrl!.isNotEmpty
-                ? Image.network(
-              hotel.imageUrl!,
-              height: 200,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  height: 200,
-                  width: double.infinity,
-                  color: Colors.grey[300],
-                  child: const Icon(Icons.broken_image, color: Colors.grey, size: 60),
-                );
-              },
-            )
-                : Container( // نمایش placeholder اگر URL تصویر موجود نباشد
-              height: 200,
-              width: double.infinity,
-              color: Colors.grey[300],
-              child: const Icon(Icons.hotel, color: Colors.grey, size: 80),
+          _buildImageHeader(context, primaryColor),
+          _buildInfoSection(context, accentColor),
+          if (hotel.amenities.isNotEmpty) _buildAmenitiesSection(context),
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          _buildActionButtons(context, primaryColor),
+        ],
+      ),
+    );
+  }
+
+  // بخش هدر عکس و نام
+  Widget _buildImageHeader(BuildContext context, Color primaryColor) {
+    return Stack(
+      children: [
+        SizedBox(
+          height: 200,
+          width: double.infinity,
+          child: (hotel.imageUrl != null && hotel.imageUrl!.isNotEmpty)
+              ? Image.network(
+            hotel.imageUrl!,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, progress) => progress == null
+                ? child
+                :  Center(child: CircularProgressIndicator(color: primaryColor)),
+            errorBuilder: (context, error, stackTrace) =>
+            const Icon(Icons.hotel_class_outlined, size: 80, color: Colors.grey),
+          )
+              : Container(
+            color: Colors.grey[200],
+            child: const Icon(Icons.hotel_class_outlined, size: 80, color: Colors.grey),
+          ),
+        ),
+        Positioned.fill(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.black.withOpacity(0.6), Colors.transparent],
+                begin: Alignment.bottomCenter,
+                end: Alignment.center,
+              ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        ),
+        Positioned(
+          bottom: 16.0,
+          right: 16.0,
+          left: 16.0,
+          child: Text(
+            hotel.name,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              shadows: [const Shadow(blurRadius: 2.0, color: Colors.black54)],
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // بخش اطلاعات (مکان و امتیاز)
+  Widget _buildInfoSection(BuildContext context, Color accentColor) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                Icon(Icons.location_on_outlined, color: theme.hintColor, size: 18),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    hotel.location,
+                    style: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodySmall?.color),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            decoration: BoxDecoration(
+              color: accentColor.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(20.0),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  hotel.name,
-                  style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: customPurple),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                  hotel.rating.toStringAsFixed(1),
+                  style: theme.textTheme.bodyMedium?.copyWith(color: accentColor, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  'توضیحات:',
-                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 4),
-                Container(
-                  height: 80,
-                  padding: const EdgeInsets.all(8.0),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8.0),
-                    color: Colors.grey.shade50,
-                  ),
-                  child: Scrollbar(
-                    thumbVisibility: true,
-                    child: SingleChildScrollView(
-                      child: Text(
-                        hotel.description,
-                        style: textTheme.bodyMedium?.copyWith(height: 1.5),
-                        textAlign: TextAlign.justify,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'امکانات:',
-                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                if (hotel.amenities.isNotEmpty)
-                  SizedBox(
-                    height: 60,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: hotel.amenities.length,
-                      itemBuilder: (context, index) {
-                        final Facility facility = hotel.amenities[index]; // حالا از نوع Facility
-                        return Padding(
-                          padding: const EdgeInsets.only(left: 8.0),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: customPurple.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Icon(
-                                  // فرض می‌کنیم getAmenityIcon رشته نام enum را می‌گیرد (Facility.Wifi.name)
-                                  // یا خود enum را اگر getAmenityIcon را تغییر داده باشید.
-                                  // در فایل amenity_icons.dart فعلی، رشته نام enum را می‌گیرد.
-                                  getAmenityIcon(facility.name), // <<--- اصلاح شده
-                                  color: customPurple,
-                                  size: 24,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                facility.displayName, // <<--- اصلاح شده
-                                style: textTheme.bodySmall?.copyWith(fontSize: 10),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              )
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  )
-                else
-                  Text('امکاناتی ثبت نشده است.', style: textTheme.bodyMedium),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Text(
-                      'امتیاز: ',
-                      style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                    ),
-                    Icon(Icons.star, color: Colors.amber, size: 22),
-                    const SizedBox(width: 4),
-                    Text(
-                      hotel.rating.toStringAsFixed(1),
-                      style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87),
-                    ),
-                    const Text(' از 5', style: TextStyle(color: Colors.grey))
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Text(
-                      'شماره شبا: ',
-                      style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                    ),
-                    Expanded(
-                      child: Text(
-                        hotel.iban,
-                        style: textTheme.bodyLarge?.copyWith(fontFamily: 'monospace', letterSpacing: 1.1),
-                        textDirection: TextDirection.ltr,
-                        textAlign: TextAlign.end,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const Divider(),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    if (hotel.licenseImageUrl != null && hotel.licenseImageUrl!.isNotEmpty)
-                      TextButton.icon(
-                        icon: const Icon(Icons.download_for_offline_outlined),
-                        label: const Text('دانلود مجوز'),
-                        onPressed: () => _launchURL(hotel.licenseImageUrl),
-                        style: TextButton.styleFrom(foregroundColor: Colors.blueGrey[700]),
-                      ),
-                    if (onManageRooms != null)
-                      TextButton.icon(
-                        icon: const Icon(Icons.bed_outlined),
-                        label: Text('اتاق‌ها ($hotelRoomCount)'),
-                        onPressed: onManageRooms,
-                        style: TextButton.styleFrom(foregroundColor: customPurple),
-                      ),
-                  ],
-                ),
-                if (onHotelUpdated != null)
-                  Align(
-                    alignment: AlignmentDirectional.centerEnd,
-                    child: TextButton.icon(
-                      icon: const Icon(Icons.edit_outlined, size: 18),
-                      label: const Text('ویرایش هتل'),
-                      onPressed: onHotelUpdated, // <<--- مستقیم از callback استفاده می‌کنیم
-                      style: TextButton.styleFrom(foregroundColor: Colors.orange[700]),
-                    ),
-                  ),
+                const SizedBox(width: 4),
+                Icon(Icons.star_rounded, color: accentColor, size: 18),
               ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  // بخش آیکون‌های امکانات
+  Widget _buildAmenitiesSection(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      child: Wrap(
+        spacing: 12.0,
+        runSpacing: 8.0,
+        children: hotel.amenities.take(6).map((facility) {
+          return Tooltip(
+            message: facility.userDisplayName,
+            child: Icon(facility.iconData, color: theme.iconTheme.color?.withOpacity(0.7), size: 22),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  // بخش دکمه‌های عملیاتی
+  Widget _buildActionButtons(BuildContext context, Color primaryColor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // *** دکمه جدید: اطلاعات بیشتر ***
+          TextButton(
+            child:  Text('اطلاعات بیشتر', style: TextStyle(fontWeight: FontWeight.w600,color:primaryColor )),
+            onPressed: () => _showDetailsDialog(context, primaryColor),
+          ),
+          TextButton.icon(
+            // /icon: Icon(Icons.edit_outlined, color: primaryColor, size: 20),
+            label: Text('ویرایش', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+            onPressed: onHotelUpdated,
+          ),
+          Row(
+            children: [
+
+              ElevatedButton.icon(
+                icon: const Icon(Icons.meeting_room_outlined, size: 20,color: Colors.white,),
+                label: const Text('مدیریت اتاق‌ها'),
+                onPressed: onManageRooms,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // *** دیالوگ جدید برای نمایش جزئیات کامل ***
+  void _showDetailsDialog(BuildContext context, Color primaryColor) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(hotel.name, style: TextStyle(fontWeight: FontWeight.bold, color: primaryColor)),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                _buildDetailRow(context, Icons.description_outlined, 'توضیحات:', hotel.description),
+                const Divider(height: 24),
+                _buildDetailRow(context, Icons.account_balance_wallet_outlined, 'شماره شبا:', hotel.iban, isLtr: true),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            // دکمه نمایش مجوز (فقط اگر لینکی وجود داشته باشد)
+            if (hotel.licenseImageUrl != null && hotel.licenseImageUrl!.isNotEmpty)
+              TextButton.icon(
+                icon: Icon(Icons.receipt_long_outlined, color: primaryColor),
+                label: Text('نمایش مجوز', style: TextStyle(color: primaryColor)),
+                onPressed: () => _launchURL(hotel.licenseImageUrl!),
+              ),
+            TextButton(
+              child:  Text('بستن', style: TextStyle(fontWeight: FontWeight.bold,color: primaryColor)),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // ویجت کمکی برای نمایش یک ردیف از جزئیات در دیالوگ
+  Widget _buildDetailRow(BuildContext context, IconData icon, String title, String value, {bool isLtr = false}) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 20, color: theme.hintColor),
+            const SizedBox(width: 8),
+            Text(title, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.grey.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            value,
+            textAlign: isLtr ? TextAlign.left : TextAlign.right,
+            textDirection: isLtr ? TextDirection.ltr : TextDirection.rtl,
+            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // تابع کمکی برای باز کردن URL مجوز
+  Future<void> _launchURL(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      // می‌توان در صورت خطا یک SnackBar نمایش داد
+      print('Could not launch $url');
+    }
   }
 }

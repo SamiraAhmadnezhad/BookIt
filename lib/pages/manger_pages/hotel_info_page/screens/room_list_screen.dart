@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/room_model.dart';
 import '../widgets/room_card.dart';
 import 'add_room_screen.dart';
-import '../data/app_data.dart'; // برای دسترسی به sampleRooms
-import '../utils/colors.dart';
+import '../data/app_data.dart';
 
 class RoomListScreen extends StatefulWidget {
   final String hotelId;
