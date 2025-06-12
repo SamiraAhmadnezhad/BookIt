@@ -23,7 +23,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late final HotelApiService _apiService;
 
-  // *** تغییر: برای هر لیست، یک متغیر خطا و وضعیت لودینگ جداگانه در نظر می‌گیریم ***
   List<Hotel>? _hotelsByCity;
   List<Hotel>? _discountedHotels;
   List<Hotel>? _topRatedHotels;
@@ -31,8 +30,6 @@ class _HomePageState extends State<HomePage> {
   bool _isCityLoading = true;
   bool _isDiscountLoading = true;
   bool _isTopRatedLoading = true;
-
-  String? _globalErrorMessage;
 
   String _selectedCity = 'تهران';
   final List<String> _allCities = ['تهران', 'مشهد', 'اصفهان', 'شیراز', 'تبریز', 'کیش', 'قشم'];
@@ -52,14 +49,15 @@ class _HomePageState extends State<HomePage> {
     _fetchInitialData();
   }
 
-  // *** بخش کلیدی: بازنویسی کامل این تابع برای مدیریت مستقل درخواست‌ها ***
   Future<void> _fetchInitialData() async {
-    setState(() {
-      _isCityLoading = true;
-      _isDiscountLoading = true;
-      _isTopRatedLoading = true;
-      _globalErrorMessage = null;
-    });
+    // برای اینکه در هنگام رفرش، کاربر متوجه تغییر شود، یک حالت لودینگ کلی قرار می‌دهیم
+    if (!(_isCityLoading && _isDiscountLoading && _isTopRatedLoading)) {
+      setState(() {
+        _isCityLoading = true;
+        _isDiscountLoading = true;
+        _isTopRatedLoading = true;
+      });
+    }
 
     // --- دریافت هتل‌های شهر ---
     try {
@@ -67,7 +65,7 @@ class _HomePageState extends State<HomePage> {
       if (mounted) setState(() => _hotelsByCity = cityHotels);
     } catch (e) {
       print("Error fetching city hotels: $e");
-      if (mounted) setState(() => _hotelsByCity = null); // null به معنی خطا است
+      if (mounted) setState(() => _hotelsByCity = null);
     } finally {
       if (mounted) setState(() => _isCityLoading = false);
     }
@@ -83,7 +81,7 @@ class _HomePageState extends State<HomePage> {
       if (mounted) setState(() => _isDiscountLoading = false);
     }
 
-    // --- دریافت هتل‌های برتر (این بخش همچنان خطا خواهد داد تا بک‌اند اصلاح شود) ---
+    // --- دریافت هتل‌های برتر ---
     try {
       final topHotels = await _apiService.fetchTopRatedHotels();
       if (mounted) setState(() => _topRatedHotels = topHotels);
@@ -99,7 +97,7 @@ class _HomePageState extends State<HomePage> {
     if (newCity == _selectedCity) return;
     setState(() {
       _selectedCity = newCity;
-      _isCityLoading = true; // نمایش لودر فقط برای لیست شهر
+      _isCityLoading = true;
       _hotelsByCity = [];
     });
 
@@ -107,7 +105,7 @@ class _HomePageState extends State<HomePage> {
       if (mounted) setState(() => _hotelsByCity = hotels);
     }).catchError((e) {
       if (mounted) {
-        setState(() => _hotelsByCity = null); // مدیریت خطا
+        setState(() => _hotelsByCity = null);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('خطا در دریافت هتل‌های شهر: $e')));
       }
     }).whenComplete(() {
@@ -115,7 +113,6 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // بقیه متدها بدون تغییر...
   void _showLocationModal() {
     showModalBottomSheet<String>(
       context: context, isScrollControlled: true, backgroundColor: Colors.white,
@@ -143,30 +140,36 @@ class _HomePageState extends State<HomePage> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: backgroundColor,
-        body: showGlobalLoader
-            ? const Center(child: CircularProgressIndicator(color: primaryColor))
-            : _globalErrorMessage != null
-            ? Center(child: Text(_globalErrorMessage!)) // اینجا خطای کلی نمایش داده می‌شود
-            : Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width > 1200 ? 1200 : MediaQuery.of(context).size.width),
-            child: RefreshIndicator(
-              onRefresh: _fetchInitialData,
-              child: CustomScrollView(
-                slivers: [
-                  _buildSliverAppBar(primaryColor),
-                  SliverToBoxAdapter(child: _buildBodyContent(primaryColor)),
-                ],
-              ),
-            ),
-          ),
+        // *** بخش کلیدی: قرار دادن RefreshIndicator در بالاترین سطح body ***
+        body: RefreshIndicator(
+          onRefresh: _fetchInitialData, // تابعی که هنگام کشیدن صفحه فراخوانی می‌شود
+          color: primaryColor,
+          child: showGlobalLoader
+              ? const Center(child: CircularProgressIndicator(color: primaryColor))
+          // زمانی که در حال رفرش هستیم، برای جلوگیری از پرش UI، از یک ListView خالی استفاده می‌کنیم
+              : _buildMainContent(primaryColor, maxContentWidth: MediaQuery.of(context).size.width > 1200 ? 1200 : MediaQuery.of(context).size.width),
         ),
       ),
     );
   }
 
-  // ... (متدهای _buildSliverAppBar و _buildBodyContent بدون تغییر)
+  Widget _buildMainContent(Color primaryColor, {required double maxContentWidth}) {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxContentWidth),
+        child: CustomScrollView(
+          // این خط مهم است تا حتی وقتی محتوا کم است، بتوان صفحه را برای رفرش کشید
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            _buildSliverAppBar(primaryColor),
+            SliverToBoxAdapter(child: _buildBodyContent(primaryColor)),
+          ],
+        ),
+      ),
+    );
+  }
+
   SliverAppBar _buildSliverAppBar(Color primaryColor) {
     return SliverAppBar(
       pinned: true, floating: true, snap: true,
@@ -226,7 +229,7 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 32),
             Padding(padding: const EdgeInsets.symmetric(horizontal: 24.0), child: SectionTitle(title: 'هتل‌های شهر $_selectedCity')),
             const SizedBox(height: 16),
-            _buildHotelList(_hotelsByCity, _isCityLoading), // پاس دادن وضعیت لودینگ
+            _buildHotelList(_hotelsByCity, _isCityLoading),
 
             const SizedBox(height: 32),
             Padding(padding: const EdgeInsets.symmetric(horizontal: 24.0), child: SectionTitle(title: 'پیشنهادهای شگفت‌انگیز')),
@@ -245,25 +248,17 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-
-  // *** بخش کلیدی: بازنویسی این تابع برای مدیریت حالت‌های مختلف هر لیست ***
   Widget _buildHotelList(List<Hotel>? hotelList, bool isLoading) {
     const listHeight = 310.0;
-
     if (isLoading) {
       return const SizedBox(height: listHeight, child: Center(child: CircularProgressIndicator()));
     }
-
     if (hotelList == null) {
-      // حالت خطا برای این لیست خاص
       return const SizedBox(height: 100, child: Center(child: Text('خطا در دریافت اطلاعات این بخش')));
     }
-
     if (hotelList.isEmpty) {
-      // حالت لیست خالی
       return const SizedBox(height: 100, child: Center(child: Text('هتلی برای نمایش یافت نشد.')));
     }
-
     return SizedBox(
       height: listHeight,
       child: ListView.builder(
