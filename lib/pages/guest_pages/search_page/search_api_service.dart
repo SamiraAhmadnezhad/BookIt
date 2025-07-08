@@ -1,4 +1,4 @@
-// فایل: lib/pages/guest_pages/search_page/services/search_api_service.dart
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -7,7 +7,7 @@ import '../home_page/model/room_model.dart';
 import 'model/search_params_model.dart';
 
 class SearchApiService {
-  static const String _searchUrl = 'https://newbookit.darkube.app/room-api/all-rooms/';
+  static const String _searchUrl = 'https://fbookit.darkube.app/room-api/all-rooms/';
 
   final AuthService _authService;
 

@@ -8,7 +8,7 @@ import '../widgets/hotel_card.dart';
 import 'add_hotel_screen.dart';
 import 'room_list_screen.dart';
 
-const String HOTELS_API_ENDPOINT = 'https://newbookit.darkube.app/hotel-api/hotel/';
+const String HOTELS_API_ENDPOINT = 'https://fbookit.darkube.app/hotel-api/hotel/';
 
 class HotelListScreen extends StatefulWidget {
   const HotelListScreen({super.key});

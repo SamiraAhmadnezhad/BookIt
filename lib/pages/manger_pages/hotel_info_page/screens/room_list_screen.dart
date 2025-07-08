@@ -9,7 +9,7 @@ import '../models/room_model.dart';
 import '../widgets/room_card.dart';
 import 'add_room_screen.dart';
 
-const String ROOMS_API_ENDPOINT = 'https://newbookit.darkube.app/room-api/room';
+const String ROOMS_API_ENDPOINT = 'https://fbookit.darkube.app/room-api/room';
 
 class RoomListScreen extends StatefulWidget {
   final String hotelId;

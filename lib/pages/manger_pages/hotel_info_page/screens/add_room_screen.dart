@@ -10,7 +10,7 @@ import 'package:provider/provider.dart';
 import '../../../authentication_page/auth_service.dart';
 
 // Endpoint جدید مطابق با Swagger
-const String ADD_ROOM_API_ENDPOINT = 'https://newbookit.darkube.app/room-api/create/';
+const String ADD_ROOM_API_ENDPOINT = 'https://fbookit.darkube.app/room-api/create/';
 
 const Color kManagerPrimaryColor = Color(0xFF542545);
 const Color kPageBackgroundColor = Color(0xFFF4F6F8);

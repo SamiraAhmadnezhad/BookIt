@@ -6,7 +6,7 @@ import '../../authentication_page/auth_service.dart';
 import 'model/hotel_model.dart';
 
 class HotelApiService {
-  static const String _baseUrl = 'https://newbookit.darkube.app/hotel-api/hotels';
+  static const String _baseUrl = 'https://fbookit.darkube.app/hotel-api/hotels';
 
   final AuthService _authService;
 
