@@ -1,3 +1,5 @@
+// lib/your_path/add_hotel_screen.dart
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -46,7 +48,6 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
   late TextEditingController _locationController;
   late TextEditingController _ibanController;
   late TextEditingController _ratingController;
-  // late TextEditingController _roomCountController; // در فرم استفاده نشده است
 
   // --- متغیرهای مدیریت عکس ---
   XFile? _selectedMainImageFile;
@@ -70,12 +71,7 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
     _descriptionController = TextEditingController(text: widget.hotel?.description ?? '');
     _locationController = TextEditingController(text: widget.hotel?.location ?? '');
     _ibanController = TextEditingController(text: widget.hotel?.iban ?? '');
-
-    // *** پیاده‌سازی خواسته مربوط به فیلد 'rate' ***
-    // اگر در حالت ویرایش باشیم (widget.hotel != null)، مقدار rate از هتل خوانده می‌شود.
-    // در غیر این صورت (حالت ایجاد)، مقدار پیش‌فرض '0' برای آن در نظر گرفته می‌شود.
     _ratingController = TextEditingController(text: widget.hotel?.rating.toString() ?? '0');
-    // _roomCountController = TextEditingController(text: widget.hotel?.roomCount?.toString() ?? '');
 
     // اگر در حالت ویرایش هستیم، داده‌های موجود را بارگذاری کن
     if (_isEditing && widget.hotel != null) {
@@ -93,7 +89,6 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
     _locationController.dispose();
     _ibanController.dispose();
     _ratingController.dispose();
-    // _roomCountController.dispose();
     super.dispose();
   }
 
@@ -108,7 +103,6 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
       _showSnackBar('لطفاً حداقل یک امکان برای هتل انتخاب کنید.', isError: true);
       return;
     }
-    // در حالت ایجاد، عکس اصلی الزامی است
     if (!_isEditing && _selectedMainImageFile == null) {
       _showSnackBar('عکس اصلی هتل الزامی است.', isError: true);
       return;
@@ -125,17 +119,19 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
       return;
     }
 
-    // *** پیاده‌سازی خواسته مربوط به URL ***
-    // اگر در حالت ویرایش باشیم، شناسه هتل به انتهای URL اضافه می‌شود.
     final String url = _isEditing ? '$EDIT_HOTEL_ENDPOINT_PREFIX${widget.hotel!.id}/' : ADD_HOTEL_ENDPOINT;
-    // متد درخواست نیز بر اساس حالت ویرایش (PATCH) یا ایجاد (POST) تعیین می‌شود.
     final String method = _isEditing ? 'PATCH' : 'POST';
 
     var request = http.MultipartRequest(method, Uri.parse(url));
     request.headers['Authorization'] = 'Bearer $token';
 
-    // تبدیل لیست امکانات به یک رشته جدا شده با کاما (مطابق با پیاده‌سازی بک‌اند)
-    final facilitiesString = _selectedAmenities.map((f) => f.apiValue).join(',');
+    // ====================== شروع اصلاحیه اصلی ======================
+    // 1. لیست نام امکانات را به صورت یک لیست از رشته‌ها استخراج می‌کنیم.
+    final List<String> facilityNames = _selectedAmenities.map((f) => f.apiValue).toList();
+    // 2. لیست را به یک رشته با فرمت JSON تبدیل می‌کنیم.
+    // خروجی این خط مثلاً به صورت: '["Wi-Fi", "Parking"]' خواهد بود.
+    final String facilitiesJson = jsonEncode(facilityNames);
+    // ======================= پایان اصلاحیه اصلی =======================
 
     // آماده‌سازی فیلدهای متنی برای ارسال
     final Map<String, String> fields = {
@@ -143,8 +139,7 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
       'location': _locationController.text,
       'description': _descriptionController.text,
       'hotel_iban_number': _ibanController.text,
-      'facilities': facilitiesString,
-      // فیلد rate همیشه ارسال می‌شود (با مقدار 0 در حالت ایجاد و مقدار موجود در حالت ویرایش)
+      'facilities': facilitiesJson, // <<< استفاده از رشته JSON به جای رشته جدا شده با کاما
       'rate': _ratingController.text,
     };
 
@@ -153,14 +148,14 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
     // اضافه کردن فایل‌های عکس در صورت انتخاب شدن
     if (_selectedMainImageFile != null) {
       request.files.add(await http.MultipartFile.fromPath(
-        'image', // نام فیلد در API
+        'image',
         _selectedMainImageFile!.path,
         contentType: MediaType('image', _selectedMainImageFile!.path.split('.').last),
       ));
     }
     if (_selectedLicenseImageFile != null) {
       request.files.add(await http.MultipartFile.fromPath(
-        'hotel_license', // نام فیلد در API
+        'hotel_license',
         _selectedLicenseImageFile!.path,
         contentType: MediaType('image', _selectedLicenseImageFile!.path.split('.').last),
       ));
@@ -176,15 +171,13 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
       debugPrint("Submit Hotel Response Status: ${response.statusCode}");
       debugPrint("Submit Hotel Response Body: $responseBodyString");
 
-      // کد وضعیت 200 (OK) برای ویرایش و 201 (Created) برای ایجاد موفقیت‌آمیز هستند
       if (response.statusCode == 200 || response.statusCode == 201) {
         _showSnackBar(
           _isEditing ? 'اطلاعات هتل با موفقیت ویرایش شد.' : 'هتل جدید با موفقیت اضافه شد.',
           isError: false,
         );
-        Navigator.pop(context, true); // ارسال true برای رفرش صفحه قبل
+        Navigator.pop(context, true);
       } else {
-        // مدیریت خطا
         _handleErrorResponse(response.statusCode, responseBodyString);
       }
     } catch (e) {
@@ -239,10 +232,10 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
         setState(() {
           if (isMainImage) {
             _selectedMainImageFile = pickedFile;
-            _existingMainImageUrl = null; // پاک کردن عکس قبلی
+            _existingMainImageUrl = null;
           } else {
             _selectedLicenseImageFile = pickedFile;
-            _existingLicenseImageUrl = null; // پاک کردن عکس قبلی
+            _existingLicenseImageUrl = null;
           }
         });
       }
@@ -592,7 +585,6 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
       hasImage = false;
     }
 
-    // عکس اصلی الزامی است، اما عکس مجوز اختیاری است
     final bool isRequired = isMainImage || _isEditing == false;
 
     return Card(
