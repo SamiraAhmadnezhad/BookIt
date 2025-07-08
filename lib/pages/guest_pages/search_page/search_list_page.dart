@@ -57,6 +57,7 @@ class _SearchListPageState extends State<SearchListPage> {
     setState(() => _isLoading = true);
     try {
       final rooms = await _apiService.searchAvailableRooms(widget.searchParams);
+      print(rooms);
       if (mounted) {
         setState(() {
           _allRooms = rooms;

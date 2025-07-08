@@ -23,8 +23,8 @@ const Color kErrorColor = Colors.redAccent;
 const Color kInputBorderColor = Color(0xFFD0D0D0);
 
 // --- آدرس‌های API ---
-const String ADD_HOTEL_ENDPOINT = 'https://newbookit.darkube.app/hotel-api/hotel/';
-const String EDIT_HOTEL_ENDPOINT_PREFIX = 'https://newbookit.darkube.app/hotel-api/hotel/';
+const String ADD_HOTEL_ENDPOINT = 'https://fbookit.darkube.app/hotel-api/hotel/';
+const String EDIT_HOTEL_ENDPOINT_PREFIX = 'https://fbookit.darkube.app/hotel-api/hotel/';
 
 class AddHotelScreen extends StatefulWidget {
   // اگر هتل برای ویرایش ارسال شود، این متغیر مقدار خواهد داشت

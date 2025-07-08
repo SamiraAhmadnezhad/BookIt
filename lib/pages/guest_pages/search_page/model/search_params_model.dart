@@ -4,7 +4,7 @@ class SearchParams {
   final String city;
   final String checkInDate;
   final String checkOutDate;
-  final String roomType; // e.g., "یک نفره", "دو نفره"
+  final String roomType; // این مقدار حالا "Single", "Double" یا "Triple" است
 
   SearchParams({
     required this.city,
@@ -13,24 +13,19 @@ class SearchParams {
     required this.roomType,
   });
 
-  // متد برای تبدیل نوع اتاق فارسی به تعداد مسافر
   int get numberOfPassengers {
     switch (roomType) {
-      case 'تک نفره':
+      case 'Single':
         return 1;
-      case 'دو نفره':
+      case 'Double':
         return 2;
-      case 'سه نفره':
+      case 'Triple':
         return 3;
       default:
-        return 1; // مقدار پیش‌فرض
+        return 1;
     }
   }
 
-  // متد برای تبدیل نوع اتاق فارسی به مقدار مورد نیاز API (اگر متفاوت باشد)
-  String get apiRoomType {
-    // فرض می‌کنیم API همین مقادیر را انتظار دارد. در غیر این صورت، اینجا مپ کنید.
-    // مثلا: case 'تک نفره': return 'Single';
-    return roomType;
-  }
+// این متد دیگر لازم نیست چون roomType از ابتدا مقدار صحیح API را دارد
+// String get apiRoomType => roomType;
 }

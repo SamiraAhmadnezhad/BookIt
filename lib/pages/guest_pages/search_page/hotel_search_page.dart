@@ -27,12 +27,12 @@ class _HotelSearchPageState extends State<HotelSearchPage> {
   String _selectedCity = "تهران"; // یک شهر پیش‌فرض برای راحتی
   Jalali? _checkInDateShamsi;
   Jalali? _checkOutDateShamsi;
-  String _selectedRoomType = 'دو نفره';
+  String _selectedRoomType = 'Double';
 
   final List<String> _allCities = [
     "تهران", "مشهد", "اصفهان", "شیراز", "تبریز", "یزد", "کاشان", "کرج", "رشت", "ساری"
   ];
-  final List<String> _roomTypes = ['تک نفره', 'دو نفره', 'سه نفره'];
+  final List<String> _roomTypes = ['Single', 'Double', 'Triple'];
 
   final Color _primaryColor = const Color(0xFF542545);
   final Color _textFieldBackgroundColor = Colors.grey.shade100;
