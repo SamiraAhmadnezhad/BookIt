@@ -1,3 +1,5 @@
+// lib/pages/authentication_page/authentication_page.dart
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -6,7 +8,6 @@ import '../manger_pages/manager_main_screen.dart';
 import 'auth_service.dart';
 import 'constants.dart';
 import 'widgets/auth_card.dart';
-
 const String BASE_URL = 'https://fbookit.darkube.app';
 const String INITIAL_MANAGER_REGISTER_ENDPOINT='$BASE_URL/hotelManager-api/create/';
 const String INITIAL_GUEST_REGISTER_ENDPOINT='$BASE_URL/auth/register/';
@@ -20,6 +21,7 @@ class AuthenticationPage extends StatefulWidget {
 }
 
 class _AuthenticationPageState extends State<AuthenticationPage> {
+  // ... (تمام متغیرها و کنترلرهای شما بدون تغییر) ...
   int _selectedTab = 0;
   bool _isChecked = false;
   bool _otpSend = false;
@@ -47,8 +49,10 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
   final _otp3Controller = TextEditingController();
   final _otp4Controller = TextEditingController();
 
-  // Define a constant for max width
+  // این ثابت از قبل در کد شما وجود داشت و ما از آن استفاده می‌کنیم.
   static const double kMaxFormWidth = 400.0;
+
+  // ... (تمام متدهای شما از dispose تا _handleResendOtp بدون تغییر) ...
 
   @override
   void dispose() {
@@ -144,7 +148,7 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
         'last_name': _managerLastNameController.text.trim(),
         'national_code': _managerNationalIdController.text.trim(),
         'password': _managerPasswordController.text.trim(),
-       };
+      };
     } else if (_selectedTab == 2) {
       INITIAL_REGISTER_ENDPOINT=INITIAL_GUEST_REGISTER_ENDPOINT;
       requestBody = {
@@ -435,20 +439,28 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
         return Stack(
           fit: StackFit.expand,
           children: [
+            // پس‌زمینه منحنی، که ثابت است و کل عرض را می‌گیرد.
             _buildBottomCurve(constraints.maxHeight, constraints.maxWidth),
 
-            Align(
-              alignment: const Alignment(0.0, 0.3),
+            // ====================== شروع اصلاحیه اصلی ======================
+            // 1. کل محتوای قابل اسکرول را در یک Center قرار می‌دهیم.
+            // این کار باعث می‌شود در صفحه‌های عریض، محتوای ما در وسط قرار گیرد.
+            Center(
               child: SingleChildScrollView(
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: kMaxFormWidth,
-                    ),
-                    child: Padding(
-                      // Use a fixed padding instead of percentage
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      child: AuthCard(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
+                child: ConstrainedBox(
+                  // 2. یک حداکثر عرض برای کل محتوای اسکرول‌شونده تعریف می‌کنیم.
+                  constraints: const BoxConstraints(
+                    maxWidth: kMaxFormWidth,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // متن بالای صفحه
+                      _buildTopText(),
+                      const SizedBox(height: 30),
+                      // کارت فرم‌ها
+                      AuthCard(
                         selectedTab: _selectedTab,
                         isLoginAsManager: _isLoginAsManager,
                         otpSend: _otpSend,
@@ -487,18 +499,12 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
                         onSignupSubmitPressed: _handleSignupSubmit,
                         onResendOtpPressed: _handleResendOtp,
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ),
             ),
-
-            SafeArea(
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: _buildTopText(),
-              ),
-            ),
+            // ======================= پایان اصلاحیه اصلی =======================
           ],
         );
       }),
@@ -506,44 +512,34 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
   }
 
   Widget _buildTopText() {
-    return Container(
-      // This container will be centered horizontally because of Align(alignment: Alignment.topCenter)
-      padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 60.0),
-      // NEW: Wrap the content in a ConstrainedBox
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          maxWidth: kMaxFormWidth,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Align(
-              alignment: Alignment.topRight,
-              child: Text.rich(
-                TextSpan(
-                  text: 'تا وقتی ',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400, color: topTextColor),
-                  children: [
-                    const TextSpan(text: 'بوکیت ', style: TextStyle(fontWeight: FontWeight.w900)),
-                    const TextSpan(text: 'هست'),
-                  ],
-                ),
-                textDirection: TextDirection.rtl,
-              ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Align(
+          alignment: Alignment.topRight,
+          child: Text.rich(
+            TextSpan(
+              text: 'تا وقتی ',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400, color: topTextColor),
+              children: [
+                const TextSpan(text: 'بوکیت ', style: TextStyle(fontWeight: FontWeight.w900)),
+                const TextSpan(text: 'هست'),
+              ],
             ),
-            const SizedBox(height: 10),
-            Align(
-              alignment: Alignment.topLeft,
-              child: const Text(
-                'کجا بمونم سوال نیست!',
-                textDirection: TextDirection.rtl,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, color: topTextColor),
-              ),
-            ),
-          ],
+            textDirection: TextDirection.rtl,
+          ),
         ),
-      ),
+        const SizedBox(height: 10),
+        Align(
+          alignment: Alignment.topLeft,
+          child: const Text(
+            'کجا بمونم سوال نیست!',
+            textDirection: TextDirection.rtl,
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, color: topTextColor),
+          ),
+        ),
+      ],
     );
   }
 
