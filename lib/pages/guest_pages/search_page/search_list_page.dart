@@ -1,4 +1,3 @@
-// فایل: lib/pages/guest_pages/search_page/search_list_page.dart
 import 'package:bookit/pages/guest_pages/search_page/search_api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -9,6 +8,8 @@ import '../home_page/model/room_model.dart';
 import '../reservation_detail_page/reservation_detail_page.dart';
 import 'model/search_params_model.dart';
 import 'widgets/hotel_search_list_card.dart';
+
+import '../reservation_detail_page//reservation_api_service.dart';
 
 enum SortType { none, popular, cheapest, expensive, discount }
 
@@ -23,6 +24,8 @@ class SearchListPage extends StatefulWidget {
 
 class _SearchListPageState extends State<SearchListPage> {
   late final SearchApiService _apiService;
+  final ReservationApiService _reservationApiService = ReservationApiService();
+  late final String? _token; // برای دسترسی به توکن کاربر
 
   List<Room> _allRooms = [];
   List<Room> _filteredRooms = [];
@@ -48,6 +51,7 @@ class _SearchListPageState extends State<SearchListPage> {
     super.initState();
     final authService = Provider.of<AuthService>(context, listen: false);
     _apiService = SearchApiService(authService);
+    _token = authService.token; // توکن را یکبار در initState بگیرید
 
     _searchController.addListener(_applyFiltersAndSort);
     _fetchSearchResults();
@@ -57,7 +61,6 @@ class _SearchListPageState extends State<SearchListPage> {
     setState(() => _isLoading = true);
     try {
       final rooms = await _apiService.searchAvailableRooms(widget.searchParams);
-      print(rooms);
       if (mounted) {
         setState(() {
           _allRooms = rooms;
@@ -72,6 +75,80 @@ class _SearchListPageState extends State<SearchListPage> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
+
+  Future<void> _handleRoomBooking(Room room) async {
+    if (_token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("برای رزرو، ابتدا باید وارد شوید.")));
+      return;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Dialog(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: appBarActionsColor),
+              SizedBox(width: 20),
+              Text("در حال قفل کردن اتاق..."),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final bool isLocked = await _reservationApiService.lockRoom(
+      hotelId: room.hotel.id,
+      roomNumbers: [room.roomNumber],
+      token: _token!,
+    );
+
+    if (mounted) Navigator.pop(context);
+
+    if (isLocked) {
+      try {
+        final DateTime checkIn = DateTime.parse(widget.searchParams.checkInDate);
+        final DateTime checkOut = DateTime.parse(widget.searchParams.checkOutDate);
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ReservationDetailPage(
+              hotelId: room.hotel.id,
+              hotelName: room.hotel.name,
+              hotelAddress: room.hotel.location,
+              hotelRating: room.rating,
+              hotelImageUrl: room.imageUrl ?? '',
+              roomNumber: room.roomNumber,
+              roomInfo: room.name,
+              checkInDate: checkIn,
+              checkOutDate: checkOut,
+              totalPrice: room.pricePerNight,
+              numberOfAdults: widget.searchParams.numberOfPassengers,
+            ),
+          ),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("خطا: فرمت تاریخ ارسال شده نامعتبر است."),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("خطا: این اتاق در حال حاضر توسط شخص دیگری رزرو شده یا در دسترس نیست."),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
+  }
+
 
   void _calculateAndSetInitialPriceRange() {
     if (_allRooms.isEmpty) {
@@ -280,11 +357,16 @@ class _SearchListPageState extends State<SearchListPage> {
                     rating: room.rating,
                     isFavorite: room.isFavorite,
                     price: room.pricePerNight.toInt(),
-                    onTap: () {},
-                    onFavoriteToggle: () {
-                      setState(() => room.isFavorite = !room.isFavorite);
+                    onTap: () {
+                      // می‌توانید اینجا کاربر را به صفحه جزئیات هتل ببرید
+                      // Navigator.push(context, MaterialPageRoute(builder: (context) => HotelDetailsPage(hotelId: room.hotel.id.toString())));
                     },
-                    onReserveTap: () {},
+                    onFavoriteToggle: () {
+                      // منطق toggle favorite را اینجا پیاده‌سازی کنید
+                      // setState(() => room.isFavorite = !room.isFavorite);
+                    },
+                    // +++ 4. اتصال دکمه رزرو به متد جدید +++
+                    onReserveTap: () => _handleRoomBooking(room),
                   ),
                 );
               },
