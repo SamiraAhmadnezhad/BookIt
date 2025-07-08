@@ -10,10 +10,14 @@ import 'package:provider/provider.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 import '../../authentication_page/auth_service.dart';
 import '../search_page/widgets/custom_shamsi_date_picker.dart';
+// مسیر import های رزرو را بر اساس ساختار پروژه خود تنظیم کنید
+import '../reservation_detail_page/reservation_api_service.dart';
+import '../reservation_detail_page/reservation_detail_page.dart';
 
 import 'data/models/amenity_model.dart';
 import 'data/models/hotel_details_model.dart';
 import 'data/models/review_model.dart';
+// این import باید به مدل Room مخصوص این صفحه اشاره کند
 import 'data/models/room_model.dart';
 import 'data/services/hotel_api_service.dart';
 
@@ -29,18 +33,18 @@ class HotelDetailsPage extends StatefulWidget {
 
 class _HotelDetailsPageState extends State<HotelDetailsPage> {
   final HotelApiService _apiService = HotelApiService();
+  final ReservationApiService _reservationApiService = ReservationApiService();
+
   Future<HotelDetails>? _hotelDetailsFuture;
   Future<List<Room>>? _roomsFuture;
   Future<List<Review>>? _reviewsFuture;
 
-  bool _isFavorite = false; // Initial state, will be updated from API
-  String? _currentToken; // Store token once fetched
+  bool _isFavorite = false;
+  String? _currentToken;
 
   @override
   void initState() {
     super.initState();
-    // It's better to fetch the token once and store it.
-    // Accessing Provider in initState needs listen:false
     final authService = Provider.of<AuthService>(context, listen: false);
     _currentToken = authService.token;
 
@@ -49,8 +53,6 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
       _loadDataAndFavoriteStatus(_currentToken!);
     } else {
       print("کاربر لاگین نکرده یا توکن موجود نیست.");
-      // Handle no token scenario, e.g., show error or redirect
-      // For now, we'll let FutureBuilders show errors if data can't load.
     }
   }
 
@@ -63,17 +65,17 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
       }
       return hotel;
     });
+    // این متد باید لیستی از مدل Room مخصوص این صفحه را برگرداند
     _roomsFuture = _apiService.fetchHotelRooms(widget.hotelId, token);
     _reviewsFuture = _apiService.fetchHotelReviews(widget.hotelId, token);
   }
 
   Future<void> _toggleFavorite() async {
     if (_currentToken == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("ابتدا وارد شوید.", textDirection: TextDirection.rtl)));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("ابتدا وارد شوید.")));
       return;
     }
     bool newFavoriteState = !_isFavorite;
-    // Optimistically update UI
     setState(() {
       _isFavorite = newFavoriteState;
     });
@@ -81,73 +83,93 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
     try {
       bool success = await _apiService.toggleFavoriteHotel(widget.hotelId, newFavoriteState, _currentToken!);
       if (!success && mounted) {
-        // Revert if API call failed
-        setState(() {
-          _isFavorite = !newFavoriteState;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("خطا در به‌روزرسانی علاقه‌مندی", textDirection: TextDirection.rtl)));
+        setState(() => _isFavorite = !newFavoriteState);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("خطا در به‌روزرسانی علاقه‌مندی")));
       }
     } catch (e) {
       if (mounted) {
-        // Revert on error
-        setState(() {
-          _isFavorite = !newFavoriteState;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("خطا در ارتباط با سرور", textDirection: TextDirection.rtl)));
+        setState(() => _isFavorite = !newFavoriteState);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("خطا در ارتباط با سرور")));
       }
     }
   }
 
+  // === متد کاملاً اصلاح شده بر اساس مدل Room این صفحه ===
   Future<void> _showBookingDateRangePicker(BuildContext context, Room room) async {
-    Jalali? startDate;
-    Jalali? endDate;
+    if (_currentToken == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("برای رزرو اتاق، ابتدا وارد شوید.")));
+      return;
+    }
+
     final Jalali today = Jalali.now();
-    final Jalali initialFirstDate = today;
-    final Jalali initialLastDate = today.addDays(365);
+    final Jalali? checkInDateJalali = await showCustomShamsiDatePickerDialog(context, initialDate: today.addDays(1), firstDate: today, lastDate: today.addDays(365), titleText: "تاریخ ورود را انتخاب کنید");
+    if (checkInDateJalali == null || !mounted) return;
 
-    startDate = await showCustomShamsiDatePickerDialog(
-      context,
-      initialDate: initialFirstDate,
-      firstDate: initialFirstDate,
-      lastDate: initialLastDate,
-      titleText: "تاریخ ورود را انتخاب کنید",
+    final Jalali? checkOutDateJalali = await showCustomShamsiDatePickerDialog(context, initialDate: checkInDateJalali.addDays(1), firstDate: checkInDateJalali.addDays(1), lastDate: today.addDays(365), titleText: "تاریخ خروج را انتخاب کنید");
+    if (checkOutDateJalali == null || !mounted) return;
+
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Dialog(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(color: kPrimaryColor),
+                const SizedBox(width: 20),
+                const Text("در حال قفل کردن اتاق..."),
+              ],
+            ),
+          ),
+        )
     );
 
-    if (startDate == null || !mounted) return;
-
-    final Jalali firstDateForEndDate = startDate.addDays(1);
-    final Jalali lastDateForEndDate = initialLastDate.compareTo(firstDateForEndDate) < 0
-        ? firstDateForEndDate.addDays(30)
-        : initialLastDate;
-
-    endDate = await showCustomShamsiDatePickerDialog(
-      context,
-      initialDate: firstDateForEndDate,
-      firstDate: firstDateForEndDate,
-      lastDate: lastDateForEndDate,
-      titleText: "تاریخ خروج را انتخاب کنید",
+    // استفاده از room.id به عنوان شماره اتاق برای API
+    final bool isLocked = await _reservationApiService.lockRoom(
+      hotelId: widget.hotelId,
+      roomNumbers: [room.roomNumber],
+      token: _currentToken!,
     );
 
-    if (endDate == null || !mounted) return;
+    if (mounted) Navigator.pop(context);
 
-    final String startDateFormatted = "${startDate.year}/${startDate.month.toString().padLeft(2, '0')}/${startDate.day.toString().padLeft(2, '0')}";
-    final String endDateFormatted = "${endDate.year}/${endDate.month.toString().padLeft(2, '0')}/${endDate.day.toString().padLeft(2, '0')}";
+    if (isLocked) {
+      final hotelDetails = await _hotelDetailsFuture;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          "اتاق ${room.name} برای تاریخ $startDateFormatted تا $endDateFormatted انتخاب شد. ورود به صفحه رزرو...",
-          textDirection: TextDirection.rtl,
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ReservationDetailPage(
+            hotelId: widget.hotelId,
+            hotelName: hotelDetails?.name ?? 'نام هتل',
+            hotelAddress: hotelDetails?.address ?? 'آدرس نامشخص',
+            hotelRating: hotelDetails?.rating ?? 0.0,
+            hotelImageUrl: hotelDetails?.imageUrl ?? '',
+            roomNumber: room.roomNumber,
+            roomInfo: room.name,
+            checkInDate: checkInDateJalali.toDateTime(),
+            checkOutDate: checkOutDateJalali.toDateTime(),
+            totalPrice: room.pricePerNight,
+            numberOfAdults: room.capacity,
+          ),
         ),
-        duration: const Duration(seconds: 3),
-      ),
-    );
-    // Navigate to booking page or implement booking logic here
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("خطا: این اتاق در حال حاضر توسط شخص دیگری رزرو شده یا در دسترس نیست."),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
+
 
   Future<void> _handleReviewSubmission(Review reviewData) async {
     if (_currentToken == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("ابتدا وارد شوید.", textDirection: TextDirection.rtl)));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("ابتدا وارد شوید.")));
       return;
     }
 
@@ -155,15 +177,15 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return const Dialog(
+        return Dialog(
           child: Padding(
-            padding: EdgeInsets.all(20.0),
+            padding: const EdgeInsets.all(20.0),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 CircularProgressIndicator(color: kPrimaryColor),
-                SizedBox(width: 20),
-                Text("در حال ارسال نظر...", textDirection: TextDirection.rtl),
+                const SizedBox(width: 20),
+                const Text("در حال ارسال نظر..."),
               ],
             ),
           ),
@@ -173,20 +195,15 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
 
     bool success = await _apiService.submitReview(widget.hotelId, reviewData, _currentToken!);
 
-    if (mounted) Navigator.pop(context); // Close loading dialog
+    if (mounted) Navigator.pop(context);
 
     if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("نظر شما با موفقیت ثبت شد.", textDirection: TextDirection.rtl)),
-      );
-      // Refresh reviews list
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("نظر شما با موفقیت ثبت شد.")));
       setState(() {
         _reviewsFuture = _apiService.fetchHotelReviews(widget.hotelId, _currentToken!);
       });
     } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("خطا در ثبت نظر. لطفا دوباره تلاش کنید.", textDirection: TextDirection.rtl)),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("خطا در ثبت نظر. لطفا دوباره تلاش کنید.")));
     }
   }
 
@@ -200,18 +217,16 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
         body: FutureBuilder<HotelDetails>(
           future: _hotelDetailsFuture,
           builder: (context, snapshot) {
-            if (_currentToken == null && snapshot.connectionState != ConnectionState.waiting) { // Check if token was issue initially
+            if (_currentToken == null && snapshot.connectionState != ConnectionState.waiting) {
               return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text("برای مشاهده اطلاعات هتل، ابتدا وارد شوید.", textDirection: TextDirection.rtl),
+                      const Text("برای مشاهده اطلاعات هتل، ابتدا وارد شوید."),
                       const SizedBox(height: 10),
                       ElevatedButton(
                         onPressed: () {
-                          // Example: Navigate to login or trigger auth flow
-                          // Navigator.of(context).pushReplacementNamed('/login');
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("منتقل کردن به صفحه لاگین...", textDirection: TextDirection.rtl)));
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("منتقل کردن به صفحه لاگین...")));
                         },
                         style: ElevatedButton.styleFrom(backgroundColor: kPrimaryColor),
                         child: const Text("ورود", style: TextStyle(color: Colors.white)),
@@ -228,17 +243,17 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text("خطا در بارگذاری اطلاعات هتل.", textDirection: TextDirection.rtl),
+                    const Text("خطا در بارگذاری اطلاعات هتل."),
                     ElevatedButton(
                         onPressed: () {
                           if (_currentToken != null) {
                             _loadDataAndFavoriteStatus(_currentToken!);
                           } else {
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("ابتدا وارد شوید.", textDirection: TextDirection.rtl)));
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("ابتدا وارد شوید.")));
                           }
                         },
                         style: ElevatedButton.styleFrom(backgroundColor: kPrimaryColor),
-                        child: const Text("تلاش مجدد", textDirection: TextDirection.rtl, style: TextStyle(color: Colors.white)))
+                        child: const Text("تلاش مجدد", style: TextStyle(color: Colors.white)))
                   ],
                 ),
               );
@@ -257,7 +272,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                   snap: false,
                   backgroundColor: kPrimaryColor,
                   elevation: 2,
-                  automaticallyImplyLeading: false, // We use a custom leading
+                  automaticallyImplyLeading: false,
                   flexibleSpace: FlexibleSpaceBar(
                     background: HotelImageWidget(imageUrl: hotel.imageUrl, rating: hotel.rating),
                     stretchModes: const [StretchMode.zoomBackground, StretchMode.fadeTitle],
@@ -311,7 +326,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
                       top: 20.0,
                       left: 16.0,
                       right: 16.0,
-                      bottom: 16.0, // Ensure bottom padding for scroll content
+                      bottom: 16.0,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -450,7 +465,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
 
   Widget _buildAmenitiesGrid(List<Amenity> amenities) {
     if (amenities.isEmpty) {
-      return Text("امکاناتی برای نمایش وجود ندارد.", style: TextStyle(color: Colors.grey[600]), textDirection: TextDirection.rtl);
+      return Text("امکاناتی برای نمایش وجود ندارد.", style: TextStyle(color: Colors.grey[600]));
     }
     return Container(
       alignment: Alignment.centerRight,
@@ -472,7 +487,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
           return const Center(child: CircularProgressIndicator(color: kPrimaryColor));
         }
         if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text("اتاقی برای نمایش وجود ندارد.", textDirection: TextDirection.rtl));
+          return const Center(child: Text("اتاقی برای نمایش وجود ندارد."));
         }
         final rooms = snapshot.data!;
         return ListView.separated(
@@ -497,7 +512,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
           return Center(child: CircularProgressIndicator(color: kPrimaryColor));
         }
         if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text("نظری برای نمایش وجود ندارد.", textDirection: TextDirection.rtl));
+          return const Center(child: Text("نظری برای نمایش وجود ندارد."));
         }
         final reviews = snapshot.data!;
         return ListView.separated(
@@ -505,7 +520,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
           shrinkWrap: true,
           itemCount: reviews.length,
           itemBuilder: (context, index) => ReviewCardWidget(review: reviews[index]),
-          separatorBuilder: (context, index) => const SizedBox(height: 0), // No space between review cards in this design
+          separatorBuilder: (context, index) => const SizedBox(height: 0),
         );
       },
     );

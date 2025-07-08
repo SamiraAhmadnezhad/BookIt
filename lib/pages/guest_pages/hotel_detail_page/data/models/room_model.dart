@@ -2,6 +2,7 @@ class Room {
   final String id;
   final String name;
   final String imageUrl;
+  final String roomNumber;
   final int capacity;
   final bool hasBreakfast;
   final bool hasLunch;
@@ -13,6 +14,7 @@ class Room {
     required this.id,
     required this.name,
     required this.imageUrl,
+    required this.roomNumber,
     required this.capacity,
     this.hasBreakfast = false,
     this.hasLunch = false,
