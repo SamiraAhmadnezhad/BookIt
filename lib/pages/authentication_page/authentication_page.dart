@@ -142,9 +142,9 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
         'email': _managerEmailController.text.trim(),
         'name': _managerNameController.text.trim(),
         'last_name': _managerLastNameController.text.trim(),
-        'password': _managerPasswordController.text,
         'national_code': _managerNationalIdController.text.trim(),
-      };
+        'password': _managerPasswordController.text.trim(),
+       };
     } else if (_selectedTab == 2) {
       INITIAL_REGISTER_ENDPOINT=INITIAL_GUEST_REGISTER_ENDPOINT;
       requestBody = {
@@ -169,7 +169,7 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
       );
 
       if (!mounted) return false;
-      print(response.statusCode);
+      print(response.body);
       if (response.statusCode == 201 || response.statusCode == 200) {
         return true;
       } else {
