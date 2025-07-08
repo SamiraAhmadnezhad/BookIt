@@ -1,8 +1,10 @@
 // guest_main_screen.dart
 import 'package:bookit/pages/guest_pages/search_page/hotel_search_page.dart';
+import 'package:bookit/pages/manger_pages/report_page/pages/reports_page.dart';
 import 'package:flutter/material.dart';
 import '../guest_pages/custom_bottom_nav_bar.dart';
 import 'account_page/manager_account_page.dart';
+import 'add_facilities_page.dart';
 import 'hotel_info_page/screens/hotel_list_screen.dart';
 class ManagerMainScreen extends StatefulWidget {
   const ManagerMainScreen({super.key});
@@ -16,8 +18,9 @@ class _ManagerMainScreenState extends State<ManagerMainScreen> {
 
  static final List<Widget> _widgetOptions = <Widget>[
     HotelListScreen(),
-   //ManagerSettingsPage(),
-    ManagerAccountPage(),
+   ReportsPage(),
+   ManagerAccountPage(),
+   AddFacilitiesPage(),
   ];
 
   final List<NavBarItemData> _navBarItemsData = [
@@ -36,12 +39,11 @@ class _ManagerMainScreenState extends State<ManagerMainScreen> {
       icon: const Icon(Icons.person_outline),
       activeIcon: const Icon(Icons.person),
     ),
-    // می‌توانید آیتم‌های بیشتری اضافه کنید
-    // NavBarItemData(
-    //   label: 'موارد دلخواه',
-    //   icon: const Icon(Icons.favorite_border),
-    //   activeIcon: const Icon(Icons.favorite),
-    // ),
+    NavBarItemData(
+      label: 'facilities',
+      icon: const Icon(Icons.favorite_border),
+      activeIcon: const Icon(Icons.favorite),
+    ),
   ];
 
   void _onItemTapped(int index) {
