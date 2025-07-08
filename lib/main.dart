@@ -1,9 +1,16 @@
 import 'package:bookit/pages/authentication_page/auth_service.dart';
 import 'package:bookit/pages/splash_screen/splash_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // <--- این خط را اضافه کنید
+
+  // مقداردهی اولیه برای زبان‌های فارسی و انگلیسی جهت استفاده در پکیج intl
+  await initializeDateFormatting('fa_IR', null); // <--- برای تاریخ شمسی و واحد پول
+  await initializeDateFormatting('en_US', null); // <--- برای ارسال تاریخ میلادی به سرور
+
   runApp(
     ChangeNotifierProvider(
       create: (context) => AuthService(),
