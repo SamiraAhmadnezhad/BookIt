@@ -125,6 +125,7 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
       'rate': _ratingController.text,
     };
 
+    print(fields);
     request.fields.addAll(fields);
 
     if (_selectedMainImageFile != null) {
