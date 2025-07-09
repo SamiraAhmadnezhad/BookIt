@@ -39,11 +39,11 @@ class _ManagerMainScreenState extends State<ManagerMainScreen> {
       icon: const Icon(Icons.person_outline),
       activeIcon: const Icon(Icons.person),
     ),
-    NavBarItemData(
-      label: 'facilities',
-      icon: const Icon(Icons.favorite_border),
-      activeIcon: const Icon(Icons.favorite),
-    ),
+    // NavBarItemData(
+    //   label: 'facilities',
+    //   icon: const Icon(Icons.favorite_border),
+    //   activeIcon: const Icon(Icons.favorite),
+    // ),
   ];
 
   void _onItemTapped(int index) {

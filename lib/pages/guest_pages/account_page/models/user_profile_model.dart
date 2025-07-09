@@ -1,5 +1,3 @@
-// lib/pages/profile_pages/models/user_profile_model.dart
-
 class UserProfileModel {
   final int id;
   final String email;
@@ -7,7 +5,6 @@ class UserProfileModel {
   final String lastName;
   final String role;
   final String status;
-  // فیلدهای 'password' و 'avatarUrl' از این API نمی‌آیند.
 
   UserProfileModel({
     required this.id,
@@ -29,15 +26,23 @@ class UserProfileModel {
     );
   }
 
-  // متدی برای ارسال داده‌ها به سرور هنگام ویرایش
   Map<String, dynamic> toJsonForUpdate({String? newPassword}) {
+    String getRoleApiValue(String displayRole) {
+      final roleMap = {
+        'customer': 'Customer',
+        'hotel manager': 'HotelManager',
+        'admin': 'Admin',
+      };
+      return roleMap[displayRole.toLowerCase()] ?? displayRole;
+    }
+
     final Map<String, dynamic> data = {
       'email': email,
       'name': name,
       'last_name': lastName,
-      'role': role,
+      'role': getRoleApiValue(role),
     };
-    // فقط در صورتی که رمز جدیدی وارد شده باشد، آن را به درخواست اضافه کن
+
     if (newPassword != null && newPassword.isNotEmpty) {
       data['password'] = newPassword;
     }

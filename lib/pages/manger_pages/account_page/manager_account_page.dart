@@ -1,25 +1,21 @@
+// lib/pages/manger_pages/manager_account_page.dart
+
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../../authentication_page/auth_service.dart';
+import '../../guest_pages/account_page/models/user_profile_model.dart';
 import 'edit_manager_profile_page.dart';
 import '../../authentication_page/authentication_page.dart';
-
 const Color kPrimaryColor = Color(0xFF542545);
 const Color kAccentColor = Color(0xFF7E3F6B);
 const Color kPageBackground = Color(0xFFF4F6F8);
 const Color kCardBackground = Colors.white;
 const Color kLightTextColor = Color(0xFF606060);
 const Color kLighterTextColor = Color(0xFF888888);
-const Color kIconColor = Color(0xFF404040);
 const Color kPositiveColor = Color(0xFF28a745);
 const Color kNegativeColor = Color(0xFFdc3545);
-
-class ManagerProfileModel {
-  final String name;
-  final String email;
-  final String? avatarUrl;
-  ManagerProfileModel({required this.name, required this.email, this.avatarUrl});
-}
 
 class RuleModel {
   String id;
@@ -55,12 +51,11 @@ class ManagerAccountPage extends StatefulWidget {
   State<ManagerAccountPage> createState() => _ManagerAccountPageState();
 }
 
-class _ManagerAccountPageState extends State<ManagerAccountPage>
-    with SingleTickerProviderStateMixin {
+class _ManagerAccountPageState extends State<ManagerAccountPage> with SingleTickerProviderStateMixin {
   TabController? _tabController;
   String _selectedTab = 'قوانین و مقررات';
 
-  ManagerProfileModel? _managerProfile;
+  UserProfileModel? _managerProfile;
   List<RuleModel> _rules = [];
   List<ReviewModel> _reviews = [];
 
@@ -86,9 +81,7 @@ class _ManagerAccountPageState extends State<ManagerAccountPage>
   }
 
   void _handleTabSelection() {
-    if (_tabController!.indexIsChanging ||
-        _selectedTab == _tabs[_tabController!.index]) return;
-
+    if (_tabController!.indexIsChanging || _selectedTab == _tabs[_tabController!.index]) return;
     if (mounted) {
       setState(() {
         _selectedTab = _tabs[_tabController!.index];
@@ -127,30 +120,43 @@ class _ManagerAccountPageState extends State<ManagerAccountPage>
   Future<void> _fetchManagerProfile() async {
     if (!mounted) return;
     setState(() => _isLoadingProfile = true);
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final token = authService.token;
+    if (token == null) {
+      _showErrorSnackBar('شما وارد نشده‌اید.');
+      if (mounted) setState(() => _isLoadingProfile = false);
+      return;
+    }
+
     try {
-      await Future.delayed(const Duration(milliseconds: 800));
+      final response = await http.get(
+        Uri.parse('https://fbookit.darkube.app/auth/users/profile/'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
       if (!mounted) return;
-      _managerProfile = ManagerProfileModel(
-          name: 'تقی تقوی',
-          email: 'taghitaghavi@gmail.com',
-          avatarUrl: 'https://i.pravatar.cc/150?u=taghitaghavi');
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        setState(() {
+          _managerProfile = UserProfileModel.fromJson(data);
+        });
+      } else {
+        throw Exception('Failed to load manager profile (Code: ${response.statusCode})');
+      }
     } catch (e) {
-      _showErrorSnackBar('خطا در بارگذاری پروفایل: ${e.toString()}');
+      _showErrorSnackBar('خطا در بارگذاری پروفایل مدیر: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _isLoadingProfile = false);
     }
   }
 
   String _convertRulesListToText(List<RuleModel> rules) {
-    return rules
-        .map((rule) => '${rule.title.trim()}: ${rule.description.trim()}')
-        .join('\n\n');
+    return rules.map((rule) => '${rule.title.trim()}: ${rule.description.trim()}').join('\n\n');
   }
 
   List<RuleModel> _convertTextToRulesList(String text) {
     final List<RuleModel> newRules = [];
     if (text.trim().isEmpty) return newRules;
-
     final ruleEntries = text.split(RegExp(r'\n\s*\n+'));
     int ruleCounter = 1;
 
@@ -167,10 +173,7 @@ class _ManagerAccountPageState extends State<ManagerAccountPage>
               description: description));
         }
       } else {
-        newRules.add(RuleModel(
-            id: 'local${ruleCounter++}',
-            title: "قانون $ruleCounter",
-            description: entry.trim()));
+        newRules.add(RuleModel(id: 'local${ruleCounter++}', title: "قانون $ruleCounter", description: entry.trim()));
       }
     }
     return newRules;
@@ -183,21 +186,8 @@ class _ManagerAccountPageState extends State<ManagerAccountPage>
       await Future.delayed(const Duration(seconds: 1));
       if (!mounted) return;
       _rules = [
-        RuleModel(
-            id: '1',
-            title: '۱. زمان ورود و خروج',
-            description:
-            'زمان ورود به اتاق ساعت ۱۴:۰۰ و زمان خروج ساعت ۱۲:۰۰ ظهر می‌باشد.'),
-        RuleModel(
-            id: '2',
-            title: '۲. مدارک شناسایی',
-            description:
-            'ارائه کارت ملی و شناسنامه برای تمامی میهمانان الزامی است.'),
-        RuleModel(
-            id: '3',
-            title: '۳. استعمال دخانیات',
-            description:
-            'استعمال دخانیات در تمامی فضاهای داخلی هتل ممنوع می‌باشد.'),
+        RuleModel(id: '1', title: '۱. زمان ورود و خروج', description: 'زمان ورود به اتاق ساعت ۱۴:۰۰ و زمان خروج ساعت ۱۲:۰۰ ظهر می‌باشد.'),
+        RuleModel(id: '2', title: '۲. مدارک شناسایی', description: 'ارائه کارت ملی و شناسنامه برای تمامی میهمانان الزامی است.'),
       ];
       _rulesTextController.text = _convertRulesListToText(_rules);
     } catch (e) {
@@ -214,24 +204,8 @@ class _ManagerAccountPageState extends State<ManagerAccountPage>
       await Future.delayed(const Duration(seconds: 1));
       if (!mounted) return;
       _reviews = [
-        ReviewModel(
-            id: 'rev1',
-            date: '۱۴ تیر ۱۴۰۲',
-            userName: 'سارا احمدی',
-            roomInfo: 'اتاق دو تخته دابل',
-            positivePoints: ['نظافت عالی اتاق‌ها', 'برخورد خوب پرسنل'],
-            negativePoints: ['تنوع کم صبحانه'],
-            rating: 4.2,
-            managerReplyText:
-            'از اقامت شما سپاسگزاریم. نظرات شما برای بهبود خدمات ما ارزشمند است.'),
-        ReviewModel(
-            id: 'rev2',
-            date: '۱۲ تیر ۱۴۰۲',
-            userName: 'رضا محمدی',
-            roomInfo: 'سوییت یک خوابه',
-            positivePoints: ['منظره زیبای اتاق', 'دسترسی مناسب به مرکز شهر'],
-            negativePoints: ['صدای زیاد از راهرو'],
-            rating: 3.8),
+        ReviewModel(id: 'rev1', date: '۱۴ تیر ۱۴۰۲', userName: 'سارا احمدی', roomInfo: 'اتاق دو تخته دابل', positivePoints: ['نظافت عالی اتاق‌ها', 'برخورد خوب پرسنل'], negativePoints: ['تنوع کم صبحانه'], rating: 4.2, managerReplyText: 'از اقامت شما سپاسگزاریم.'),
+        ReviewModel(id: 'rev2', date: '۱۲ تیر ۱۴۰۲', userName: 'رضا محمدی', roomInfo: 'سوییت یک خوابه', positivePoints: ['منظره زیبای اتاق', 'دسترسی مناسب به مرکز شهر'], negativePoints: ['صدای زیاد از راهرو'], rating: 3.8),
       ];
     } catch (e) {
       _showErrorSnackBar('خطا در بارگذاری نظرات: ${e.toString()}');
@@ -270,9 +244,9 @@ class _ManagerAccountPageState extends State<ManagerAccountPage>
   }
 
   void _editManagerProfile() {
+    if (_managerProfile == null) return;
     Navigator.of(context)
-        .push(MaterialPageRoute(
-        builder: (context) => const EditManagerProfilePage()))
+        .push(MaterialPageRoute(builder: (context) => EditManagerProfilePage(initialProfileData: _managerProfile!)))
         .then((value) {
       if (value == true && mounted) {
         _fetchManagerProfile();
@@ -300,29 +274,12 @@ class _ManagerAccountPageState extends State<ManagerAccountPage>
 
   Future<void> _logoutUser() async {
     final authService = Provider.of<AuthService>(context, listen: false);
-    if (authService.isLoading) return;
-    try {
-      await authService.logout();
-      if (!mounted) return;
-      if (authService.errorMessage != null &&
-          authService.errorMessage!.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('توجه: ${authService.errorMessage}'),
-            backgroundColor: Colors.orangeAccent,
-            behavior: SnackBarBehavior.floating));
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('شما با موفقیت از حساب کاربری خود خارج شدید.'),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating));
-      }
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const AuthenticationPage()),
-            (Route<dynamic> route) => false,
-      );
-    } catch (e) {
-      _showErrorSnackBar('خطای پیش‌بینی نشده هنگام خروج: ${e.toString()}');
-    }
+    await authService.logout();
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const AuthenticationPage()),
+          (Route<dynamic> route) => false,
+    );
   }
 
   void _toggleEditRulesMode() {
@@ -381,16 +338,14 @@ class _ManagerAccountPageState extends State<ManagerAccountPage>
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
               'حساب کاربری مدیر',
-              style: theme.textTheme.titleLarge
-                  ?.copyWith(color: kPrimaryColor, fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleLarge?.copyWith(color: kPrimaryColor, fontWeight: FontWeight.bold),
             ),
           ),
           actions: [
             Padding(
               padding: const EdgeInsets.only(left: 16.0, right: 8.0),
               child: IconButton(
-                icon:
-                Icon(Icons.logout_outlined, color: kPrimaryColor, size: 26),
+                icon: Icon(Icons.logout_outlined, color: kPrimaryColor, size: 26),
                 onPressed: authService.isLoading ? null : _logoutUser,
                 tooltip: 'خروج از حساب',
               ),
@@ -410,8 +365,7 @@ class _ManagerAccountPageState extends State<ManagerAccountPage>
                     labelColor: kPrimaryColor,
                     unselectedLabelColor: kLightTextColor,
                     indicatorWeight: 2.5,
-                    labelStyle: theme.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                    labelStyle: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                     unselectedLabelStyle: theme.textTheme.titleSmall,
                     tabs: _tabs.map((String name) => Tab(text: name)).toList(),
                   ),
@@ -449,19 +403,12 @@ class _ManagerAccountPageState extends State<ManagerAccountPage>
           CircleAvatar(
             radius: 48,
             backgroundColor: kPrimaryColor.withOpacity(0.1),
-            backgroundImage: _managerProfile?.avatarUrl != null
-                ? NetworkImage(_managerProfile!.avatarUrl!)
-                : null,
-            child: _managerProfile?.avatarUrl == null
-                ? Icon(Icons.business_center_outlined,
-                size: 50, color: kPrimaryColor.withOpacity(0.8))
-                : null,
+            child: Icon(Icons.business_center_outlined, size: 50, color: kPrimaryColor.withOpacity(0.8)),
           ),
           const SizedBox(height: 16),
           Text(
-            _managerProfile?.name ?? 'مدیر هتل',
-            style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold, color: Colors.black87),
+            '${_managerProfile?.name ?? ''} ${_managerProfile?.lastName ?? ''}',
+            style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87),
           ),
           const SizedBox(height: 6),
           if (_managerProfile?.email.isNotEmpty ?? false)
@@ -470,12 +417,10 @@ class _ManagerAccountPageState extends State<ManagerAccountPage>
               children: [
                 Text(
                   _managerProfile!.email,
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(color: kLightTextColor),
+                  style: theme.textTheme.bodyMedium?.copyWith(color: kLightTextColor),
                 ),
                 const SizedBox(width: 6),
-                Icon(Icons.verified_user_outlined,
-                    color: Colors.green[600], size: 16)
+                Icon(Icons.verified_user_outlined, color: Colors.green[600], size: 16)
               ],
             ),
           const SizedBox(height: 20),
@@ -486,12 +431,9 @@ class _ManagerAccountPageState extends State<ManagerAccountPage>
             style: ElevatedButton.styleFrom(
               backgroundColor: kPrimaryColor,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 24, vertical: 10),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-              textStyle: theme.textTheme.labelLarge
-                  ?.copyWith(fontWeight: FontWeight.w600),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              textStyle: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -503,8 +445,7 @@ class _ManagerAccountPageState extends State<ManagerAccountPage>
     if (tabName == 'قوانین و مقررات') {
       if (_isLoadingRules && !_isEditingRules) return _buildLoadingIndicator();
       if (_rules.isEmpty && !_isEditingRules && !_isLoadingRules) {
-        return _buildEmptyStateWithButton(
-            'هیچ قانونی ثبت نشده است.', 'افزودن قوانین', _toggleEditRulesMode);
+        return _buildEmptyStateWithButton('هیچ قانونی ثبت نشده است.', 'افزودن قوانین', _toggleEditRulesMode);
       }
       return _buildRulesContent();
     } else if (tabName == 'پاسخگویی به نظرات') {
@@ -526,32 +467,18 @@ class _ManagerAccountPageState extends State<ManagerAccountPage>
             children: [
               Flexible(
                 child: Text('قوانین و مقررات هتل',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold, color: kPrimaryColor)),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: kPrimaryColor)),
               ),
               TextButton.icon(
                 onPressed: _isEditingRules ? _saveRules : _toggleEditRulesMode,
-                icon: Icon(
-                    _isEditingRules
-                        ? Icons.save_outlined
-                        : Icons.edit_outlined,
-                    size: 18,
-                    color: _isEditingRules ? kPositiveColor : kAccentColor),
-                label: Text(_isEditingRules ? 'ذخیره' : 'ویرایش',
-                    style: TextStyle(
-                        color: _isEditingRules ? kPositiveColor : kAccentColor,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600)),
+                icon: Icon(_isEditingRules ? Icons.save_outlined : Icons.edit_outlined, size: 18, color: _isEditingRules ? kPositiveColor : kAccentColor),
+                label: Text(_isEditingRules ? 'ذخیره' : 'ویرایش', style: TextStyle(color: _isEditingRules ? kPositiveColor : kAccentColor, fontSize: 13, fontWeight: FontWeight.w600)),
                 style: TextButton.styleFrom(padding: EdgeInsets.zero),
               ),
               if (_isEditingRules)
                 TextButton(
                   onPressed: _cancelEditRules,
-                  child: const Text('لغو',
-                      style: TextStyle(
-                          color: kNegativeColor,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600)),
+                  child: const Text('لغو', style: TextStyle(color: kNegativeColor, fontSize: 13, fontWeight: FontWeight.w600)),
                   style: TextButton.styleFrom(padding: EdgeInsets.zero),
                 ),
             ],
@@ -563,16 +490,12 @@ class _ManagerAccountPageState extends State<ManagerAccountPage>
                 maxLines: null,
                 minLines: 8,
                 keyboardType: TextInputType.multiline,
-                style: TextStyle(
-                    fontSize: 14, color: Colors.grey[850], height: 1.6),
+                style: TextStyle(fontSize: 14, color: Colors.grey[850], height: 1.6),
                 decoration: InputDecoration(
-                    hintText:
-                    'قوانین را اینجا وارد کنید. هر قانون با عنوان و توضیحات (مثال: ۱. زمان ورود: ساعت ۱۴). برای جدا کردن قوانین، از یک خط خالی استفاده کنید.',
+                    hintText: 'قوانین را اینجا وارد کنید. هر قانون با عنوان و توضیحات (مثال: ۱. زمان ورود: ساعت ۱۴). برای جدا کردن قوانین، از یک خط خالی استفاده کنید.',
                     filled: true,
                     fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey.shade300)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
                     contentPadding: const EdgeInsets.all(12)))
           else if (!_isLoadingRules)
             _rules.isEmpty
@@ -585,17 +508,9 @@ class _ManagerAccountPageState extends State<ManagerAccountPage>
                   child: RichText(
                     textAlign: TextAlign.justify,
                     text: TextSpan(
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(
-                          color: kLightTextColor, height: 1.6),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: kLightTextColor, height: 1.6),
                       children: <TextSpan>[
-                        TextSpan(
-                            text: '${rule.title}: ',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87)),
+                        TextSpan(text: '${rule.title}: ', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
                         TextSpan(text: rule.description),
                       ],
                     ),
@@ -609,32 +524,21 @@ class _ManagerAccountPageState extends State<ManagerAccountPage>
   }
 
   Widget _buildLoadingIndicator() {
-    return const Center(
-        child: Padding(
-            padding: EdgeInsets.all(30.0),
-            child: CircularProgressIndicator(color: kPrimaryColor)));
+    return const Center(child: Padding(padding: EdgeInsets.all(30.0), child: CircularProgressIndicator(color: kPrimaryColor)));
   }
 
   Widget _buildEmptyState(String message) {
-    return Center(
-        child: Padding(
-            padding: const EdgeInsets.all(30.0),
-            child: Text(message,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: kLightTextColor))));
+    return Center(child: Padding(padding: const EdgeInsets.all(30.0), child: Text(message, textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: kLightTextColor))));
   }
 
-  Widget _buildEmptyStateWithButton(
-      String message, String buttonText, VoidCallback onPressed) {
+  Widget _buildEmptyStateWithButton(String message, String buttonText, VoidCallback onPressed) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(30.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(message,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: kLightTextColor)),
+            Text(message, textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: kLightTextColor)),
             const SizedBox(height: 20),
             ElevatedButton.icon(
               icon: const Icon(Icons.add_circle_outline, size: 20),
@@ -643,10 +547,8 @@ class _ManagerAccountPageState extends State<ManagerAccountPage>
               style: ElevatedButton.styleFrom(
                 backgroundColor: kAccentColor,
                 foregroundColor: Colors.white,
-                padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
             )
           ],
@@ -679,37 +581,20 @@ class _ManagerAccountPageState extends State<ManagerAccountPage>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(review.userName,
-                    style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87)),
-                Text(review.date,
-                    style:
-                    TextStyle(fontSize: 12, color: kLighterTextColor)),
+                Text(review.userName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87)),
+                Text(review.date, style: TextStyle(fontSize: 12, color: kLighterTextColor)),
               ],
             ),
-            Text(review.roomInfo,
-                style: TextStyle(fontSize: 12, color: kLightTextColor)),
+            Text(review.roomInfo, style: TextStyle(fontSize: 12, color: kLightTextColor)),
             const SizedBox(height: 10),
             if (review.positivePoints.isNotEmpty) ...[
-              const Text("نکات مثبت:",
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: kPositiveColor)),
-              ...review.positivePoints
-                  .map((point) => _buildPointRow(point, true)),
+              const Text("نکات مثبت:", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kPositiveColor)),
+              ...review.positivePoints.map((point) => _buildPointRow(point, true)),
               const SizedBox(height: 6),
             ],
             if (review.negativePoints.isNotEmpty) ...[
-              const Text("نکات منفی:",
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: kNegativeColor)),
-              ...review.negativePoints
-                  .map((point) => _buildPointRow(point, false)),
+              const Text("نکات منفی:", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: kNegativeColor)),
+              ...review.negativePoints.map((point) => _buildPointRow(point, false)),
               const SizedBox(height: 6),
             ],
             const SizedBox(height: 4),
@@ -719,52 +604,24 @@ class _ManagerAccountPageState extends State<ManagerAccountPage>
               children: [
                 Row(
                   children: [
-                    Icon(Icons.star_rounded,
-                        size: 20, color: Colors.amber[600]),
+                    Icon(Icons.star_rounded, size: 20, color: Colors.amber[600]),
                     const SizedBox(width: 4),
-                    Text(review.rating.toStringAsFixed(1),
-                        style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: kLightTextColor)),
+                    Text(review.rating.toStringAsFixed(1), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: kLightTextColor)),
                   ],
                 ),
                 TextButton.icon(
                   onPressed: () => _toggleReplyForm(review.id),
-                  icon: Icon(
-                      review.managerReplyText != null && !isReplying
-                          ? Icons.edit_note_outlined
-                          : Icons.reply_outlined,
-                      size: 18,
-                      color: kAccentColor),
-                  label: Text(
-                      review.managerReplyText != null && !isReplying
-                          ? 'ویرایش پاسخ'
-                          : (isReplying ? 'بستن' : 'ثبت پاسخ'),
-                      style: TextStyle(
-                          color: kAccentColor,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600)),
-                  style: TextButton.styleFrom(
-                      padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4)),
+                  icon: Icon(review.managerReplyText != null && !isReplying ? Icons.edit_note_outlined : Icons.reply_outlined, size: 18, color: kAccentColor),
+                  label: Text(review.managerReplyText != null && !isReplying ? 'ویرایش پاسخ' : (isReplying ? 'بستن' : 'ثبت پاسخ'), style: TextStyle(color: kAccentColor, fontSize: 13, fontWeight: FontWeight.w600)),
+                  style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4)),
                 ),
               ],
             ),
             if (review.managerReplyText != null && !isReplying) ...[
               const Divider(height: 20, thickness: 0.5),
-              Text('پاسخ شما:',
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: kPrimaryColor)),
+              Text('پاسخ شما:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: kPrimaryColor)),
               const SizedBox(height: 4),
-              Text(review.managerReplyText!,
-                  style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[800],
-                      fontStyle: FontStyle.italic,
-                      height: 1.5)),
+              Text(review.managerReplyText!, style: TextStyle(fontSize: 13, color: Colors.grey[800], fontStyle: FontStyle.italic, height: 1.5)),
             ],
             if (isReplying) _buildReplyForm(review),
           ],
@@ -779,16 +636,9 @@ class _ManagerAccountPageState extends State<ManagerAccountPage>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-              isPositive
-                  ? Icons.check_circle_outline_rounded
-                  : Icons.highlight_off_rounded,
-              size: 16,
-              color: isPositive ? kPositiveColor : kNegativeColor),
+          Icon(isPositive ? Icons.check_circle_outline_rounded : Icons.highlight_off_rounded, size: 16, color: isPositive ? kPositiveColor : kNegativeColor),
           const SizedBox(width: 6),
-          Expanded(
-              child: Text(point,
-                  style: TextStyle(fontSize: 13, color: Colors.grey[800]))),
+          Expanded(child: Text(point, style: TextStyle(fontSize: 13, color: Colors.grey[800]))),
         ],
       ),
     );
@@ -805,11 +655,7 @@ class _ManagerAccountPageState extends State<ManagerAccountPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('پاسخ به نظر ${review.userName}:',
-              style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: kPrimaryColor)),
+          Text('پاسخ به نظر ${review.userName}:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: kPrimaryColor)),
           const SizedBox(height: 10),
           TextField(
               controller: _replyController,
@@ -822,35 +668,21 @@ class _ManagerAccountPageState extends State<ManagerAccountPage>
                   hintText: 'پاسخ خود را اینجا بنویسید...',
                   filled: true,
                   fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300)),
-                  focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: kAccentColor, width: 1.5)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: kAccentColor, width: 1.5)),
                   contentPadding: const EdgeInsets.all(10))),
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: _isLoadingReviews
-                  ? null
-                  : () => _submitReply(review.id, _replyController.text),
+              onPressed: _isLoadingReviews ? null : () => _submitReply(review.id, _replyController.text),
               style: ElevatedButton.styleFrom(
                   backgroundColor: kPrimaryColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 10.0),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0)),
-                  textStyle: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.bold)),
-              child: _isLoadingReviews
-                  ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Colors.white))
-                  : const Text('ثبت پاسخ'),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                  textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+              child: _isLoadingReviews ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('ثبت پاسخ'),
             ),
           )
         ],
@@ -861,7 +693,6 @@ class _ManagerAccountPageState extends State<ManagerAccountPage>
 
 class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
   _SliverTabBarDelegate(this.tabBar, this.backgroundColor);
-
   final TabBar tabBar;
   final Color backgroundColor;
 
@@ -871,21 +702,12 @@ class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => tabBar.preferredSize.height;
 
   @override
-  Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: backgroundColor,
-      child: Material(
-        elevation: overlapsContent || (shrinkOffset > maxExtent - minExtent) ? 2.0 : 0.0,
-        color: backgroundColor,
-        child: tabBar,
-      ),
-    );
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(color: backgroundColor, child: Material(elevation: overlapsContent || (shrinkOffset > maxExtent - minExtent) ? 2.0 : 0.0, color: backgroundColor, child: tabBar));
   }
 
   @override
   bool shouldRebuild(_SliverTabBarDelegate oldDelegate) {
-    return tabBar != oldDelegate.tabBar ||
-        backgroundColor != oldDelegate.backgroundColor;
+    return tabBar != oldDelegate.tabBar || backgroundColor != oldDelegate.backgroundColor;
   }
 }
