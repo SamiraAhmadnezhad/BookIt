@@ -1,73 +1,73 @@
-// فایل: lib/pages/guest_pages/home_page/model/hotel_model.dart
+// lib/pages/shared_models/hotel_model.dart (یا مسیر قبلی)
+
+import '../../hotel_detail_page/data/models/amenity_model.dart';
 
 class Hotel {
   final int id;
   final String name;
-  final String location;
+  final String address;
+  final String imageUrl;
+  final double rating;
+  final int reviewCount;
   final String description;
-  final List<String> facilities;
-  final int rate;
-  final int? rateNumber;
-  final String? hotelLicenseUrl;
-  final String? imageUrl;
+  final List<Amenity> amenities;
+  final String iban;
+  final String licenseImageUrl;
   final String status;
-  final String? discount; // به صورت رشته باقی می‌ماند
-  final int? totalRooms;
-  final double pricePerNight; // برای سازگاری با کارت‌ها
-  bool isFavorite;
+  final double discount;
+  final int totalRooms;
+  final bool isCurrentlyFavorite;
 
   Hotel({
     required this.id,
     required this.name,
-    required this.location,
+    required this.address,
+    required this.imageUrl,
+    required this.rating,
+    required this.reviewCount,
     required this.description,
-    required this.facilities,
-    required this.rate,
-    this.rateNumber,
-    this.hotelLicenseUrl,
-    this.imageUrl,
+    required this.amenities,
+    required this.iban,
+    required this.licenseImageUrl,
     required this.status,
-    this.discount,
-    this.totalRooms,
-    required this.pricePerNight,
-    this.isFavorite = false,
+    required this.discount,
+    required this.totalRooms,
+    this.isCurrentlyFavorite = false,
   });
 
   factory Hotel.fromJson(Map<String, dynamic> json) {
-    const String baseUrl = 'https://newbookit.darkube.app';
-
-    // *** بخش کلیدی: اصلاح نحوه خواندن facilities ***
-    List<String> facilitiesList = [];
+    List<Amenity> amenitiesList = [];
     if (json['facilities'] != null && json['facilities'] is List) {
-      facilitiesList = (json['facilities'] as List)
-          .where((facility) => facility is Map<String, dynamic> && facility['name'] != null)
-          .map((facility) => facility['name'] as String)
-          .toList();
+      var facilityObjects = List<Map<String, dynamic>>.from(json['facilities']);
+      amenitiesList = facilityObjects.map((obj) => Amenity(name: obj['name'] ?? '')).toList();
     }
 
-    // ساخت URL کامل برای عکس‌ها
-    String? relativeImageUrl = json['image'] as String?;
-    String? fullImageUrl = relativeImageUrl != null ? '$baseUrl$relativeImageUrl' : null;
-
-    String? relativeLicenseUrl = json['hotel_license'] as String?;
-    String? fullLicenseUrl = relativeLicenseUrl != null ? '$baseUrl$relativeLicenseUrl' : null;
+    String _processUrl(String? url) {
+      if (url == null || url.isEmpty) return '';
+      if (url.startsWith('/')) {
+        return 'https://fbookit.darkube.app$url';
+      }
+      if (url.contains('http')) {
+        return url.substring(url.lastIndexOf('http'));
+      }
+      return url;
+    }
 
     return Hotel(
       id: json['id'] ?? 0,
-      name: json['name'] ?? 'نامشخص',
-      location: json['location'] ?? 'نامشخص',
-      description: json['description'] ?? '',
-      facilities: facilitiesList,
-      rate: (json['rate'] as num?)?.toInt() ?? 0,
-      rateNumber: (json['rate_number'] as num?)?.toInt(),
-      hotelLicenseUrl: fullLicenseUrl,
-      imageUrl: fullImageUrl,
-      status: json['status'] ?? 'Pending',
-      discount: json['discount'] as String?,
-      totalRooms: (json['total_rooms'] as num?)?.toInt(),
-      // API شما برای لیست هتل‌ها قیمت ندارد، یک مقدار پیش‌فرض می‌گذاریم
-      pricePerNight: (json['price'] as num?)?.toDouble() ?? 0.0,
-      isFavorite: false,
+      name: json['name'] ?? 'نام یافت نشد',
+      address: json['location'] ?? 'آدرس یافت نشد',
+      imageUrl: _processUrl(json['image']),
+      licenseImageUrl: _processUrl(json['hotel_license']),
+      description: json['description'] ?? 'توضیحات موجود نیست',
+      rating: (json['rate'] as num?)?.toDouble() ?? 0.0,
+      reviewCount: json['rate_number'] ?? 0,
+      amenities: amenitiesList,
+      iban: json['hotel_iban_number'] ?? '',
+      status: json['status']?.toString() ?? 'Pending',
+      discount: double.tryParse(json['discount']?.toString() ?? '0.0') ?? 0.0,
+      totalRooms: int.tryParse(json['total_rooms']?.toString() ?? '0') ?? 0,
+      isCurrentlyFavorite: json['is_favorite'] ?? false,
     );
   }
 }

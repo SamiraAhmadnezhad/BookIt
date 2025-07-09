@@ -1,29 +1,26 @@
-// lib/pages/guest_pages/hotel_detail_page/data/models/room_model.dart
-
 class Room {
-  // ... (فیلدها بدون تغییر)
   final String id;
   final String name;
   final String imageUrl;
-  final String roomNumber;
   final int capacity;
   final bool hasBreakfast;
   final bool hasLunch;
   final bool hasDinner;
   final double pricePerNight;
   final double rating;
+  final int roomNumber; // فیلد جدید اضافه شد
 
   Room({
     required this.id,
     required this.name,
     required this.imageUrl,
-    required this.roomNumber,
     required this.capacity,
     this.hasBreakfast = false,
     this.hasLunch = false,
     this.hasDinner = false,
     required this.pricePerNight,
     required this.rating,
+    required this.roomNumber, // الزامی شد
   });
 
   factory Room.fromJson(Map<String, dynamic> json) {
@@ -32,10 +29,8 @@ class Room {
       return double.tryParse(value.toString()) ?? 0.0;
     }
 
-    // <<< اصلاح اصلی: پردازش URL عکس اتاق >>>
     String _processUrl(String? url) {
       if (url == null || url.isEmpty) return '';
-      // اگر URL با اسلش شروع می‌شود (نسبی است)، آدرس پایه را به آن اضافه کن
       if (url.startsWith('/')) {
         return 'https://fbookit.darkube.app$url';
       }
@@ -48,13 +43,14 @@ class Room {
     return Room(
       id: json['id']?.toString() ?? '0',
       name: json['name'] ?? 'بدون نام',
-      imageUrl: _processUrl(json['image']), // استفاده از تابع پردازش URL
+      imageUrl: _processUrl(json['image']),
       capacity: json['capacity'] ?? 1,
       pricePerNight: safeParseDouble(json['price']),
       hasBreakfast: json['breakfast_included'] ?? false,
       hasLunch: json['lunch_included'] ?? false,
       hasDinner: json['dinner_included'] ?? false,
       rating: safeParseDouble(json['rate']),
+      roomNumber: json['room_number'] ?? 0, // مقداردهی فیلد جدید
     );
   }
 }

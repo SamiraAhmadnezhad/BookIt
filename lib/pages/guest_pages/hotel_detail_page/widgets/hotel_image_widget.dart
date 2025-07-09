@@ -1,5 +1,3 @@
-// lib/pages/guest_pages/hotel_detail_page/widgets/hotel_image_widget.dart
-
 import 'package:flutter/material.dart';
 
 class HotelImageWidget extends StatelessWidget {
@@ -9,17 +7,15 @@ class HotelImageWidget extends StatelessWidget {
   const HotelImageWidget({
     Key? key,
     required this.imageUrl,
-    required this.rating,
+    this.rating = 0.0,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // <<< اصلاح اصلی: اطمینان از اینکه فقط از imageUrl استفاده می‌شود >>>
-    // و هیچ پیشوندی به آن اضافه نمی‌شود.
     Widget image;
-    if (imageUrl.isNotEmpty && Uri.tryParse(imageUrl)?.hasAbsolutePath == true) {
+    if (imageUrl.isNotEmpty && Uri.tryParse(imageUrl)?.isAbsolute == true) {
       image = Image.network(
-        imageUrl, // مستقیماً از URL کامل استفاده کن
+        imageUrl, // فقط از این URL استفاده می‌شود
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
@@ -37,7 +33,6 @@ class HotelImageWidget extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         image,
-        // ... (بقیه کد ویجت شما برای نمایش rating و غیره)
         Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -45,27 +40,6 @@ class HotelImageWidget extends StatelessWidget {
               end: Alignment.bottomCenter,
               colors: [Colors.transparent, Colors.black.withOpacity(0.6)],
               stops: const [0.5, 1.0],
-            ),
-          ),
-        ),
-        Positioned(
-          bottom: 16,
-          right: 16,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.6),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.star, color: Colors.yellow, size: 16),
-                const SizedBox(width: 4),
-                Text(
-                  rating.toStringAsFixed(1),
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-              ],
             ),
           ),
         ),
