@@ -1,8 +1,9 @@
-// فایل: widgets/hotel_card.dart
+// lib/pages/manger_pages/widgets/hotel_card.dart
+
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart'; // برای باز کردن لینک مجوز
-import '../models/hotel_model.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/facility_enum.dart';
+import '../models/hotel_model.dart';
 
 class HotelCard extends StatelessWidget {
   final Hotel hotel;
@@ -39,20 +40,18 @@ class HotelCard extends StatelessWidget {
     );
   }
 
-  // بخش هدر عکس و نام
   Widget _buildImageHeader(BuildContext context, Color primaryColor) {
     return Stack(
       children: [
         SizedBox(
           height: 200,
           width: double.infinity,
-          child: (hotel.imageUrl != null && hotel.imageUrl!.isNotEmpty)
+          child: (hotel.imageUrl.isNotEmpty)
               ? Image.network(
-            hotel.imageUrl!,
+            hotel.imageUrl,
             fit: BoxFit.cover,
-            loadingBuilder: (context, child, progress) => progress == null
-                ? child
-                :  Center(child: CircularProgressIndicator(color: primaryColor)),
+            loadingBuilder: (context, child, progress) =>
+            progress == null ? child : Center(child: CircularProgressIndicator(color: primaryColor)),
             errorBuilder: (context, error, stackTrace) =>
             const Icon(Icons.hotel_class_outlined, size: 80, color: Colors.grey),
           )
@@ -91,7 +90,6 @@ class HotelCard extends StatelessWidget {
     );
   }
 
-  // بخش اطلاعات (مکان و امتیاز)
   Widget _buildInfoSection(BuildContext context, Color accentColor) {
     final theme = Theme.of(context);
     return Padding(
@@ -107,7 +105,7 @@ class HotelCard extends StatelessWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    hotel.location,
+                    hotel.address,
                     style: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodySmall?.color),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -138,7 +136,7 @@ class HotelCard extends StatelessWidget {
     );
   }
 
-  // بخش آیکون‌های امکانات
+  // ====================== شروع اصلاحیه اصلی ======================
   Widget _buildAmenitiesSection(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
@@ -146,56 +144,52 @@ class HotelCard extends StatelessWidget {
       child: Wrap(
         spacing: 12.0,
         runSpacing: 8.0,
-        children: hotel.amenities.take(6).map((facility) {
+        children: hotel.amenities.take(6).map((amenity) {
+          // 1. از مدل Amenity که فقط name دارد، Facility enum را پیدا می‌کنیم.
+          final facilityEnum = FacilityParsing.fromApiValue(amenity.name);
+
+          // 2. از facilityEnum برای دریافت آیکون و نام فارسی استفاده می‌کنیم.
           return Tooltip(
-            message: facility.userDisplayName,
-            child: Icon(facility.iconData, color: theme.iconTheme.color?.withOpacity(0.7), size: 22),
+            message: facilityEnum.userDisplayName,
+            child: Icon(facilityEnum.iconData, color: theme.iconTheme.color?.withOpacity(0.7), size: 22),
           );
         }).toList(),
       ),
     );
   }
+  // ======================= پایان اصلاحیه اصلی =======================
 
-  // بخش دکمه‌های عملیاتی
   Widget _buildActionButtons(BuildContext context, Color primaryColor) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // *** دکمه جدید: اطلاعات بیشتر ***
           TextButton(
-            child:  Text('اطلاعات بیشتر', style: TextStyle(fontWeight: FontWeight.w600,color:primaryColor )),
+            child: Text('اطلاعات بیشتر', style: TextStyle(fontWeight: FontWeight.w600, color: primaryColor)),
             onPressed: () => _showDetailsDialog(context, primaryColor),
           ),
-          TextButton.icon(
-            // /icon: Icon(Icons.edit_outlined, color: primaryColor, size: 20),
-            label: Text('ویرایش', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+          TextButton(
+            child: Text('ویرایش', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
             onPressed: onHotelUpdated,
           ),
-          Row(
-            children: [
-
-              ElevatedButton.icon(
-                icon: const Icon(Icons.meeting_room_outlined, size: 20,color: Colors.white,),
-                label: const Text('مدیریت اتاق‌ها'),
-                onPressed: onManageRooms,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-                ),
-              ),
-            ],
+          ElevatedButton.icon(
+            icon: const Icon(Icons.meeting_room_outlined, size: 20, color: Colors.white),
+            label: const Text('مدیریت اتاق‌ها'),
+            onPressed: onManageRooms,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryColor,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+            ),
           ),
         ],
       ),
     );
   }
 
-  // *** دیالوگ جدید برای نمایش جزئیات کامل ***
   void _showDetailsDialog(BuildContext context, Color primaryColor) {
     showDialog(
       context: context,
@@ -213,15 +207,14 @@ class HotelCard extends StatelessWidget {
             ),
           ),
           actions: <Widget>[
-            // دکمه نمایش مجوز (فقط اگر لینکی وجود داشته باشد)
-            if (hotel.licenseImageUrl != null && hotel.licenseImageUrl!.isNotEmpty)
+            if (hotel.licenseImageUrl.isNotEmpty)
               TextButton.icon(
                 icon: Icon(Icons.receipt_long_outlined, color: primaryColor),
                 label: Text('نمایش مجوز', style: TextStyle(color: primaryColor)),
-                onPressed: () => _launchURL(hotel.licenseImageUrl!),
+                onPressed: () => _launchURL(hotel.licenseImageUrl),
               ),
             TextButton(
-              child:  Text('بستن', style: TextStyle(fontWeight: FontWeight.bold,color: primaryColor)),
+              child: Text('بستن', style: TextStyle(fontWeight: FontWeight.bold, color: primaryColor)),
               onPressed: () => Navigator.of(context).pop(),
             ),
           ],
@@ -230,7 +223,6 @@ class HotelCard extends StatelessWidget {
     );
   }
 
-  // ویجت کمکی برای نمایش یک ردیف از جزئیات در دیالوگ
   Widget _buildDetailRow(BuildContext context, IconData icon, String title, String value, {bool isLtr = false}) {
     final theme = Theme.of(context);
     return Column(
@@ -262,11 +254,9 @@ class HotelCard extends StatelessWidget {
     );
   }
 
-  // تابع کمکی برای باز کردن URL مجوز
   Future<void> _launchURL(String url) async {
     final Uri uri = Uri.parse(url);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      // می‌توان در صورت خطا یک SnackBar نمایش داد
       print('Could not launch $url');
     }
   }

@@ -1,4 +1,5 @@
-// فایل: models/facility_enum.dart
+// lib/pages/manger_pages/models/facility_enum.dart
+
 import 'package:flutter/material.dart';
 
 enum Facility {
@@ -24,7 +25,6 @@ enum Facility {
 
 extension FacilityExtension on Facility {
   String get userDisplayName {
-    // ... (این بخش بدون تغییر باقی می‌ماند)
     switch (this) {
       case Facility.Wifi: return "وای فای";
       case Facility.Parking: return "پارکینگ";
@@ -48,7 +48,6 @@ extension FacilityExtension on Facility {
   }
 
   String get apiValue {
-    // ... (این بخش بدون تغییر باقی می‌ماند)
     switch (this) {
       case Facility.Wifi: return "Wi-Fi";
       case Facility.Parking: return "Parking";
@@ -71,7 +70,6 @@ extension FacilityExtension on Facility {
     }
   }
 
-  // *** بخش جدید: اضافه کردن آیکون برای هر امکانات ***
   IconData get iconData {
     switch (this) {
       case Facility.Wifi: return Icons.wifi;
@@ -94,16 +92,16 @@ extension FacilityExtension on Facility {
       case Facility.ShoppingMall: return Icons.store_mall_directory;
     }
   }
+}
 
-  static Facility? fromApiValue(String? value) {
-    if (value == null) return null;
-    final lowercasedValue = value.toLowerCase();
-    for (var facility in Facility.values) {
-      if (facility.apiValue.toLowerCase() == lowercasedValue) {
-        return facility;
-      }
-    }
-    print("Warning: Unknown facility received from API: '$value'");
-    return null;
+extension FacilityParsing on Facility {
+  static Facility fromApiValue(String value) {
+    return Facility.values.firstWhere(
+          (e) => e.apiValue.toLowerCase().replaceAll(' ', '') == value.toLowerCase().replaceAll(' ', ''),
+      orElse: () {
+        debugPrint("Warning: Unknown facility value '$value' received from API.");
+        return Facility.Wifi;
+      },
+    );
   }
 }

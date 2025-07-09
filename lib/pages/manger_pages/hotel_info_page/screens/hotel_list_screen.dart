@@ -156,7 +156,7 @@ class _HotelListScreenState extends State<HotelListScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => RoomListScreen(hotelId: hotel.id, hotelName: hotel.name),
+        builder: (context) => RoomListScreen(hotelId: hotel.id.toString(), hotelName: hotel.name),
       ),
     );
   }

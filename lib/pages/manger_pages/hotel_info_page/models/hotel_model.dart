@@ -1,73 +1,87 @@
-// فایل: models/hotel_model.dart
+// lib/pages/shared_models/hotel_model.dart
 
-import 'facility_enum.dart';
+
+import '../../../guest_pages/hotel_detail_page/data/models/amenity_model.dart';
 
 class Hotel {
-  final String id;
-  String? imageUrl;
+  final int id;
   final String name;
-  final String location;
-  final String description;
-  final List<Facility> amenities;
+  final String address;
+  final String imageUrl;
   final double rating;
+  final int reviewCount;
+  final String description;
+  final List<Amenity> amenities;
   final String iban;
-  String? licenseImageUrl;
-  final int? roomCount;
+  final String licenseImageUrl;
+  final String status;
+  final double discount;
+  final int totalRooms;
+  final bool isCurrentlyFavorite;
 
   Hotel({
     required this.id,
-    this.imageUrl,
     required this.name,
-    required this.location,
+    required this.address,
+    required this.imageUrl,
+    required this.rating,
+    required this.reviewCount,
     required this.description,
     required this.amenities,
-    required this.rating,
     required this.iban,
-    this.licenseImageUrl,
-    this.roomCount,
+    required this.licenseImageUrl,
+    required this.status,
+    required this.discount,
+    required this.totalRooms,
+    this.isCurrentlyFavorite = false,
   });
 
   factory Hotel.fromJson(Map<String, dynamic> json) {
-    var facilitiesData = json['facilities'] as List<dynamic>?;
+    List<Amenity> amenitiesList = [];
+    if (json['facilities'] != null && json['facilities'] is List) {
+      var facilityData = json['facilities'] as List<dynamic>;
+      amenitiesList = facilityData
+          .map((item) {
+        // سرور یک لیست از آبجکت‌ها با کلید 'name' برمی‌گرداند
+        if (item is Map<String, dynamic> && item.containsKey('name')) {
+          return Amenity(name: item['name'] as String);
+        }
+        // برای سازگاری در صورتی که سرور فقط رشته بفرستد
+        else if (item is String) {
+          return Amenity(name: item);
+        }
+        return null;
+      })
+          .whereType<Amenity>()
+          .toList();
+    }
 
-    List<Facility> amenitiesList = facilitiesData?.map((facilityItem) {
-      if (facilityItem is Map<String, dynamic> && facilityItem.containsKey('name')) {
-        return FacilityExtension.fromApiValue(facilityItem['name'] as String?);
-      } else if (facilityItem is String) {
-        // برای سازگاری در صورتی که API گاهی رشته هم بفرستد
-        return FacilityExtension.fromApiValue(facilityItem);
+    String processUrl(String? url) {
+      if (url == null || url.isEmpty) return '';
+      if (url.startsWith('/')) {
+        return 'https://fbookit.darkube.app$url';
       }
-      return null;
-    })
-        .whereType<Facility>() // فقط موارد غیر null را نگه می‌دارد
-        .toList() ?? [];
+      if (url.contains('http')) {
+        return url.substring(url.lastIndexOf('http'));
+      }
+      return url;
+    }
 
     return Hotel(
-      id: json['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      imageUrl: json['image'] as String?,
-      name: json['name'] as String? ?? 'نام نامشخص',
-      location: json['location'] as String? ?? 'مکان نامشخص',
-      description: json['description'] as String? ?? 'توضیحاتی ارائه نشده است.',
-      amenities: amenitiesList,
+      id: json['id'] as int? ?? 0,
+      name: json['name'] as String? ?? 'نام یافت نشد',
+      address: json['location'] as String? ?? 'آدرس یافت نشد',
+      imageUrl: processUrl(json['image'] as String?),
+      licenseImageUrl: processUrl(json['hotel_license'] as String?),
+      description: json['description'] as String? ?? 'توضیحات موجود نیست',
       rating: (json['rate'] as num?)?.toDouble() ?? 0.0,
-      iban: json['hotel_iban_number'] as String? ?? 'شماره شبا نامشخص',
-      licenseImageUrl: json['hotel_license'] as String?,
-      roomCount: (json['room_count'] as num?)?.toInt(),
+      reviewCount: json['rate_number'] as int? ?? 0,
+      amenities: amenitiesList,
+      iban: json['hotel_iban_number'] as String? ?? '',
+      status: json['status'] as String? ?? 'Pending',
+      discount: double.tryParse(json['discount']?.toString() ?? '0.0') ?? 0.0,
+      totalRooms: int.tryParse(json['total_rooms']?.toString() ?? '0') ?? 0,
+      isCurrentlyFavorite: json['is_favorite'] as bool? ?? false,
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'location': location,
-      'description': description,
-      'image': imageUrl,
-      'hotel_license': licenseImageUrl,
-      'hotel_iban_number': iban,
-      'facilities': amenities.map((amenity) => amenity.apiValue).toList(),
-      'rate': rating,
-      'room_count': roomCount,
-    };
   }
 }

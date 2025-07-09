@@ -8,12 +8,10 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:http_parser/http_parser.dart';
 
-// توجه: برای اجرای این کد، فایل‌های زیر باید در پروژه شما موجود باشند:
-import '../models/hotel_model.dart';      // مدل داده برای هتل
-import '../models/facility_enum.dart';   // Enum برای امکانات هتل
-import '../../../authentication_page/auth_service.dart'; // سرویس برای مدیریت توکن احراز هویت
+import '../models/hotel_model.dart';
+import '../models/facility_enum.dart';
+import '../../../authentication_page/auth_service.dart';
 
-// --- ثابت‌های مربوط به رنگ و استایل ---
 const Color kPrimaryColor = Color(0xFF542545);
 const Color kAccentColor = Color(0xFF7E3F6B);
 const Color kPageBackground = Color(0xFFF4F6F8);
@@ -24,12 +22,10 @@ const Color kIconColor = Colors.grey;
 const Color kErrorColor = Colors.redAccent;
 const Color kInputBorderColor = Color(0xFFD0D0D0);
 
-// --- آدرس‌های API ---
 const String ADD_HOTEL_ENDPOINT = 'https://fbookit.darkube.app/hotel-api/hotel/';
 const String EDIT_HOTEL_ENDPOINT_PREFIX = 'https://fbookit.darkube.app/hotel-api/hotel/';
 
 class AddHotelScreen extends StatefulWidget {
-  // اگر هتل برای ویرایش ارسال شود، این متغیر مقدار خواهد داشت
   final Hotel? hotel;
 
   const AddHotelScreen({super.key, this.hotel});
@@ -42,40 +38,37 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
   final _formKey = GlobalKey<FormState>();
   final ImagePicker _picker = ImagePicker();
 
-  // --- کنترلرهای فرم ---
   late TextEditingController _nameController;
   late TextEditingController _descriptionController;
   late TextEditingController _locationController;
   late TextEditingController _ibanController;
   late TextEditingController _ratingController;
 
-  // --- متغیرهای مدیریت عکس ---
   XFile? _selectedMainImageFile;
   String? _existingMainImageUrl;
   XFile? _selectedLicenseImageFile;
   String? _existingLicenseImageUrl;
 
-  // --- متغیرهای وضعیت ---
   Set<Facility> _selectedAmenities = {};
   bool _isLoading = false;
 
-  // برای تشخیص حالت "ایجاد" یا "ویرایش"
   bool get _isEditing => widget.hotel != null;
 
   @override
   void initState() {
     super.initState();
 
-    // --- مقداردهی اولیه کنترلرها ---
     _nameController = TextEditingController(text: widget.hotel?.name ?? '');
     _descriptionController = TextEditingController(text: widget.hotel?.description ?? '');
-    _locationController = TextEditingController(text: widget.hotel?.location ?? '');
+    _locationController = TextEditingController(text: widget.hotel?.address ?? ''); // <<< اصلاح شد
     _ibanController = TextEditingController(text: widget.hotel?.iban ?? '');
     _ratingController = TextEditingController(text: widget.hotel?.rating.toString() ?? '0');
 
-    // اگر در حالت ویرایش هستیم، داده‌های موجود را بارگذاری کن
     if (_isEditing && widget.hotel != null) {
-      _selectedAmenities = widget.hotel!.amenities.toSet();
+      // <<< اصلاح شد: استفاده از متد fromApiValue که در enum تعریف کردیم
+      _selectedAmenities = widget.hotel!.amenities
+          .map((amenityModel) => FacilityParsing.fromApiValue(amenityModel.name))
+          .toSet();
       _existingMainImageUrl = widget.hotel!.imageUrl;
       _existingLicenseImageUrl = widget.hotel!.licenseImageUrl;
     }
@@ -83,7 +76,6 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
 
   @override
   void dispose() {
-    // آزادسازی منابع کنترلرها
     _nameController.dispose();
     _descriptionController.dispose();
     _locationController.dispose();
@@ -92,9 +84,7 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
     super.dispose();
   }
 
-  // --- تابع اصلی برای ارسال داده‌ها به سرور ---
   Future<void> _submitHotelData() async {
-    // اعتبارسنجی فرم
     if (!_formKey.currentState!.validate()) {
       _showSnackBar('لطفاً تمام موارد الزامی را تکمیل کنید.', isError: true);
       return;
@@ -110,7 +100,6 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
 
     setState(() => _isLoading = true);
 
-    // دریافت توکن احراز هویت
     final authService = Provider.of<AuthService>(context, listen: false);
     final String? token = authService.token;
     if (token == null) {
@@ -125,27 +114,19 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
     var request = http.MultipartRequest(method, Uri.parse(url));
     request.headers['Authorization'] = 'Bearer $token';
 
-    // ====================== شروع اصلاحیه اصلی ======================
-    // 1. لیست نام امکانات را به صورت یک لیست از رشته‌ها استخراج می‌کنیم.
-    final List<String> facilityNames = _selectedAmenities.map((f) => f.apiValue).toList();
-    // 2. لیست را به یک رشته با فرمت JSON تبدیل می‌کنیم.
-    // خروجی این خط مثلاً به صورت: '["Wi-Fi", "Parking"]' خواهد بود.
-    final String facilitiesJson = jsonEncode(facilityNames);
-    // ======================= پایان اصلاحیه اصلی =======================
+    final String facilitiesString = _selectedAmenities.map((f) => f.apiValue).join(',');
 
-    // آماده‌سازی فیلدهای متنی برای ارسال
     final Map<String, String> fields = {
       'name': _nameController.text,
       'location': _locationController.text,
       'description': _descriptionController.text,
       'hotel_iban_number': _ibanController.text,
-      'facilities': facilitiesJson, // <<< استفاده از رشته JSON به جای رشته جدا شده با کاما
+      'facilities': facilitiesString,
       'rate': _ratingController.text,
     };
 
     request.fields.addAll(fields);
 
-    // اضافه کردن فایل‌های عکس در صورت انتخاب شدن
     if (_selectedMainImageFile != null) {
       request.files.add(await http.MultipartFile.fromPath(
         'image',
@@ -187,8 +168,6 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
-
-  // --- متدهای کمکی برای UI و منطق ---
 
   void _handleErrorResponse(int statusCode, String body) {
     String errorMessage = 'خطا در ارسال اطلاعات هتل.';
@@ -299,8 +278,6 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
       },
     );
   }
-
-  // --- ویجت‌های ساخت UI ---
 
   @override
   Widget build(BuildContext context) {

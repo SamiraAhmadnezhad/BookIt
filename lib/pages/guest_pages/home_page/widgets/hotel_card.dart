@@ -1,9 +1,9 @@
-// lib/pages/your_path/widgets/hotel_card.dart
-
 import 'package:bookit/pages/guest_pages/home_page/model/hotel_model.dart';
+import 'package:bookit/pages/guest_pages/hotel_detail_page/hotel_detail_page.dart';
+import 'package:bookit/pages/guest_pages/hotel_detail_page/utils/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
-import '../../hotel_detail_page/hotel_detail_page.dart';
 class HotelCard extends StatefulWidget {
   final Hotel hotel;
 
@@ -22,16 +22,11 @@ class _HotelCardState extends State<HotelCard> {
   @override
   void initState() {
     super.initState();
-    // <<< اصلاح شد: استفاده از فیلد isCurrentlyFavorite >>>
     _isFavorite = widget.hotel.isCurrentlyFavorite;
   }
 
   @override
   Widget build(BuildContext context) {
-    const Color customPurple = Color(0xFF542545);
-    // <<< اصلاح شد: استفاده از فیلد discount که از قبل double است >>>
-    final double discount = widget.hotel.discount;
-
     void goToDetailsPage() {
       Navigator.push(
         context,
@@ -40,19 +35,20 @@ class _HotelCardState extends State<HotelCard> {
     }
 
     return SizedBox(
-      width: 290, // کمی عرض را برای پدینگ بیشتر می‌کنیم
+      width: 290,
       child: Card(
-        elevation: 5.0,
-        shadowColor: Colors.black.withOpacity(0.08),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
+        elevation: 3,
+        shadowColor: Colors.black.withOpacity(0.1),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
         clipBehavior: Clip.antiAlias,
+        margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
         child: InkWell(
           onTap: goToDetailsPage,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildImageSection(context, customPurple),
-              _buildInfoSection(context, customPurple, discount, goToDetailsPage),
+              _buildImageSection(context),
+              _buildInfoSection(context, goToDetailsPage),
             ],
           ),
         ),
@@ -60,13 +56,12 @@ class _HotelCardState extends State<HotelCard> {
     );
   }
 
-  Widget _buildImageSection(BuildContext context, Color customPurple) {
+  Widget _buildImageSection(BuildContext context) {
     return Stack(
       children: [
         AspectRatio(
           aspectRatio: 16 / 10,
           child: Image.network(
-            // <<< اصلاح شد: استفاده از فیلد imageUrl >>>
             widget.hotel.imageUrl,
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) => Container(
@@ -77,12 +72,12 @@ class _HotelCardState extends State<HotelCard> {
           ),
         ),
         Positioned(
-          top: 12,
-          right: 12,
+          top: 10,
+          right: 10,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withOpacity(0.6),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -91,7 +86,6 @@ class _HotelCardState extends State<HotelCard> {
                 const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
                 const SizedBox(width: 4),
                 Text(
-                  // <<< اصلاح شد: استفاده از فیلد rating >>>
                   widget.hotel.rating.toStringAsFixed(1),
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                 ),
@@ -105,15 +99,14 @@ class _HotelCardState extends State<HotelCard> {
           child: GestureDetector(
             onTap: () {
               setState(() => _isFavorite = !_isFavorite);
-              // TODO: این تغییر باید به سرور هم اطلاع داده شود
             },
             child: CircleAvatar(
-              backgroundColor: Colors.white,
-              radius: 18,
+              backgroundColor: Colors.white.withOpacity(0.9),
+              radius: 16,
               child: Icon(
                 _isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                color: _isFavorite ? Colors.redAccent : Colors.grey.shade400,
-                size: 22,
+                color: _isFavorite ? Colors.redAccent : Colors.grey.shade500,
+                size: 20,
               ),
             ),
           ),
@@ -122,74 +115,92 @@ class _HotelCardState extends State<HotelCard> {
     );
   }
 
-  Widget _buildInfoSection(BuildContext context, Color customPurple, double discount, VoidCallback onTap) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12.0, 10.0, 12.0, 12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              widget.hotel.name,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            Row(
-              children: [
-                Icon(Icons.location_on_outlined, size: 16, color: Colors.grey.shade600),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    // <<< اصلاح شد: استفاده از فیلد address >>>
-                    widget.hotel.address,
-                    style: TextStyle(fontSize: 13, color: Colors.grey.shade700, fontWeight: FontWeight.w500),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // نمایش تخفیف یا یک فضای خالی برای حفظ چیدمان
-                if (discount > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8)
-                    ),
-                    child: Text(
-                      '${discount.toStringAsFixed(0)}% تخفیف',
-                      style: const TextStyle(fontSize: 13, color: Colors.red, fontWeight: FontWeight.bold),
-                    ),
-                  )
-                else
-                  const SizedBox(), // فضای خالی برای حفظ چیدمان
+  Widget _buildInfoSection(BuildContext context, VoidCallback onTap) {
+    final currencyFormat = NumberFormat.currency(locale: 'fa_IR', symbol: '', decimalDigits: 0);
+    final double originalPrice = widget.hotel.discount;
+    final double discount = widget.hotel.discount;
+    final double discountedPrice = originalPrice * (1 - discount / 100);
 
-                // دکمه نمایش جزئیات
-                InkWell(
-                  onTap: onTap,
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 2.0),
-                    child: Row(
-                      children: [
-                        Text('مشاهده جزئیات', style: TextStyle(fontSize: 14, color: customPurple, fontWeight: FontWeight.bold)),
-                        const SizedBox(width: 4),
-                        Icon(Icons.arrow_forward_ios_rounded, size: 16, color: customPurple),
-                      ],
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12.0, 10.0, 12.0, 10.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.hotel.name,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Icon(Icons.location_on_outlined, size: 14, color: Colors.grey.shade600),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  widget.hotel.address,
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700, fontWeight: FontWeight.w500),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "شروع قیمت از",
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        currencyFormat.format(discountedPrice),
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge
+                            ?.copyWith(fontWeight: FontWeight.bold, color: kPrimaryColor),
+                      ),
+                      const SizedBox(width: 4),
+                      const Text("تومان", style: TextStyle(color: kPrimaryColor, fontWeight: FontWeight.w500, fontSize: 12)),
+                    ],
+                  ),
+                  if (discount > 0)
+                    Text(
+                      currencyFormat.format(originalPrice),
+                      style: TextStyle(
+                        decoration: TextDecoration.lineThrough,
+                        color: Colors.grey.shade500,
+                        fontSize: 12,
+                      ),
                     ),
+                ],
+              ),
+              if (discount > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${discount.toStringAsFixed(0)}% تخفیف',
+                    style: const TextStyle(fontSize: 12, color: Colors.red, fontWeight: FontWeight.bold),
                   ),
                 ),
-              ],
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }
