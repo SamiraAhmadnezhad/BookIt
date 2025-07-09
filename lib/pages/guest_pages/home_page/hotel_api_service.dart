@@ -23,7 +23,7 @@ class HotelApiService {
 
     try {
       final response = await http.get(uri, headers: headers);
-
+      print(response.statusCode);
       if (response.statusCode == 200) {
         final dynamic decodedJson = json.decode(utf8.decode(response.bodyBytes));
 
