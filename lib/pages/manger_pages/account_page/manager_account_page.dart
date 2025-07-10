@@ -4,10 +4,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-import '../../authentication_page/auth_service.dart';
+import '../../../features/auth/data/services/auth_service.dart';
 import '../../guest_pages/account_page/models/user_profile_model.dart';
 import 'edit_manager_profile_page.dart';
-import '../../authentication_page/authentication_page.dart';
+import '../../../features/auth/presentation/pages/authentication_screen.dart';
 const Color kPrimaryColor = Color(0xFF542545);
 const Color kAccentColor = Color(0xFF7E3F6B);
 const Color kPageBackground = Color(0xFFF4F6F8);
@@ -277,7 +277,7 @@ class _ManagerAccountPageState extends State<ManagerAccountPage> with SingleTick
     await authService.logout();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const AuthenticationPage()),
+      MaterialPageRoute(builder: (context) => const AuthenticationScreen()),
           (Route<dynamic> route) => false,
     );
   }

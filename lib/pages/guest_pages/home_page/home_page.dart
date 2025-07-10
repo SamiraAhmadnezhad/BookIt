@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
-import '../../authentication_page/auth_service.dart';
+import '../../../features/auth/data/services/auth_service.dart';
 import 'hotel_api_service.dart';
 import 'model/hotel_model.dart';
 import 'widgets/category_card.dart';

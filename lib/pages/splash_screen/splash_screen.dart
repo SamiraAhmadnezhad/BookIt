@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'package:bookit/pages/authentication_page/authentication_page.dart';
+import 'package:bookit/features/auth/presentation/pages/authentication_screen.dart';
 import 'package:bookit/pages/guest_pages/guest_main_screen.dart';
 import 'package:bookit/pages/manger_pages/manager_main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../authentication_page/auth_service.dart';
+import '../../features/auth/data/services/auth_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -47,16 +47,6 @@ class _SplashScreenState extends State<SplashScreen> {
                   fontWeight: FontWeight.w900,
                   color: primaryColor,
                 ),
-                children: [
-                  TextSpan(
-                    text: '.',
-                    style: TextStyle(
-                      fontSize: 60,
-                      fontWeight: FontWeight.w900,
-                      color: primaryColor.withOpacity(0.5),
-                    ),
-                  ),
-                ],
               ),
               textDirection: TextDirection.rtl,
             ),
@@ -110,7 +100,7 @@ class _AuthWrapper extends StatelessWidget {
       }
     }
     else {
-      return const AuthenticationPage();
+      return const AuthenticationScreen();
     }
 
   }

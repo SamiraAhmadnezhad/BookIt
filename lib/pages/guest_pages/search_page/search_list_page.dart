@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import '../../authentication_page/auth_service.dart';
+import '../../../features/auth/data/services/auth_service.dart';
 import '../home_page/model/room_model.dart';
 import '../reservation_detail_page/reservation_detail_page.dart';
 import 'model/search_params_model.dart';

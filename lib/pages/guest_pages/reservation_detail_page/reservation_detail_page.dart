@@ -5,7 +5,7 @@ import 'package:intl/date_symbol_data_local.dart' as intl_local;
 import 'package:provider/provider.dart';
 
 import 'package:bookit/pages/guest_pages/hotel_detail_page/utils/constants.dart';
-import '../../authentication_page/auth_service.dart';
+import '../../../features/auth/data/services/auth_service.dart';
 import 'reservation_api_service.dart';
 
 enum PaymentMethod { online, atHotel }

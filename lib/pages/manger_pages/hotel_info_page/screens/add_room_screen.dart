@@ -7,7 +7,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
-import '../../../authentication_page/auth_service.dart';
+import '../../../../features/auth/data/services/auth_service.dart';
 
 // Endpoint جدید مطابق با Swagger
 const String ADD_ROOM_API_ENDPOINT = 'https://fbookit.darkube.app/room-api/create/';

@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-import '../../../authentication_page/auth_service.dart';
+import '../../../../features/auth/data/services/auth_service.dart';
 import '../models/hotel_model.dart';
 import '../widgets/hotel_card.dart';
 import 'add_hotel_screen.dart';

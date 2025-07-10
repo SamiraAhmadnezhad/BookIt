@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:provider/provider.dart';
 import 'package:shamsi_date/shamsi_date.dart';
-import '../../authentication_page/auth_service.dart';
+import '../../../features/auth/data/services/auth_service.dart';
 import '../home_page/model/hotel_model.dart';
 import '../reservation_detail_page/reservation_api_service.dart';
 import '../reservation_detail_page/reservation_detail_page.dart';
