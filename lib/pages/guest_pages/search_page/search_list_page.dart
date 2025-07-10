@@ -101,8 +101,7 @@ class _SearchListPageState extends State<SearchListPage> {
     );
 
     final bool isLocked = await _reservationApiService.lockRoom(
-      hotelId: room.hotel.id,
-      roomNumbers: [room.roomNumber],
+      roomID: [room.id],
       token: _token!,
     );
 
@@ -122,6 +121,7 @@ class _SearchListPageState extends State<SearchListPage> {
               hotelAddress: room.hotel.location,
               hotelRating: room.rating,
               hotelImageUrl: room.imageUrl ?? '',
+              roomID: room.id,
               roomNumber: room.roomNumber,
               roomInfo: room.name,
               checkInDate: checkIn,

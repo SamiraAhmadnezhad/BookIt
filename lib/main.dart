@@ -5,11 +5,10 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // <--- این خط را اضافه کنید
+  WidgetsFlutterBinding.ensureInitialized();
 
-  // مقداردهی اولیه برای زبان‌های فارسی و انگلیسی جهت استفاده در پکیج intl
-  await initializeDateFormatting('fa_IR', null); // <--- برای تاریخ شمسی و واحد پول
-  await initializeDateFormatting('en_US', null); // <--- برای ارسال تاریخ میلادی به سرور
+  await initializeDateFormatting('fa_IR', null);
+  await initializeDateFormatting('en_US', null);
 
   runApp(
     ChangeNotifierProvider(
