@@ -192,7 +192,7 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
         height: size.height * 0.45,
         width: size.width,
         decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.25),
+          color: AppColors.primary,
           borderRadius:
           const BorderRadius.vertical(top: Radius.elliptical(200, 50)),
         ),
@@ -208,7 +208,7 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
         height: size.height,
         width: size.width * 0.8,
         decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.25),
+          color: AppColors.primary,
           borderRadius: const BorderRadius.horizontal(
               right: Radius.elliptical(80, 300)),
         ),

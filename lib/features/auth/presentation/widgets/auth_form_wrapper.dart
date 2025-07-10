@@ -30,7 +30,7 @@ class _AuthFormWrapperState extends State<AuthFormWrapper> {
   }
 
   void _handleLogin(String email, String password, bool isManager) async {
-    final authService = context.read<AuthService>();
+    final authService = context.watch<AuthService>();
     final error = await authService.login(email, password, isManager);
     if (error == null) {
       _showSnackBar('ورود با موفقیت انجام شد.', isError: false);
@@ -78,7 +78,7 @@ class _AuthFormWrapperState extends State<AuthFormWrapper> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.lightGrey,
+        color: AppColors.formBackgroundGrey,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
