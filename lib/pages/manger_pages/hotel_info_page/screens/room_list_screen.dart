@@ -1,9 +1,7 @@
-// فایل: screens/room_list_screen.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-
 import '../../../authentication_page/auth_service.dart';
 import '../models/room_model.dart';
 import '../widgets/room_card.dart';
@@ -22,6 +20,8 @@ class RoomListScreen extends StatefulWidget {
 }
 
 class _RoomListScreenState extends State<RoomListScreen> {
+  static const Color _primaryColor = Color(0xFF542545);
+
   List<Room> _hotelRooms = [];
   bool _isLoading = true;
   String? _errorMessage;
@@ -36,9 +36,11 @@ class _RoomListScreenState extends State<RoomListScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(message, style: const TextStyle(fontFamily: 'Vazirmatn')),
         backgroundColor: isError ? Colors.redAccent : Colors.green,
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        margin: const EdgeInsets.all(12),
       ),
     );
   }
@@ -48,7 +50,6 @@ class _RoomListScreenState extends State<RoomListScreen> {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
-      _hotelRooms = [];
     });
 
     final authService = Provider.of<AuthService>(context, listen: false);
@@ -57,7 +58,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = 'توکن احراز هویت یافت نشد.';
+          _errorMessage = 'توکن احراز هویت یافت نشد. لطفاً مجددا وارد شوید.';
         });
         _showSnackBar(_errorMessage!, isError: true);
       }
@@ -68,7 +69,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
     try {
       final response = await http.get(
         url,
-        headers: { 'Authorization': 'Bearer $token' },
+        headers: {'Authorization': 'Bearer $token'},
       ).timeout(const Duration(seconds: 20));
 
       if (!mounted) return;
@@ -79,40 +80,23 @@ class _RoomListScreenState extends State<RoomListScreen> {
         final Map<String, dynamic> decodedData = jsonDecode(responseBody);
         final List<dynamic>? roomListData = decodedData['data'] as List<dynamic>?;
 
-        if (roomListData != null) {
-          setState(() {
-            _hotelRooms = roomListData
-                .map((data) => Room.fromJson(data as Map<String, dynamic>))
-                .toList();
-            _isLoading = false;
-          });
-        } else {
-          throw Exception('فرمت پاسخ سرور نامعتبر است.');
-        }
-
-      }
-      // *** این بخش به درستی خطای 404 را به عنوان لیست خالی مدیریت می‌کند ***
-      else if (response.statusCode == 404 && responseBody.contains("هیچ اتاقی برای این هتل یافت نشد")) {
-        // چون _errorMessage تنظیم نمی‌شود، UI به درستی حالت لیست خالی را نشان می‌دهد
         setState(() {
-          _isLoading = false;
+          _hotelRooms = roomListData?.map((data) => Room.fromJson(data)).toList() ?? [];
         });
-      }
-      // *** سایر خطاها در اینجا مدیریت می‌شوند ***
-      else {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = 'خطا: $responseBody (کد: ${response.statusCode})';
-        });
+      } else if (response.statusCode == 404) {
+        _hotelRooms = [];
+      } else {
+        _errorMessage = 'خطا در دریافت اطلاعات. (کد: ${response.statusCode})';
         _showSnackBar(_errorMessage!, isError: true);
       }
     } catch (e) {
+      _errorMessage = 'خطا در ارتباط با سرور. لطفاً اتصال اینترنت خود را بررسی کنید.';
+      _showSnackBar(_errorMessage!, isError: true);
+    } finally {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = 'خطا در پردازش اطلاعات: $e';
         });
-        _showSnackBar(_errorMessage!, isError: true);
       }
     }
   }
@@ -132,27 +116,27 @@ class _RoomListScreenState extends State<RoomListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF542545);
-
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text('اتاق‌های ${widget.hotelName}'),
-        backgroundColor: primaryColor,
+        title: Text('اتاق‌های هتل ${widget.hotelName}', style: const TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+        backgroundColor: _primaryColor,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _isLoading ? null : _fetchRoomsForHotel,
+            tooltip: 'بارگذاری مجدد',
           ),
         ],
       ),
       body: _buildBody(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _navigateAndRefreshAddRoom(context),
-        label: const Text('افزودن اتاق'),
+        label: const Text('افزودن اتاق', style: TextStyle(fontFamily: 'Vazirmatn')),
         icon: const Icon(Icons.add),
-        backgroundColor: primaryColor,
+        backgroundColor: _primaryColor,
         foregroundColor: Colors.white,
       ),
     );
@@ -160,25 +144,26 @@ class _RoomListScreenState extends State<RoomListScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFF542545)));
+      return const Center(child: CircularProgressIndicator(color: _primaryColor));
     }
 
     if (_errorMessage != null) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(32.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error, size: 60),
-              const SizedBox(height: 16),
-              Text('خطا در بارگذاری', style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 8),
-              Text(_errorMessage!, textAlign: TextAlign.center),
+              Icon(Icons.cloud_off_rounded, color: Colors.grey[400], size: 80),
+              const SizedBox(height: 20),
+              Text('خطا در بارگذاری', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey[700])),
+              const SizedBox(height: 12),
+              Text(_errorMessage!, textAlign: TextAlign.center, style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.grey[600], height: 1.6)),
               const SizedBox(height: 24),
               ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(backgroundColor: _primaryColor, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12)),
                 icon: const Icon(Icons.refresh),
-                label: const Text("تلاش مجدد"),
+                label: const Text("تلاش مجدد", style: TextStyle(fontFamily: 'Vazirmatn')),
                 onPressed: _fetchRoomsForHotel,
               )
             ],
@@ -190,15 +175,15 @@ class _RoomListScreenState extends State<RoomListScreen> {
     if (_hotelRooms.isEmpty) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(32.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.meeting_room_outlined, size: 70, color: Colors.grey[400]),
-              const SizedBox(height: 16),
-              Text('هیچ اتاقی برای این هتل ثبت نشده است', style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 8),
-              const Text('برای افزودن، روی دکمه + پایین صفحه بزنید.', textAlign: TextAlign.center),
+              Icon(Icons.door_sliding_outlined, size: 80, color: Colors.grey[400]),
+              const SizedBox(height: 20),
+              Text('اتاقی یافت نشد', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey[700])),
+              const SizedBox(height: 12),
+              Text('برای افزودن اتاق جدید، روی دکمه + پایین صفحه بزنید.', textAlign: TextAlign.center, style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.grey[600], height: 1.6)),
             ],
           ),
         ),
@@ -207,14 +192,19 @@ class _RoomListScreenState extends State<RoomListScreen> {
 
     return RefreshIndicator(
       onRefresh: _fetchRoomsForHotel,
-      color: const Color(0xFF542545),
-      child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 80.0),
+      color: _primaryColor,
+      child: GridView.builder(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 88),
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 350,
+          mainAxisSpacing: 20,
+          crossAxisSpacing: 20,
+          childAspectRatio: 350 / 380,
+        ),
         itemCount: _hotelRooms.length,
         itemBuilder: (context, index) {
           return RoomCard(room: _hotelRooms[index]);
         },
-        separatorBuilder: (context, index) => const SizedBox(height: 16),
       ),
     );
   }
