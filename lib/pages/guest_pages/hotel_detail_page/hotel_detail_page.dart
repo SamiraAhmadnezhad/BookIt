@@ -100,8 +100,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
     );
 
     final bool isRoomLocked = await _reservationApiService.lockRoom(
-      hotelId: widget.hotel.id.toString(),
-      roomNumbers: [room.roomNumber.toString()],
+      roomID: [room.id],
       token: _currentToken!,
     );
 
@@ -124,6 +123,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
             hotelRating: widget.hotel.rating,
             hotelImageUrl: widget.hotel.imageUrl,
             roomNumber: room.roomNumber.toString(),
+            roomID: room.id,
             roomInfo: room.name,
             numberOfAdults: room.capacity,
             totalPrice: totalPrice,

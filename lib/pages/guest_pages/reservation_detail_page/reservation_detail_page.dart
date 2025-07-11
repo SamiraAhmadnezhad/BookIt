@@ -17,6 +17,7 @@ class ReservationDetailPage extends StatefulWidget {
   final double hotelRating;
   final String hotelImageUrl;
   final String roomNumber;
+  final String roomID;
   final String roomInfo;
   final int numberOfAdults;
   final double totalPrice;
@@ -31,6 +32,7 @@ class ReservationDetailPage extends StatefulWidget {
     required this.hotelRating,
     required this.hotelImageUrl,
     required this.roomNumber,
+    required this.roomID,
     required this.roomInfo,
     required this.numberOfAdults,
     required this.totalPrice,
@@ -104,7 +106,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
 
   Future<void> _handleCancellation({bool popPage = false}) async {
     if (_token != null) {
-      await _apiService.unlockRoom(roomNumbers: [widget.roomNumber], token: _token!);
+      await _apiService.unlockRoom(roomID: [widget.roomID], token: _token!);
     }
     if (mounted && popPage) {
       Navigator.of(context).pop();
@@ -158,7 +160,7 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
         context: context, barrierDismissible: false, builder: (BuildContext dialogContext) => const _LoadingDialog());
 
     final Map<String, dynamic> reservationPayload = {
-      'room_number': int.tryParse(widget.roomNumber) ?? 0,
+      'room_id': int.tryParse(widget.roomID) ?? 0,
       'check_in_date': intl.DateFormat('yyyy-MM-dd').format(widget.checkInDate),
       'check_out_date': intl.DateFormat('yyyy-MM-dd').format(widget.checkOutDate),
       'amount': _amountToPay,
@@ -545,14 +547,14 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
     return Column(
       children: [
         RadioListTile<PaymentMethod>(
-            title: const Text('پرداخت آنلاین (پیش‌پرداخت ۵۰٪)', style: TextStyle(fontSize: 14)),
+            title: const Text('پرداخت حضوری (پیش‌پرداخت ۵۰٪ از مبلغ به صورت آنلاین)', style: TextStyle(fontSize: 14)),
             value: PaymentMethod.online,
             groupValue: _paymentMethod,
             onChanged: _updatePaymentMethod,
             activeColor: kPrimaryColor,
             contentPadding: EdgeInsets.zero),
         RadioListTile<PaymentMethod>(
-            title: const Text('پرداخت در محل (حضوری)', style: TextStyle(fontSize: 14)),
+            title: const Text('پرداخت آنلاین', style: TextStyle(fontSize: 14)),
             value: PaymentMethod.atHotel,
             groupValue: _paymentMethod,
             onChanged: _updatePaymentMethod,

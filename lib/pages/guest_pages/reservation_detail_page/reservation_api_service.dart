@@ -5,8 +5,7 @@ class ReservationApiService {
   static const String _baseUrl = 'https://fbookit.darkube.app';
 
   Future<bool> lockRoom({
-    required String hotelId,
-    required List<String> roomNumbers,
+    required List<String> roomID,
     required String token,
   }) async {
     final uri = Uri.parse('$_baseUrl/reservation-api/lock-rooms/');
@@ -15,8 +14,7 @@ class ReservationApiService {
       'Authorization': 'Bearer $token',
     };
     final body = json.encode({
-      'hotel_id': hotelId,
-      'room_numbers': roomNumbers,
+      'room_ids': roomID,
     });
 
     try {
@@ -32,7 +30,7 @@ class ReservationApiService {
   }
 
   Future<bool> unlockRoom({
-    required List<String> roomNumbers,
+    required List<String> roomID,
     required String token,
   }) async {
     final uri = Uri.parse('$_baseUrl/reservation-api/unlock-rooms/');
@@ -41,7 +39,7 @@ class ReservationApiService {
       'Authorization': 'Bearer $token',
     };
     final body = json.encode({
-      'room_numbers': roomNumbers,
+      'room_ids': roomID,
     });
 
     try {

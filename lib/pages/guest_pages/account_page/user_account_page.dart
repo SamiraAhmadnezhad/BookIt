@@ -8,6 +8,9 @@ import '../../../features/auth/data/services/auth_service.dart';
 import 'edit_profile_page.dart';
 import '../../../features/auth/presentation/pages/authentication_screen.dart';
 import 'models/user_profile_model.dart';
+import 'models/reservation_model.dart';
+import 'widgets/active_reservation_card.dart';
+import 'widgets/previous_reservation_card.dart';
 
 const Color kPrimaryColor = Color(0xFF542545);
 const Color kAccentColor = Color(0xFF7E3F6B);
@@ -29,8 +32,9 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
 
   UserProfileModel? _userProfile;
   List<dynamic> _favoriteHotels = []; // Placeholder
-  List<dynamic> _currentBookings = []; // Placeholder
-  List<dynamic> _previousBookings = []; // Placeholder
+  List<ReservationModel> _allBookings = []; // <-- لیستی برای همه رزروها
+  List<ReservationModel> _currentBookings = []; // <-- لیست جدید
+  List<ReservationModel> _previousBookings = []; // <-- لیست جدید
 
   bool _isLoadingProfile = true;
   bool _isLoadingFavorites = true;
@@ -73,10 +77,10 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
     if (!mounted) return;
     if (_selectedTab == 'علاقه‌مندی‌ها') {
       await _fetchFavoriteHotels();
-    } else if (_selectedTab == 'لیست رزروها') {
-      await _fetchCurrentBookings();
-    } else if (_selectedTab == 'رزروهای قبلی') {
-      await _fetchPreviousBookings();
+    } else if (_selectedTab == 'لیست رزروها' || _selectedTab == 'رزروهای قبلی') {
+      if (_allBookings.isEmpty) {
+        await _fetchReservations();
+      }
     }
   }
 
@@ -121,18 +125,64 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
     if(mounted) setState(() => _isLoadingFavorites = false);
   }
 
-  Future<void> _fetchCurrentBookings() async {
-    setState(() => _isLoadingCurrentBookings = true);
-    await Future.delayed(const Duration(seconds: 1));
-    _currentBookings = [];
-    if(mounted) setState(() => _isLoadingCurrentBookings = false);
-  }
+  Future<void> _fetchReservations() async {
+    if (!mounted) return;
 
-  Future<void> _fetchPreviousBookings() async {
-    setState(() => _isLoadingPreviousBookings = true);
-    await Future.delayed(const Duration(seconds: 1));
-    _previousBookings = [];
-    if(mounted) setState(() => _isLoadingPreviousBookings = false);
+    if (_selectedTab == 'لیست رزروها') {
+      setState(() => _isLoadingCurrentBookings = true);
+    } else if (_selectedTab == 'رزروهای قبلی') {
+      setState(() => _isLoadingPreviousBookings = true);
+    }
+
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final token = authService.token;
+
+    if (token == null) {
+      _showErrorSnackBar('برای مشاهده رزروها، ابتدا وارد شوید.');
+      if (mounted) {
+        setState(() {
+          _isLoadingCurrentBookings = false;
+          _isLoadingPreviousBookings = false;
+        });
+      }
+      return;
+    }
+
+    try {
+      final response = await http.get(
+        Uri.parse('https://fbookit.darkube.app/reservation-api/reservation/'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (!mounted) return;
+      if (response.statusCode == 200) {
+
+        print('--- Reservations Response Body ---');
+        print(utf8.decode(response.bodyBytes));
+        print('----------------------------------');
+
+        final Map<String, dynamic> responseData = jsonDecode(utf8.decode(response.bodyBytes));
+        final List<dynamic> reservationsList = responseData['data'];
+        _allBookings = reservationsList.map((json) => ReservationModel.fromJson(json)).toList();
+
+        setState(() {
+          _currentBookings = _allBookings.where((booking) => booking.isActive).toList();
+          _previousBookings = _allBookings.where((booking) => booking.isCompleted).toList();
+        });
+
+      } else {
+        throw Exception('Failed to load reservations (Code: ${response.statusCode})');
+      }
+    } catch (e) {
+      _showErrorSnackBar('خطا در بارگذاری رزروها: ${e.toString()}');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingCurrentBookings = false;
+          _isLoadingPreviousBookings = false;
+        });
+      }
+    }
   }
 
   void _showErrorSnackBar(String message) {
@@ -294,11 +344,23 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
     } else if (tabName == 'لیست رزروها') {
       if (_isLoadingCurrentBookings) return _buildLoadingIndicator();
       if (_currentBookings.isEmpty) return _buildEmptyState('هیچ رزرو فعالی ندارید.');
-      return Container(); // Placeholder
+      return ListView.builder(
+        padding: const EdgeInsets.only(top: 8, bottom: 8),
+        itemCount: _currentBookings.length,
+        itemBuilder: (context, index) {
+          return ActiveReservationCard(reservation: _currentBookings[index]);
+        },
+      );
     } else if (tabName == 'رزروهای قبلی') {
       if (_isLoadingPreviousBookings) return _buildLoadingIndicator();
       if (_previousBookings.isEmpty) return _buildEmptyState('هیچ رزرو قبلی یافت نشد.');
-      return Container(); // Placeholder
+      return ListView.builder(
+        padding: const EdgeInsets.only(top: 8, bottom: 8),
+        itemCount: _previousBookings.length,
+        itemBuilder: (context, index) {
+          return PreviousReservationCard(reservation: _previousBookings[index]);
+        },
+      );
     }
     return const SizedBox.shrink();
   }
