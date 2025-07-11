@@ -33,8 +33,10 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
   }
 
   void _onAuthStateChanged() {
+    if (!mounted) return;
+
     final authService = context.read<AuthService>();
-    if (authService.isAuthenticated && mounted) {
+    if (authService.isAuthenticated) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const AuthWrapper()),
       );
@@ -108,7 +110,7 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                               ),
                             ],
                           ),
-                          SizedBox(height: 20,),
+                          const SizedBox(height: 20,),
                           Text(
                             'کجا بمونم سوال نیست!',
                             textDirection: TextDirection.rtl,
@@ -173,7 +175,7 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
           ),
           textDirection: TextDirection.rtl,
         ),
-        SizedBox(width: 20,),
+        const SizedBox(width: 20,),
         Text(
           'کجا بمونم سوال نیست!',
           textDirection: TextDirection.rtl,

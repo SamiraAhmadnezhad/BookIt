@@ -30,8 +30,10 @@ class _AuthFormWrapperState extends State<AuthFormWrapper> {
   }
 
   void _handleLogin(String email, String password, bool isManager) async {
+    print("salam");
     final authService = context.read<AuthService>();
     final error = await authService.login(email, password, isManager);
+    if (!mounted) return;
     if (error == null) {
       _showSnackBar('ورود با موفقیت انجام شد.', isError: false);
     } else {
@@ -42,6 +44,7 @@ class _AuthFormWrapperState extends State<AuthFormWrapper> {
   void _handleSignup(Map<String, String> data, UserType userType) async {
     final authService = context.read<AuthService>();
     final error = await authService.register(data, userType == UserType.manager);
+    if (!mounted) return;
     if (error == null) {
       setState(() {
         _emailForOtp = data['email']!;
@@ -56,6 +59,7 @@ class _AuthFormWrapperState extends State<AuthFormWrapper> {
   void _handleOtpSubmit(String otp) async {
     final authService = context.read<AuthService>();
     final error = await authService.verifyOtp(_emailForOtp, otp);
+    if (!mounted) return;
     if (error == null) {
       _showSnackBar('ثبت‌نام با موفقیت انجام شد. لطفا وارد شوید.', isError: false);
       setState(() => _currentScreen = AuthScreen.login);
@@ -67,6 +71,7 @@ class _AuthFormWrapperState extends State<AuthFormWrapper> {
   void _handleResendOtp() async {
     final authService = context.read<AuthService>();
     final error = await authService.resendOtp(_emailForOtp);
+    if (!mounted) return;
     _showSnackBar(error ?? 'کد جدید ارسال شد.', isError: error != null);
   }
 

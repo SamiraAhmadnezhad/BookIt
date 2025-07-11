@@ -6,7 +6,7 @@ import 'package:bookit/features/guest/home/presentation/widgets/hotel_card.dart'
 import 'package:bookit/features/guest/home/presentation/widgets/image_banner.dart';
 import 'package:bookit/features/guest/home/presentation/widgets/location_selection_modal.dart';
 import 'package:bookit/features/guest/home/presentation/widgets/section_header.dart';
-import 'package:bookit/pages/guest_pages/hotel_detail_page/hotel_detail_page.dart';
+import 'package:bookit/features/guest/hotel_detail/presentation/pages/hotel_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -92,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => HotelDetailsPage(hotel: hotel),
+        builder: (context) => HotelDetailScreen(hotel: hotel),
       ),
     );
   }
