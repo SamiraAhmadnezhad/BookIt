@@ -1,6 +1,6 @@
 // lib/pages/guest_pages/hotel_detail_page/data/models/hotel_details_model.dart
 
-import 'amenity_model.dart';
+import '../../../../../core/models/amenity_model.dart';
 
 class HotelDetails {
   // ... (فیلدها بدون تغییر)

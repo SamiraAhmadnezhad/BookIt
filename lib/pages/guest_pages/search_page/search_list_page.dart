@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import '../../authentication_page/auth_service.dart';
-import '../home_page/model/room_model.dart';
+import '../../../core/models/room_model.dart';
+import '../../../features/auth/data/services/auth_service.dart';
 import '../reservation_detail_page/reservation_detail_page.dart';
 import 'model/search_params_model.dart';
 import 'widgets/hotel_search_list_card.dart';

@@ -9,8 +9,8 @@ import 'package:provider/provider.dart';
 import 'package:http_parser/http_parser.dart';
 
 import '../models/hotel_model.dart';
-import '../models/facility_enum.dart';
-import '../../../authentication_page/auth_service.dart';
+import '../../../../core/models/facility_enum.dart';
+import '../../../../features/auth/data/services/auth_service.dart';
 
 const Color kPrimaryColor = Color(0xFF542545);
 const Color kAccentColor = Color(0xFF7E3F6B);

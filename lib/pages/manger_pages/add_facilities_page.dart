@@ -4,8 +4,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-import '../authentication_page/auth_service.dart';
-import 'hotel_info_page/models/facility_enum.dart';
+import '../../features/auth/data/services/auth_service.dart';
+import '../../core/models/facility_enum.dart';
 
 // --- ثابت‌ها ---
 const String BASE_URL = 'https://fbookit.darkube.app';

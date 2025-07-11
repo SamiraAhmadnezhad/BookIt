@@ -4,9 +4,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-import '../../authentication_page/auth_service.dart';
+import '../../../features/auth/data/services/auth_service.dart';
 import 'edit_profile_page.dart';
-import '../../authentication_page/authentication_page.dart';
+import '../../../features/auth/presentation/pages/authentication_screen.dart';
 import 'models/user_profile_model.dart';
 import 'models/reservation_model.dart';
 import 'widgets/active_reservation_card.dart';
@@ -198,7 +198,7 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
     await authService.logout();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const AuthenticationPage()),
+      MaterialPageRoute(builder: (context) => const AuthenticationScreen()),
           (Route<dynamic> route) => false,
     );
   }

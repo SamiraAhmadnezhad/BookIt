@@ -1,11 +1,12 @@
 // lib/pages/guest_pages/hotel_detail_page/widgets/amenity_item_widget.dart
 
+import 'package:bookit/core/models/facility_enum.dart';
 import 'package:flutter/material.dart';
-import '../data/models/amenity_model.dart';
+import '../../../../core/models/amenity_model.dart';
 import '../utils/constants.dart';
 
 class AmenityItemWidget extends StatelessWidget {
-  final Amenity amenity;
+  final Facility amenity;
 
   const AmenityItemWidget({Key? key, required this.amenity}) : super(key: key);
 
