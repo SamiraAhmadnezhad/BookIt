@@ -34,6 +34,7 @@ class AuthService with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+
     try {
       final response = await http.post(
         Uri.parse(url),
@@ -41,6 +42,7 @@ class AuthService with ChangeNotifier {
         body: jsonEncode(body),
       ).timeout(const Duration(seconds: 15));
 
+      print(response.body);
       final responseBody = utf8.decode(response.bodyBytes);
       final responseData = jsonDecode(responseBody);
 

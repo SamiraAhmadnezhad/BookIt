@@ -1,6 +1,6 @@
 import 'package:bookit/core/models/hotel_model.dart';
 import 'package:bookit/features/guest/home/presentation/widgets/hotel_card.dart';
-import 'package:bookit/pages/guest_pages/hotel_detail_page/hotel_detail_page.dart';
+import 'package:bookit/features/guest/hotel_detail/presentation/pages/hotel_detail_screen.dart';
 import 'package:flutter/material.dart';
 
 class HotelListScreen extends StatelessWidget {
@@ -36,7 +36,7 @@ class HotelListScreen extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => HotelDetailsPage(hotel: hotel),
+                  builder: (context) => HotelDetailScreen(hotel: hotel),
                 ),
               );
             },
