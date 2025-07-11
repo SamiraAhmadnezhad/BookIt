@@ -89,7 +89,7 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
           hotelRating: widget.hotel.rating,
           hotelImageUrl: widget.hotel.imageUrl,
           roomNumber: room.roomNumber,
-          numberOfAdults: room.capacity,
+          numberOfAdults: room.capacity, roomID: room.id,
         ),
       ),
     );
