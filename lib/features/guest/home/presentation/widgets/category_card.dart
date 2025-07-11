@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 class CategoryCard extends StatelessWidget {
@@ -5,19 +6,18 @@ class CategoryCard extends StatelessWidget {
   final String label;
   final Color color;
   final VoidCallback onTap;
-
   const CategoryCard({
-    Key? key,
+    super.key,
     required this.icon,
     required this.label,
     required this.color,
     required this.onTap,
-  }) : super(key: key);
-
+  });
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -33,10 +33,8 @@ class CategoryCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 13,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w600,
-              color: Colors.black87,
             ),
           ),
         ],

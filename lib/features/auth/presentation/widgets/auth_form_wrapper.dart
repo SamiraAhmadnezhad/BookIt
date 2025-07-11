@@ -30,7 +30,7 @@ class _AuthFormWrapperState extends State<AuthFormWrapper> {
   }
 
   void _handleLogin(String email, String password, bool isManager) async {
-    final authService = context.watch<AuthService>();
+    final authService = context.read<AuthService>();
     final error = await authService.login(email, password, isManager);
     if (error == null) {
       _showSnackBar('ورود با موفقیت انجام شد.', isError: false);
@@ -91,8 +91,7 @@ class _AuthFormWrapperState extends State<AuthFormWrapper> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (_currentScreen != AuthScreen.otp)
-            _buildSegmentedControl(theme),
+          if (_currentScreen != AuthScreen.otp) _buildSegmentedControl(theme),
           SizedBox(
             height: 480,
             child: AnimatedSwitcher(
@@ -114,7 +113,8 @@ class _AuthFormWrapperState extends State<AuthFormWrapper> {
         return LoginForm(
           key: const ValueKey('login'),
           onLogin: _handleLogin,
-          onForgotPassword: () => _showSnackBar('این قابلیت هنوز پیاده‌سازی نشده است.'),
+          onForgotPassword: () =>
+              _showSnackBar('این قابلیت هنوز پیاده‌سازی نشده است.'),
           isLoading: isLoading,
         );
       case AuthScreen.guestSignup:

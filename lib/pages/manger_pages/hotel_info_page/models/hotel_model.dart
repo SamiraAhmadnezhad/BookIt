@@ -1,7 +1,5 @@
-// lib/pages/shared_models/hotel_model.dart
 
-
-import '../../../guest_pages/hotel_detail_page/data/models/amenity_model.dart';
+import '../../../../core/models/amenity_model.dart';
 
 class Hotel {
   final int id;

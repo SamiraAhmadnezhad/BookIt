@@ -1,6 +1,4 @@
-// lib/pages/shared_models/hotel_model.dart (یا مسیر قبلی)
-
-import '../../hotel_detail_page/data/models/amenity_model.dart';
+import 'facility_enum.dart';
 
 class Hotel {
   final int id;
@@ -10,13 +8,13 @@ class Hotel {
   final double rating;
   final int reviewCount;
   final String description;
-  final List<Amenity> amenities;
+  final List<Facility> amenities;
   final String iban;
   final String licenseImageUrl;
   final String status;
-  final double discount;
+  final double discountPercent;
   final int totalRooms;
-  final bool isCurrentlyFavorite;
+  final bool isFavorite;
 
   Hotel({
     required this.id,
@@ -30,20 +28,18 @@ class Hotel {
     required this.iban,
     required this.licenseImageUrl,
     required this.status,
-    required this.discount,
+    required this.discountPercent,
     required this.totalRooms,
-    this.isCurrentlyFavorite = false,
+    required this.isFavorite,
   });
 
-  factory Hotel.fromJson(Map<String, dynamic> json) {
-    List<Amenity> amenitiesList = [];
-    if (json['facilities'] != null && json['facilities'] is List) {
-      var facilityObjects = List<Map<String, dynamic>>.from(json['facilities']);
-      amenitiesList = facilityObjects.map((obj) => Amenity(name: obj['name'] ?? '')).toList();
-    }
+  bool get isCurrentlyFavorite => isFavorite;
 
-    String _processUrl(String? url) {
-      if (url == null || url.isEmpty) return '';
+  factory Hotel.fromJson(Map<String, dynamic> json) {
+    String processUrl(String? url) {
+      if (url == null || url.isEmpty) {
+        return 'https://placehold.co/600x400/EEE/31343C/png?text=Image';
+      }
       if (url.startsWith('/')) {
         return 'https://fbookit.darkube.app$url';
       }
@@ -53,21 +49,28 @@ class Hotel {
       return url;
     }
 
+    var amenitiesList = (json['facilities'] as List<dynamic>?)
+        ?.map((facility) =>
+        FacilityParsing.fromApiValue(facility['name'] ?? ''))
+        .toList() ??
+        [];
+
     return Hotel(
       id: json['id'] ?? 0,
       name: json['name'] ?? 'نام یافت نشد',
       address: json['location'] ?? 'آدرس یافت نشد',
-      imageUrl: _processUrl(json['image']),
-      licenseImageUrl: _processUrl(json['hotel_license']),
+      imageUrl: processUrl(json['image']),
+      licenseImageUrl: processUrl(json['hotel_license']),
       description: json['description'] ?? 'توضیحات موجود نیست',
       rating: (json['rate'] as num?)?.toDouble() ?? 0.0,
       reviewCount: json['rate_number'] ?? 0,
+      status: json['status']?.toString() ?? 'Pending',
+      discountPercent:
+      double.tryParse(json['discount']?.toString() ?? '0.0') ?? 0.0,
+      totalRooms: int.tryParse(json['total_rooms']?.toString() ?? '0') ?? 0,
+      isFavorite: json['is_favorite'] ?? false,
       amenities: amenitiesList,
       iban: json['hotel_iban_number'] ?? '',
-      status: json['status']?.toString() ?? 'Pending',
-      discount: double.tryParse(json['discount']?.toString() ?? '0.0') ?? 0.0,
-      totalRooms: int.tryParse(json['total_rooms']?.toString() ?? '0') ?? 0,
-      isCurrentlyFavorite: json['is_favorite'] ?? false,
     );
   }
 }

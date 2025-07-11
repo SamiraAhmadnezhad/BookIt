@@ -1,3 +1,4 @@
+import 'package:bookit/core/models/facility_enum.dart';
 import 'package:bookit/pages/guest_pages/hotel_detail_page/utils/constants.dart';
 import 'package:bookit/pages/guest_pages/hotel_detail_page/widgets/add_review_form_widget.dart';
 import 'package:bookit/pages/guest_pages/hotel_detail_page/widgets/amenity_item_widget.dart';
@@ -9,12 +10,12 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:provider/provider.dart';
 import 'package:shamsi_date/shamsi_date.dart';
+import '../../../core/models/amenity_model.dart';
+import '../../../core/models/hotel_model.dart';
 import '../../../features/auth/data/services/auth_service.dart';
-import '../home_page/model/hotel_model.dart';
 import '../reservation_detail_page/reservation_api_service.dart';
 import '../reservation_detail_page/reservation_detail_page.dart';
 import '../search_page/widgets/custom_shamsi_date_picker.dart';
-import 'data/models/amenity_model.dart';
 import 'data/models/review_model.dart';
 import 'data/models/room_model.dart';
 import 'data/services/hotel_api_service.dart';
@@ -349,7 +350,7 @@ class _HotelDetailsPageState extends State<HotelDetailsPage> {
     );
   }
 
-  Widget _buildAmenitiesHorizontalList(List<Amenity> amenities) {
+  Widget _buildAmenitiesHorizontalList(List<Facility> amenities) {
     if (amenities.isEmpty) {
       return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),

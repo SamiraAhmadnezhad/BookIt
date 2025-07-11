@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../pages/guest_pages/guest_main_screen.dart';
-import '../../../../pages/manger_pages/manager_main_screen.dart';
+import '../../../guest/presentation/pages/guest_main_wrapper.dart';
+import '../../../manager/presentation/pages/manager_main_wrapper.dart';
 import '../../data/services/auth_service.dart';
 import '../pages/authentication_screen.dart';
 
@@ -21,9 +21,9 @@ class AuthWrapper extends StatelessWidget {
 
     if (authService.isAuthenticated) {
       if (authService.userRole == 'manager') {
-        return const ManagerMainScreen();
+        return const ManagerMainWrapper();
       } else {
-        return const GuestMainScreen();
+        return const GuestMainWrapper();
       }
     } else {
       return const AuthenticationScreen();
