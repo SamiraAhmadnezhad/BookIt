@@ -161,14 +161,15 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
         print(utf8.decode(response.bodyBytes));
         print('----------------------------------');
 
-        final Map<String, dynamic> responseData = jsonDecode(utf8.decode(response.bodyBytes));
-        final List<dynamic> reservationsList = responseData['data'];
-        _allBookings = reservationsList.map((json) => ReservationModel.fromJson(json)).toList();
+        final Map<String, dynamic> responseJson = jsonDecode(utf8.decode(response.bodyBytes));
 
-        setState(() {
-          _currentBookings = _allBookings.where((booking) => booking.isActive).toList();
-          _previousBookings = _allBookings.where((booking) => booking.isCompleted).toList();
-        });
+        final Map<String, dynamic> dataObject = responseJson['data'];
+
+        final List<dynamic> futureList = dataObject['future'] ?? [];
+        _currentBookings = futureList.map((json) => ReservationModel.fromJson(json)).toList();
+
+        final List<dynamic> pastList = dataObject['past'] ?? [];
+        _previousBookings = pastList.map((json) => ReservationModel.fromJson(json)).toList();
 
       } else {
         throw Exception('Failed to load reservations (Code: ${response.statusCode})');

@@ -8,6 +8,8 @@ import '../../../features/auth/data/services/auth_service.dart';
 import '../../guest_pages/account_page/models/user_profile_model.dart';
 import 'edit_manager_profile_page.dart';
 import '../../../features/auth/presentation/pages/authentication_screen.dart';
+import '../../../core/models/hotel_reservation_model.dart';
+import '../../../core/widgets/hotel_reservation_card.dart';
 const Color kPrimaryColor = Color(0xFF542545);
 const Color kAccentColor = Color(0xFF7E3F6B);
 const Color kPageBackground = Color(0xFFF4F6F8);
@@ -17,12 +19,6 @@ const Color kLighterTextColor = Color(0xFF888888);
 const Color kPositiveColor = Color(0xFF28a745);
 const Color kNegativeColor = Color(0xFFdc3545);
 
-class RuleModel {
-  String id;
-  String title;
-  String description;
-  RuleModel({required this.id, required this.title, required this.description});
-}
 
 class ReviewModel {
   final String id;
@@ -53,24 +49,21 @@ class ManagerAccountPage extends StatefulWidget {
 
 class _ManagerAccountPageState extends State<ManagerAccountPage> with SingleTickerProviderStateMixin {
   TabController? _tabController;
-  String _selectedTab = 'قوانین و مقررات';
+  String _selectedTab = 'اطلاعات رزروها';
 
   UserProfileModel? _managerProfile;
-  List<RuleModel> _rules = [];
+  List<HotelReservationModel> _hotelReservations = [];
   List<ReviewModel> _reviews = [];
 
   bool _isLoadingProfile = true;
-  bool _isLoadingRules = true;
+  bool _isLoadingHotelReservations = true;
   bool _isLoadingReviews = false;
 
   String? _replyingToReviewId;
   final TextEditingController _replyController = TextEditingController();
   final FocusNode _replyFocusNode = FocusNode();
 
-  bool _isEditingRules = false;
-  final TextEditingController _rulesTextController = TextEditingController();
-
-  final List<String> _tabs = const ['قوانین و مقررات', 'پاسخگویی به نظرات'];
+  final List<String> _tabs = const ['اطلاعات رزروها', 'پاسخگویی به نظرات'];
 
   @override
   void initState() {
@@ -87,7 +80,6 @@ class _ManagerAccountPageState extends State<ManagerAccountPage> with SingleTick
         _selectedTab = _tabs[_tabController!.index];
         _replyingToReviewId = null;
         _replyController.clear();
-        if (_isEditingRules) _cancelEditRules();
       });
       _fetchDataForSelectedTab();
     }
@@ -99,7 +91,6 @@ class _ManagerAccountPageState extends State<ManagerAccountPage> with SingleTick
     _tabController?.dispose();
     _replyController.dispose();
     _replyFocusNode.dispose();
-    _rulesTextController.dispose();
     super.dispose();
   }
 
@@ -110,8 +101,8 @@ class _ManagerAccountPageState extends State<ManagerAccountPage> with SingleTick
 
   Future<void> _fetchDataForSelectedTab() async {
     if (!mounted) return;
-    if (_selectedTab == 'قوانین و مقررات') {
-      await _fetchRules();
+    if (_selectedTab == 'اطلاعات رزروها') {
+      await _fetchHotelReservations();
     } else if (_selectedTab == 'پاسخگویی به نظرات') {
       await _fetchReviews();
     }
@@ -150,50 +141,46 @@ class _ManagerAccountPageState extends State<ManagerAccountPage> with SingleTick
     }
   }
 
-  String _convertRulesListToText(List<RuleModel> rules) {
-    return rules.map((rule) => '${rule.title.trim()}: ${rule.description.trim()}').join('\n\n');
-  }
+  Future<void> _fetchHotelReservations() async {
+    if (!mounted) return;
+    setState(() => _isLoadingHotelReservations = true);
 
-  List<RuleModel> _convertTextToRulesList(String text) {
-    final List<RuleModel> newRules = [];
-    if (text.trim().isEmpty) return newRules;
-    final ruleEntries = text.split(RegExp(r'\n\s*\n+'));
-    int ruleCounter = 1;
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final token = authService.token;
 
-    for (String entry in ruleEntries) {
-      if (entry.trim().isEmpty) continue;
-      int colonIndex = entry.indexOf(':');
-      if (colonIndex != -1) {
-        String title = entry.substring(0, colonIndex).trim();
-        String description = entry.substring(colonIndex + 1).trim();
-        if (title.isNotEmpty || description.isNotEmpty) {
-          newRules.add(RuleModel(
-              id: 'local${ruleCounter++}',
-              title: title.isEmpty ? "قانون $ruleCounter" : title,
-              description: description));
-        }
-      } else {
-        newRules.add(RuleModel(id: 'local${ruleCounter++}', title: "قانون $ruleCounter", description: entry.trim()));
-      }
+    if (token == null) {
+      _showErrorSnackBar('برای مشاهده رزروها، ابتدا وارد شوید.');
+      if (mounted) setState(() => _isLoadingHotelReservations = false);
+      return;
     }
-    return newRules;
-  }
 
-  Future<void> _fetchRules() async {
-    if (_isEditingRules || !mounted || _isLoadingRules) return;
-    setState(() => _isLoadingRules = true);
     try {
-      await Future.delayed(const Duration(seconds: 1));
+      final response = await http.get(
+        Uri.parse('https://fbookit.darkube.app/hotelManager-api/hotel_manager/hotel-reservations/'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
       if (!mounted) return;
-      _rules = [
-        RuleModel(id: '1', title: '۱. زمان ورود و خروج', description: 'زمان ورود به اتاق ساعت ۱۴:۰۰ و زمان خروج ساعت ۱۲:۰۰ ظهر می‌باشد.'),
-        RuleModel(id: '2', title: '۲. مدارک شناسایی', description: 'ارائه کارت ملی و شناسنامه برای تمامی میهمانان الزامی است.'),
-      ];
-      _rulesTextController.text = _convertRulesListToText(_rules);
+
+      if (response.statusCode == 200) {
+
+        print('--- Reservations Response Body ---');
+        print(utf8.decode(response.bodyBytes));
+        print('----------------------------------');
+
+        final Map<String, dynamic> responseJson = jsonDecode(utf8.decode(response.bodyBytes));
+        final List<dynamic> reservationsList = responseJson['data'] ?? [];
+
+        setState(() {
+          _hotelReservations = reservationsList.map((json) => HotelReservationModel.fromJson(json)).toList();
+        });
+      } else {
+        throw Exception('Failed to load hotel reservations (Code: ${response.statusCode})');
+      }
     } catch (e) {
-      _showErrorSnackBar('خطا در بارگذاری قوانین: ${e.toString()}');
+      _showErrorSnackBar('خطا در بارگذاری اطلاعات رزروها: ${e.toString()}');
     } finally {
-      if (mounted) setState(() => _isLoadingRules = false);
+      if (mounted) setState(() => _isLoadingHotelReservations = false);
     }
   }
 
@@ -280,44 +267,6 @@ class _ManagerAccountPageState extends State<ManagerAccountPage> with SingleTick
       MaterialPageRoute(builder: (context) => const AuthenticationScreen()),
           (Route<dynamic> route) => false,
     );
-  }
-
-  void _toggleEditRulesMode() {
-    if (!mounted) return;
-    setState(() {
-      _isEditingRules = !_isEditingRules;
-      if (_isEditingRules) {
-        _rulesTextController.text = _convertRulesListToText(_rules);
-      }
-    });
-  }
-
-  void _cancelEditRules() {
-    if (!mounted) return;
-    setState(() {
-      _isEditingRules = false;
-      _rulesTextController.text = _convertRulesListToText(_rules);
-    });
-  }
-
-  Future<void> _saveRules() async {
-    final newRulesText = _rulesTextController.text;
-    if (newRulesText.trim().isEmpty && _rules.isNotEmpty) {
-      _showErrorSnackBar("متن قوانین نمی‌تواند خالی باشد اگر قبلا قانونی ثبت شده است.");
-      return;
-    }
-    setState(() => _isLoadingRules = true);
-    await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
-    setState(() {
-      _rules = _convertTextToRulesList(newRulesText);
-      _isEditingRules = false;
-      _isLoadingRules = false;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('قوانین با موفقیت ذخیره شد.'),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating));
   }
 
   @override
@@ -442,85 +391,16 @@ class _ManagerAccountPageState extends State<ManagerAccountPage> with SingleTick
   }
 
   Widget _buildSelectedTabContent(String tabName) {
-    if (tabName == 'قوانین و مقررات') {
-      if (_isLoadingRules && !_isEditingRules) return _buildLoadingIndicator();
-      if (_rules.isEmpty && !_isEditingRules && !_isLoadingRules) {
-        return _buildEmptyStateWithButton('هیچ قانونی ثبت نشده است.', 'افزودن قوانین', _toggleEditRulesMode);
-      }
-      return _buildRulesContent();
+    if (tabName == 'اطلاعات رزروها') {
+      if (_isLoadingHotelReservations) return _buildLoadingIndicator();
+      if (_hotelReservations.isEmpty) return _buildEmptyState('هیچ رزروی برای هتل شما یافت نشد.');
+      return _buildList(_hotelReservations, (reservation) => HotelReservationCard(reservation: reservation));
     } else if (tabName == 'پاسخگویی به نظرات') {
       if (_isLoadingReviews) return _buildLoadingIndicator();
       if (_reviews.isEmpty) return _buildEmptyState('هیچ نظری برای پاسخگویی یافت نشد.');
       return _buildList(_reviews, _buildReviewItem);
     }
     return const SizedBox.shrink();
-  }
-
-  Widget _buildRulesContent() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(
-                child: Text('قوانین و مقررات هتل',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: kPrimaryColor)),
-              ),
-              TextButton.icon(
-                onPressed: _isEditingRules ? _saveRules : _toggleEditRulesMode,
-                icon: Icon(_isEditingRules ? Icons.save_outlined : Icons.edit_outlined, size: 18, color: _isEditingRules ? kPositiveColor : kAccentColor),
-                label: Text(_isEditingRules ? 'ذخیره' : 'ویرایش', style: TextStyle(color: _isEditingRules ? kPositiveColor : kAccentColor, fontSize: 13, fontWeight: FontWeight.w600)),
-                style: TextButton.styleFrom(padding: EdgeInsets.zero),
-              ),
-              if (_isEditingRules)
-                TextButton(
-                  onPressed: _cancelEditRules,
-                  child: const Text('لغو', style: TextStyle(color: kNegativeColor, fontSize: 13, fontWeight: FontWeight.w600)),
-                  style: TextButton.styleFrom(padding: EdgeInsets.zero),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          if (_isEditingRules)
-            TextFormField(
-                controller: _rulesTextController,
-                maxLines: null,
-                minLines: 8,
-                keyboardType: TextInputType.multiline,
-                style: TextStyle(fontSize: 14, color: Colors.grey[850], height: 1.6),
-                decoration: InputDecoration(
-                    hintText: 'قوانین را اینجا وارد کنید. هر قانون با عنوان و توضیحات (مثال: ۱. زمان ورود: ساعت ۱۴). برای جدا کردن قوانین، از یک خط خالی استفاده کنید.',
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-                    contentPadding: const EdgeInsets.all(12)))
-          else if (!_isLoadingRules)
-            _rules.isEmpty
-                ? const Text("هنوز قانونی ثبت نشده است.")
-                : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: _rules.map((rule) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child: RichText(
-                    textAlign: TextAlign.justify,
-                    text: TextSpan(
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: kLightTextColor, height: 1.6),
-                      children: <TextSpan>[
-                        TextSpan(text: '${rule.title}: ', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
-                        TextSpan(text: rule.description),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-        ],
-      ),
-    );
   }
 
   Widget _buildLoadingIndicator() {
