@@ -14,7 +14,6 @@ import 'package:shamsi_date/shamsi_date.dart';
 import '../../../../../core/utils/custom_shamsi_date_picker.dart';
 import '../../../../../pages/guest_pages/reservation_detail_page/reservation_detail_page.dart';
 import '../../../../../pages/guest_pages/reservation_detail_page/reservation_api_service.dart';
-import '../../../../auth/data/services/auth_service.dart';
 
 class HotelDetailScreen extends StatefulWidget {
   final Hotel hotel;
@@ -100,54 +99,50 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
       ),
     );
 
-    bool isRoomLocked = false;
-    try {
-      isRoomLocked = await _reservationApiService.lockRoom(
-        roomID: [room.id],
-        token: _token!,
-      );
-    } catch (e) {
-      if (mounted) Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('خطا در ارتباط با سرور: $e'), backgroundColor: Colors.red),
-      );
-      return;
-    }
+    final bool isLocked = await _reservationApiService.lockRoom(
+      roomID: [room.id],
+      token: _token!,
+    );
 
-    if (!mounted) return;
-    Navigator.pop(context);
+    if (mounted) Navigator.pop(context);
 
-    if (isRoomLocked) {
-      final checkInDateTime = startDate.toDateTime();
-      final checkOutDateTime = endDate.toDateTime();
-      final numberOfNights = checkOutDateTime.difference(checkInDateTime).inDays;
-      final totalPrice = room.pricePerNight * (numberOfNights > 0 ? numberOfNights : 1);
+    if (isLocked) {
+      try{
+        final checkInDateTime = startDate.toDateTime();
+        final checkOutDateTime = endDate.toDateTime();
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ReservationDetailPage(
-            hotelName: widget.hotel.name,
-            roomInfo: room.name,
-            checkInDate: checkInDateTime,
-            checkOutDate: checkOutDateTime,
-            totalPrice: totalPrice,
-            hotelId: widget.hotel.id.toString(),
-            hotelAddress: widget.hotel.address,
-            hotelRating: widget.hotel.rating,
-            hotelImageUrl: widget.hotel.imageUrl,
-            roomNumber: room.roomNumber,
-            numberOfAdults: room.capacity,
-            roomID: room.id,
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ReservationDetailPage(
+              hotelId: room.hotel.id,
+              hotelName: room.hotel.name,
+              hotelAddress: room.hotel.location,
+              hotelRating: room.rating,
+              hotelImageUrl: room.imageUrl ?? '',
+              roomID: room.id,
+              roomNumber: room.roomNumber,
+              roomInfo: room.name,
+              checkInDate: checkInDateTime,
+              checkOutDate: checkOutDateTime,
+              totalPrice: room.pricePerNight,
+              numberOfAdults: room.capacity,
+            ),
           ),
-        ),
-      );
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("خطا: فرمت تاریخ ارسال شده نامعتبر است."),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } else {
-      // اگر اتاق قفل نشد
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("متاسفانه این اتاق لحظاتی پیش رزرو شد. لطفا اتاق دیگری را انتخاب کنید."),
-          backgroundColor: Colors.orange,
+          content: Text("خطا: این اتاق در حال حاضر توسط شخص دیگری رزرو شده یا در دسترس نیست."),
+          backgroundColor: Colors.redAccent,
         ),
       );
     }

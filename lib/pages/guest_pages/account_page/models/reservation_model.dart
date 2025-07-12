@@ -21,12 +21,10 @@ class ReservationModel {
     required this.hotelImageUrl,
   });
 
-  // تابع کمکی برای ساخت URL کامل تصویر
   static String _buildImageUrl(String? path) {
     if (path == null || path.isEmpty) {
-      return 'https://via.placeholder.com/150'; // تصویر پیش‌فرض
+      return 'https://via.placeholder.com/150';
     }
-    // اگر path با http شروع نمی‌شود، آدرس پایه را اضافه کن
     if (path.startsWith('http')) {
       return path;
     }
@@ -59,16 +57,5 @@ class ReservationModel {
       hotelImageUrl: _buildImageUrl(hotelDetails['image']),
 
     );
-  }
-
-  // این متدها برای فیلتر کردن صحیح هستند
-  bool get isActive {
-    final s = status.toLowerCase();
-    return s == 'active' || s == 'confirmed' || s == 'pending';
-  }
-
-  bool get isCompleted {
-    final s = status.toLowerCase();
-    return s == 'completed' || s == 'finished';
   }
 }

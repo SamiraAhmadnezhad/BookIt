@@ -25,7 +25,7 @@ class SearchListPage extends StatefulWidget {
 class _SearchListPageState extends State<SearchListPage> {
   late final SearchApiService _apiService;
   final ReservationApiService _reservationApiService = ReservationApiService();
-  late final String? _token; // برای دسترسی به توکن کاربر
+  late final String? _token;
 
   List<Room> _allRooms = [];
   List<Room> _filteredRooms = [];
