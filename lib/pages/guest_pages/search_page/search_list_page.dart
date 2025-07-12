@@ -25,7 +25,7 @@ class SearchListPage extends StatefulWidget {
 class _SearchListPageState extends State<SearchListPage> {
   late final SearchApiService _apiService;
   final ReservationApiService _reservationApiService = ReservationApiService();
-  late final String? _token; // برای دسترسی به توکن کاربر
+  late final String? _token;
 
   List<Room> _allRooms = [];
   List<Room> _filteredRooms = [];
@@ -51,7 +51,7 @@ class _SearchListPageState extends State<SearchListPage> {
     super.initState();
     final authService = Provider.of<AuthService>(context, listen: false);
     _apiService = SearchApiService(authService);
-    _token = authService.token; // توکن را یکبار در initState بگیرید
+    _token = authService.token;
 
     _searchController.addListener(_applyFiltersAndSort);
     _fetchSearchResults();

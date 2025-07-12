@@ -8,7 +8,6 @@ class ReservationModel {
   final double amount;
   final String status;
   final String hotelImageUrl;
-  final double hotelRating;
 
   ReservationModel({
     required this.id,
@@ -20,29 +19,43 @@ class ReservationModel {
     required this.amount,
     required this.status,
     required this.hotelImageUrl,
-    required this.hotelRating,
   });
 
+  static String _buildImageUrl(String? path) {
+    if (path == null || path.isEmpty) {
+      return 'https://via.placeholder.com/150';
+    }
+    if (path.startsWith('http')) {
+      return path;
+    }
+    return 'https://fbookit.darkube.app$path';
+  }
+
   factory ReservationModel.fromJson(Map<String, dynamic> json) {
+    // دسترسی به آبجکت تودرتوی room_details
+    final roomDetails = json['room_details'] as Map<String, dynamic>? ?? {};
+    // دسترسی به آبجکت تودرتوی hotel که داخل room_details است
+    final hotelDetails = roomDetails['hotel'] as Map<String, dynamic>? ?? {};
+
     return ReservationModel(
       id: json['id'] ?? 0,
-      hotelId: json['hotel_id'] ?? 0,
-      hotelName: json['hotel_name'] ?? 'نام هتل نامشخص',
-      roomInfo: json['room_info'] ?? 'اطلاعات اتاق نامشخص',
+      hotelId: hotelDetails['id'] ?? 0,
+      hotelName: hotelDetails['name'] ?? 'نام هتل نامشخص',
+
+      // ترکیب نوع و شماره اتاق برای roomInfo
+      roomInfo: '${roomDetails['room_type'] ?? 'اتاق'} شماره ${roomDetails['room_number'] ?? ''}'.trim(),
+
       checkInDate: json['check_in_date'] ?? '',
       checkOutDate: json['check_out_date'] ?? '',
-      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
+
+      // قیمت از داخل roomDetails خوانده می‌شود و از رشته به عدد تبدیل می‌شود
+      amount: double.tryParse(roomDetails['price']?.toString() ?? '0.0') ?? 0.0,
+
       status: json['status'] ?? 'نامشخص',
-      hotelImageUrl: json['hotel_image_url'] ?? 'https://via.placeholder.com/150',
-      hotelRating: (json['hotel_rating'] as num?)?.toDouble() ?? 0.0,
+
+      // ساخت URL کامل برای تصویر هتل
+      hotelImageUrl: _buildImageUrl(hotelDetails['image']),
+
     );
-  }
-
-  bool get isCompleted {
-    return status.toLowerCase() == 'completed';
-  }
-
-  bool get isActive {
-    return status.toLowerCase() == 'active' || status.toLowerCase() == 'confirmed';
   }
 }

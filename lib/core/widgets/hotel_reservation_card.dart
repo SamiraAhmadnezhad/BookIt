@@ -23,7 +23,7 @@ class HotelReservationCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Card(
-      margin: EdgeInsets.zero, // مارجین توسط ListView.separated کنترل می‌شود
+      margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 2,
       shadowColor: Colors.black.withOpacity(0.1),
@@ -32,7 +32,6 @@ class HotelReservationCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ردیف بالای کارت: نام هتل و اتاق
             Text(
               reservation.hotelName,
               style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: kPrimaryColor),

@@ -14,6 +14,7 @@ import 'package:shamsi_date/shamsi_date.dart';
 
 import '../../../../../core/utils/custom_shamsi_date_picker.dart';
 import '../../../../../pages/guest_pages/reservation_detail_page/reservation_detail_page.dart';
+import '../../../../../pages/guest_pages/reservation_detail_page/reservation_api_service.dart';
 
 class HotelDetailScreen extends StatefulWidget {
   final Hotel hotel;
@@ -25,6 +26,8 @@ class HotelDetailScreen extends StatefulWidget {
 
 class _HotelDetailScreenState extends State<HotelDetailScreen> {
   late final HotelDetailApiService _apiService;
+  late final ReservationApiService _reservationApiService;
+  late final String? _token;
   Future<List<Room>>? _roomsFuture;
   Future<List<Review>>? _reviewsFuture;
 
@@ -33,6 +36,8 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
     super.initState();
     final authService = Provider.of<AuthService>(context, listen: false);
     _apiService = HotelDetailApiService(authService);
+    _reservationApiService = ReservationApiService();
+    _token = authService.token;
     _loadData();
   }
 
@@ -80,31 +85,80 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
 
     if (endDate == null || !mounted) return;
 
-    final checkInDateTime = startDate.toDateTime();
-    final checkOutDateTime = endDate.toDateTime();
-    final numberOfNights = checkOutDateTime.difference(checkInDateTime).inDays;
-    final totalPrice =
-        room.price * (numberOfNights > 0 ? numberOfNights : 1);
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ReservationDetailPage(
-          hotelName: widget.hotel.name,
-          roomInfo: room.name,
-          checkInDate: checkInDateTime,
-          checkOutDate: checkOutDateTime,
-          totalPrice: totalPrice,
-          hotelId: widget.hotel.id.toString(),
-          hotelAddress: widget.hotel.address,
-          hotelRating: widget.hotel.rating,
-          hotelImageUrl: widget.hotel.imageUrl,
-          roomNumber: room.roomNumber,
-          numberOfAdults: roomCapacity(room.roomType),
-          roomID: room.id,
+    if (_token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('برای رزرو اتاق، ابتدا باید وارد شوید.'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Dialog(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: Color(0xFF542545)),
+              SizedBox(width: 20),
+              Text("در حال قفل کردن اتاق..."),
+            ],
+          ),
+
         ),
       ),
     );
+
+    final bool isLocked = await _reservationApiService.lockRoom(
+      roomID: [room.id],
+      token: _token!,
+    );
+
+    if (mounted) Navigator.pop(context);
+
+    if (isLocked) {
+      try{
+        final checkInDateTime = startDate.toDateTime();
+        final checkOutDateTime = endDate.toDateTime();
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ReservationDetailPage(
+              hotelId: room.hotel.id,
+              hotelName: room.hotel.name,
+              hotelAddress: room.hotel.location,
+              hotelRating: room.rating,
+              hotelImageUrl: room.imageUrl ?? '',
+              roomID: room.id,
+              roomNumber: room.roomNumber,
+              roomInfo: room.name,
+              checkInDate: checkInDateTime,
+              checkOutDate: checkOutDateTime,
+              totalPrice: room.pricePerNight,
+              numberOfAdults: room.capacity,
+            ),
+          ),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("خطا: فرمت تاریخ ارسال شده نامعتبر است."),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("خطا: این اتاق در حال حاضر توسط شخص دیگری رزرو شده یا در دسترس نیست."),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
   Future<void> _handleReviewSubmission({
