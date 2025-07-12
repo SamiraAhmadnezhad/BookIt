@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'package:bookit/pages/authentication_page/authentication_page.dart';
-import 'package:bookit/pages/guest_pages/guest_main_screen.dart';
-import 'package:bookit/pages/manger_pages/manager_main_screen.dart';
+import 'package:bookit/features/auth/presentation/pages/authentication_screen.dart';
+import 'package:bookit/features/guest/presentation/pages/guest_main_wrapper.dart';
+import 'package:bookit/features/manager/presentation/pages/manager_main_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../authentication_page/auth_service.dart';
+import '../../features/auth/data/services/auth_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -47,16 +47,6 @@ class _SplashScreenState extends State<SplashScreen> {
                   fontWeight: FontWeight.w900,
                   color: primaryColor,
                 ),
-                children: [
-                  TextSpan(
-                    text: '.',
-                    style: TextStyle(
-                      fontSize: 60,
-                      fontWeight: FontWeight.w900,
-                      color: primaryColor.withOpacity(0.5),
-                    ),
-                  ),
-                ],
               ),
               textDirection: TextDirection.rtl,
             ),
@@ -104,13 +94,13 @@ class _AuthWrapper extends StatelessWidget {
 
     if (authService.isAuthenticated) {
       if (authService.userRole == 'manager') {
-        return const ManagerMainScreen();
+        return const ManagerMainWrapper();
       } else {
-        return const GuestMainScreen();
+        return const GuestMainWrapper();
       }
     }
     else {
-      return const AuthenticationPage();
+      return const AuthenticationScreen();
     }
 
   }

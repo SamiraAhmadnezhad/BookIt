@@ -8,8 +8,8 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
-import '../../../authentication_page/auth_service.dart';
-import '../../../guest_pages/search_page/widgets/custom_shamsi_date_picker.dart';
+import '../../../../features/auth/data/services/auth_service.dart';
+import '../../../../core/utils/custom_shamsi_date_picker.dart';
 import '../models/report_models.dart';
 import '../services/report_service.dart';
 

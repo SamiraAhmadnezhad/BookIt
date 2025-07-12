@@ -1,16 +1,13 @@
-// lib/your_path/add_hotel_screen.dart
-
 import 'dart:convert';
 import 'dart:io';
+import 'package:bookit/core/models/facility_enum.dart';
+import 'package:bookit/core/models/hotel_model.dart';
+import 'package:bookit/features/auth/data/services/auth_service.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
 import 'package:http_parser/http_parser.dart';
-
-import '../models/hotel_model.dart';
-import '../models/facility_enum.dart';
-import '../../../authentication_page/auth_service.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
 const Color kPrimaryColor = Color(0xFF542545);
 const Color kAccentColor = Color(0xFF7E3F6B);
@@ -22,8 +19,10 @@ const Color kIconColor = Colors.grey;
 const Color kErrorColor = Colors.redAccent;
 const Color kInputBorderColor = Color(0xFFD0D0D0);
 
-const String ADD_HOTEL_ENDPOINT = 'https://fbookit.darkube.app/hotel-api/hotel/';
-const String EDIT_HOTEL_ENDPOINT_PREFIX = 'https://fbookit.darkube.app/hotel-api/hotel/';
+const String ADD_HOTEL_ENDPOINT =
+    'https://fbookit.darkube.app/hotel-api/hotel/';
+const String EDIT_HOTEL_ENDPOINT_PREFIX =
+    'https://fbookit.darkube.app/hotel-api/hotel/';
 
 class AddHotelScreen extends StatefulWidget {
   final Hotel? hotel;
@@ -57,18 +56,17 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
   @override
   void initState() {
     super.initState();
-
     _nameController = TextEditingController(text: widget.hotel?.name ?? '');
-    _descriptionController = TextEditingController(text: widget.hotel?.description ?? '');
-    _locationController = TextEditingController(text: widget.hotel?.address ?? ''); // <<< اصلاح شد
+    _descriptionController =
+        TextEditingController(text: widget.hotel?.description ?? '');
+    _locationController =
+        TextEditingController(text: widget.hotel?.address ?? '');
     _ibanController = TextEditingController(text: widget.hotel?.iban ?? '');
-    _ratingController = TextEditingController(text: widget.hotel?.rating.toString() ?? '0');
+    _ratingController =
+        TextEditingController(text: widget.hotel?.rating.toString() ?? '0');
 
     if (_isEditing && widget.hotel != null) {
-      // <<< اصلاح شد: استفاده از متد fromApiValue که در enum تعریف کردیم
-      _selectedAmenities = widget.hotel!.amenities
-          .map((amenityModel) => FacilityParsing.fromApiValue(amenityModel.name))
-          .toSet();
+      _selectedAmenities = widget.hotel!.amenities.toSet();
       _existingMainImageUrl = widget.hotel!.imageUrl;
       _existingLicenseImageUrl = widget.hotel!.licenseImageUrl;
     }
@@ -108,43 +106,49 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
       return;
     }
 
-    final String url = _isEditing ? '$EDIT_HOTEL_ENDPOINT_PREFIX${widget.hotel!.id}/' : ADD_HOTEL_ENDPOINT;
+    final String url = _isEditing
+        ? '$EDIT_HOTEL_ENDPOINT_PREFIX${widget.hotel!.id}/'
+        : ADD_HOTEL_ENDPOINT;
     final String method = _isEditing ? 'PATCH' : 'POST';
 
     var request = http.MultipartRequest(method, Uri.parse(url));
     request.headers['Authorization'] = 'Bearer $token';
 
-    final String facilitiesString = _selectedAmenities.map((f) => f.apiValue).join(',');
+    final List<String> facilityNames =
+    _selectedAmenities.map((f) => f.apiValue).toList();
+    final String facilitiesJson = jsonEncode(facilityNames);
 
     final Map<String, String> fields = {
       'name': _nameController.text,
       'location': _locationController.text,
       'description': _descriptionController.text,
       'hotel_iban_number': _ibanController.text,
-      'facilities': facilitiesString,
+      'facilities': facilitiesJson,
       'rate': _ratingController.text,
     };
 
-    print(fields);
     request.fields.addAll(fields);
 
     if (_selectedMainImageFile != null) {
       request.files.add(await http.MultipartFile.fromPath(
         'image',
         _selectedMainImageFile!.path,
-        contentType: MediaType('image', _selectedMainImageFile!.path.split('.').last),
+        contentType:
+        MediaType('image', _selectedMainImageFile!.path.split('.').last),
       ));
     }
     if (_selectedLicenseImageFile != null) {
       request.files.add(await http.MultipartFile.fromPath(
         'hotel_license',
         _selectedLicenseImageFile!.path,
-        contentType: MediaType('image', _selectedLicenseImageFile!.path.split('.').last),
+        contentType: MediaType(
+            'image', _selectedLicenseImageFile!.path.split('.').last),
       ));
     }
 
     try {
-      final streamedResponse = await request.send().timeout(const Duration(seconds: 45));
+      final streamedResponse =
+      await request.send().timeout(const Duration(seconds: 45));
       final response = await http.Response.fromStream(streamedResponse);
 
       if (!mounted) return;
@@ -155,7 +159,9 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         _showSnackBar(
-          _isEditing ? 'اطلاعات هتل با موفقیت ویرایش شد.' : 'هتل جدید با موفقیت اضافه شد.',
+          _isEditing
+              ? 'اطلاعات هتل با موفقیت ویرایش شد.'
+              : 'هتل جدید با موفقیت اضافه شد.',
           isError: false,
         );
         Navigator.pop(context, true);
@@ -164,7 +170,9 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
       }
     } catch (e) {
       debugPrint("Error submitting hotel data: $e");
-      if (mounted) _showSnackBar('خطا در برقراری ارتباط با سرور: $e', isError: true);
+      if (mounted) {
+        _showSnackBar('خطا در برقراری ارتباط با سرور: $e', isError: true);
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -176,7 +184,8 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
       final errorData = jsonDecode(body);
       if (errorData is Map && errorData.isNotEmpty) {
         errorMessage = errorData.entries
-            .map((e) => '${e.key}: ${e.value is List ? (e.value as List).join(', ') : e.value}')
+            .map((e) =>
+        '${e.key}: ${e.value is List ? (e.value as List).join(', ') : e.value}')
             .join('\n');
       } else if (errorData is String) {
         errorMessage = errorData;
@@ -184,10 +193,12 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
     } catch (_) {
       errorMessage = body.isNotEmpty ? body : 'خطای نامشخص از سمت سرور.';
     }
-    _showSnackBar('$errorMessage (کد: $statusCode)', isError: true, durationSeconds: 6);
+    _showSnackBar('$errorMessage (کد: $statusCode)',
+        isError: true, durationSeconds: 6);
   }
 
-  void _showSnackBar(String message, {bool isError = false, int durationSeconds = 3}) {
+  void _showSnackBar(String message,
+      {bool isError = false, int durationSeconds = 3}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -199,7 +210,8 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
     );
   }
 
-  Future<void> _pickImage(ImageSource source, {required bool isMainImage}) async {
+  Future<void> _pickImage(ImageSource source,
+      {required bool isMainImage}) async {
     if (_isLoading) return;
     try {
       final XFile? pickedFile = await _picker.pickImage(
@@ -221,7 +233,10 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
       }
     } catch (e) {
       debugPrint("Image picking error: $e");
-      if (mounted) _showSnackBar('خطا در انتخاب تصویر. لطفاً دسترسی‌ها را بررسی کنید.', isError: true);
+      if (mounted) {
+        _showSnackBar('خطا در انتخاب تصویر. لطفاً دسترسی‌ها را بررسی کنید.',
+            isError: true);
+      }
     }
   }
 
@@ -239,26 +254,37 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
             child: Wrap(
               children: <Widget>[
                 ListTile(
-                  leading: const Icon(Icons.photo_library_outlined, color: kPrimaryColor),
-                  title: const Text('انتخاب از گالری', style: TextStyle(fontWeight: FontWeight.w500)),
+                  leading: const Icon(Icons.photo_library_outlined,
+                      color: kPrimaryColor),
+                  title: const Text('انتخاب از گالری',
+                      style: TextStyle(fontWeight: FontWeight.w500)),
                   onTap: () {
                     _pickImage(ImageSource.gallery, isMainImage: isMainImage);
                     Navigator.of(context).pop();
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.camera_alt_outlined, color: kPrimaryColor),
-                  title: const Text('گرفتن عکس با دوربین', style: TextStyle(fontWeight: FontWeight.w500)),
+                  leading: const Icon(Icons.camera_alt_outlined,
+                      color: kPrimaryColor),
+                  title: const Text('گرفتن عکس با دوربین',
+                      style: TextStyle(fontWeight: FontWeight.w500)),
                   onTap: () {
                     _pickImage(ImageSource.camera, isMainImage: isMainImage);
                     Navigator.of(context).pop();
                   },
                 ),
-                if ((isMainImage && (_selectedMainImageFile != null || _existingMainImageUrl != null)) ||
-                    (!isMainImage && (_selectedLicenseImageFile != null || _existingLicenseImageUrl != null)))
+                if ((isMainImage &&
+                    (_selectedMainImageFile != null ||
+                        _existingMainImageUrl != null)) ||
+                    (!isMainImage &&
+                        (_selectedLicenseImageFile != null ||
+                            _existingLicenseImageUrl != null)))
                   ListTile(
-                    leading: const Icon(Icons.delete_outline, color: kErrorColor),
-                    title: const Text('حذف تصویر', style: TextStyle(color: kErrorColor, fontWeight: FontWeight.w500)),
+                    leading:
+                    const Icon(Icons.delete_outline, color: kErrorColor),
+                    title: const Text('حذف تصویر',
+                        style:
+                        TextStyle(color: kErrorColor, fontWeight: FontWeight.w500)),
                     onTap: () {
                       setState(() {
                         if (isMainImage) {
@@ -289,7 +315,8 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
         appBar: AppBar(
           title: Text(
             _isEditing ? 'ویرایش اطلاعات هتل' : 'افزودن هتل جدید',
-            style: const TextStyle(color: kPrimaryColor, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+                color: kPrimaryColor, fontWeight: FontWeight.bold),
           ),
           backgroundColor: kCardBackground,
           elevation: 1.5,
@@ -298,7 +325,14 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
             if (_isLoading)
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.0),
-                child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5, valueColor: AlwaysStoppedAnimation<Color>(kAccentColor)))),
+                child: Center(
+                    child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            valueColor:
+                            AlwaysStoppedAnimation<Color>(kAccentColor)))),
               )
           ],
         ),
@@ -356,7 +390,11 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
                             crossAxisSpacing: 8,
                             children: Facility.values.map((facility) {
                               return CheckboxListTile(
-                                title: Text(facility.userDisplayName, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
+                                title: Text(facility.userDisplayName,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(fontWeight: FontWeight.w500)),
                                 value: _selectedAmenities.contains(facility),
                                 onChanged: (bool? value) {
                                   setState(() {
@@ -387,7 +425,9 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
                             keyboardType: TextInputType.number,
                             isLtr: true,
                             validator: (value) {
-                              if (value == null || value.isEmpty) return 'شماره شبا الزامی است';
+                              if (value == null || value.isEmpty) {
+                                return 'شماره شبا الزامی است';
+                              }
                               if (!RegExp(r'^[0-9]{24}$').hasMatch(value)) {
                                 return 'فرمت شماره شبا صحیح نیست (۲۴ رقم)';
                               }
@@ -408,12 +448,16 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
                             ? const SizedBox(
                           width: 24,
                           height: 24,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 3),
                         )
-                            : Icon(_isEditing ? Icons.save_outlined : Icons.add_circle_outline_outlined),
+                            : Icon(_isEditing
+                            ? Icons.save_outlined
+                            : Icons.add_circle_outline_outlined),
                         label: Text(
                           _isEditing ? 'ذخیره‌ی تغییرات' : 'افزودن هتل',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: kPrimaryColor,
@@ -438,7 +482,8 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
     );
   }
 
-  Widget _buildFormSection({required String title, required List<Widget> children}) {
+  Widget _buildFormSection(
+      {required String title, required List<Widget> children}) {
     return Card(
       elevation: 2,
       margin: const EdgeInsets.symmetric(vertical: 8.0),
@@ -483,22 +528,29 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
         maxLines: maxLines,
         textAlign: isLtr ? TextAlign.left : TextAlign.right,
         textDirection: isLtr ? TextDirection.ltr : TextDirection.rtl,
-        style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w500),
+        style:
+        const TextStyle(color: Colors.black87, fontWeight: FontWeight.w500),
         decoration: InputDecoration(
           labelText: '$labelText *',
-          labelStyle: const TextStyle(color: kPrimaryColor, fontWeight: FontWeight.w500),
+          labelStyle:
+          const TextStyle(color: kPrimaryColor, fontWeight: FontWeight.w500),
           hintText: hintText,
           hintStyle: const TextStyle(color: kHintColor),
-          prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: kIconColor, textDirection: TextDirection.ltr) : null,
+          prefixIcon: prefixIcon != null
+              ? Icon(prefixIcon,
+              color: kIconColor, textDirection: TextDirection.ltr)
+              : null,
           filled: true,
           fillColor: kTextFieldBackground,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10.0),
-            borderSide: const BorderSide(color: kInputBorderColor, width: 1.0),
+            borderSide:
+            const BorderSide(color: kInputBorderColor, width: 1.0),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10.0),
-            borderSide: const BorderSide(color: kInputBorderColor, width: 1.0),
+            borderSide:
+            const BorderSide(color: kInputBorderColor, width: 1.0),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10.0),
@@ -512,7 +564,8 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
             borderRadius: BorderRadius.circular(10.0),
             borderSide: const BorderSide(color: kErrorColor, width: 1.8),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+          contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
         ),
         validator: (value) {
           if (labelText.contains('*') && (value == null || value.isEmpty)) {
@@ -534,30 +587,38 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
     bool hasImage = false;
 
     if (selectedFile != null) {
-      imageDisplay = Image.file(File(selectedFile.path), fit: BoxFit.cover, key: ValueKey(selectedFile.path));
+      imageDisplay = Image.file(File(selectedFile.path),
+          fit: BoxFit.cover, key: ValueKey(selectedFile.path));
       hasImage = true;
     } else if (existingImageUrl != null && existingImageUrl.isNotEmpty) {
-      imageDisplay = Image.network(existingImageUrl, fit: BoxFit.cover, key: ValueKey(existingImageUrl),
-        errorBuilder: (context, error, stackTrace) => Icon(Icons.broken_image_outlined, size: 48, color: kHintColor.withOpacity(0.7)),
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Center(child: CircularProgressIndicator(
-            value: loadingProgress.expectedTotalBytes != null
-                ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                : null,
-            strokeWidth: 2.5,
-            color: kAccentColor,
-          ));
-        },
-      );
+      imageDisplay = Image.network(existingImageUrl,
+          fit: BoxFit.cover,
+          key: ValueKey(existingImageUrl),
+          errorBuilder: (context, error, stackTrace) =>
+              Icon(Icons.broken_image_outlined,
+                  size: 48, color: kHintColor.withOpacity(0.7)),
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Center(
+                child: CircularProgressIndicator(
+                  value: loadingProgress.expectedTotalBytes != null
+                      ? loadingProgress.cumulativeBytesLoaded /
+                      loadingProgress.expectedTotalBytes!
+                      : null,
+                  strokeWidth: 2.5,
+                  color: kAccentColor,
+                ));
+          });
       hasImage = true;
     } else {
       imageDisplay = Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.image_search_outlined, size: 48, color: kHintColor.withOpacity(0.7)),
+          Icon(Icons.image_search_outlined,
+              size: 48, color: kHintColor.withOpacity(0.7)),
           const SizedBox(height: 8),
-          Text("تصویری انتخاب نشده", style: TextStyle(color: kHintColor.withOpacity(0.9))),
+          Text("تصویری انتخاب نشده",
+              style: TextStyle(color: kHintColor.withOpacity(0.9))),
         ],
       );
       hasImage = false;
@@ -577,7 +638,10 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
           children: [
             Text(
               isRequired ? '$title *' : title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: kPrimaryColor, fontWeight: FontWeight.bold),
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(color: kPrimaryColor, fontWeight: FontWeight.bold),
               textAlign: TextAlign.right,
             ),
             const SizedBox(height: 12),
@@ -590,7 +654,11 @@ class _AddHotelScreenState extends State<AddHotelScreen> {
                   decoration: BoxDecoration(
                     color: kTextFieldBackground,
                     borderRadius: BorderRadius.circular(8.0),
-                    border: Border.all(color: hasImage ? Colors.transparent : kInputBorderColor.withOpacity(0.7), width: 1),
+                    border: Border.all(
+                        color: hasImage
+                            ? Colors.transparent
+                            : kInputBorderColor.withOpacity(0.7),
+                        width: 1),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(7.0),

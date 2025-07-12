@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // برای فرمت کردن تاریخ
 import 'package:shamsi_date/shamsi_date.dart';
 
-import '../home_page/location_selection_modal.dart';
+import '../../../features/guest/home/presentation/widgets/location_selection_modal.dart';
 import 'model/search_params_model.dart';
 import 'search_list_page.dart';
-import 'widgets/custom_shamsi_date_picker.dart';
+import '../../../core/utils/custom_shamsi_date_picker.dart';
 
 extension JalaliToDateTime on Jalali {
   DateTime toDateTime() {
