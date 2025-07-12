@@ -13,6 +13,8 @@ class Hotel {
   final String licenseImageUrl;
   final String status;
   final double discountPercent;
+  final DateTime? discountStartDate;
+  final DateTime? discountEndDate;
   final int totalRooms;
   final bool isFavorite;
 
@@ -29,6 +31,8 @@ class Hotel {
     required this.licenseImageUrl,
     required this.status,
     required this.discountPercent,
+    this.discountStartDate,
+    this.discountEndDate,
     required this.totalRooms,
     required this.isFavorite,
   });
@@ -42,9 +46,6 @@ class Hotel {
       }
       if (url.startsWith('/')) {
         return 'https://fbookit.darkube.app$url';
-      }
-      if (url.contains('http')) {
-        return url.substring(url.lastIndexOf('http'));
       }
       return url;
     }
@@ -67,6 +68,12 @@ class Hotel {
       status: json['status']?.toString() ?? 'Pending',
       discountPercent:
       double.tryParse(json['discount']?.toString() ?? '0.0') ?? 0.0,
+      discountStartDate: json['discount_start_date'] != null
+          ? DateTime.tryParse(json['discount_start_date'])
+          : null,
+      discountEndDate: json['discount_end_date'] != null
+          ? DateTime.tryParse(json['discount_end_date'])
+          : null,
       totalRooms: int.tryParse(json['total_rooms']?.toString() ?? '0') ?? 0,
       isFavorite: json['is_favorite'] ?? false,
       amenities: amenitiesList,

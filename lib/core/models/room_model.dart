@@ -7,10 +7,10 @@ class Room {
   final String roomType;
   final String roomNumber;
   final int capacity;
-  final double pricePerNight;
+  final double price;
+  final double discountPrice;
   final String? imageUrl;
   final double rating;
-  final double discount;
   final bool isFavorite;
 
   Room({
@@ -20,10 +20,10 @@ class Room {
     required this.roomType,
     required this.roomNumber,
     required this.capacity,
-    required this.pricePerNight,
+    required this.price,
+    required this.discountPrice,
     this.imageUrl,
     required this.rating,
-    required this.discount,
     required this.isFavorite,
   });
 
@@ -41,11 +41,10 @@ class Room {
       roomNumber: json['room_number']?.toString() ?? '',
       roomType: json['room_type'] ?? 'نامشخص',
       capacity: json['capacity'] ?? 2,
-      pricePerNight: double.tryParse(json['price']?.toString() ?? '0.0') ?? 0.0,
+      price: double.tryParse(json['price']?.toString() ?? '0.0') ?? 0.0,
+      discountPrice: double.tryParse(json['discounted_price']?.toString() ?? '0.0') ?? 0.0,
       imageUrl: processUrl(json['image']),
       rating: (json['rate'] as num?)?.toDouble() ?? 0.0,
-      discount:
-      double.tryParse(json['discounted_price']?.toString() ?? '0.0') ?? 0.0,
       isFavorite: json['is_favorite'] ?? false,
     );
   }

@@ -8,14 +8,35 @@ class AmenityChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Chip(
-      avatar:
-      Icon(facility.iconData, color: theme.colorScheme.primary, size: 18),
-      label: Text(facility.userDisplayName),
-      backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-      labelStyle:
-      theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.primary),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    final colorScheme = theme.colorScheme;
+
+    return SizedBox(
+      width: 80,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: colorScheme.primary.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              facility.iconData,
+              color: colorScheme.primary,
+              size: 28,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            facility.userDisplayName,
+            style: theme.textTheme.bodySmall,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
     );
   }
 }

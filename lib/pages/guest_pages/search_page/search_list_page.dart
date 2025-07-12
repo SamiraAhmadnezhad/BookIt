@@ -126,7 +126,7 @@ class _SearchListPageState extends State<SearchListPage> {
               roomInfo: room.name,
               checkInDate: checkIn,
               checkOutDate: checkOut,
-              totalPrice: room.pricePerNight,
+              totalPrice: room.price,
               numberOfAdults: widget.searchParams.numberOfPassengers,
             ),
           ),
@@ -154,7 +154,7 @@ class _SearchListPageState extends State<SearchListPage> {
     if (_allRooms.isEmpty) {
       _maxPrice = 10000000.0;
     } else {
-      _maxPrice = _allRooms.map((r) => r.pricePerNight).reduce((a, b) => a > b ? a : b);
+      _maxPrice = _allRooms.map((r) => r.price).reduce((a, b) => a > b ? a : b);
       if (_maxPrice == 0) _maxPrice = 10000000.0;
     }
     _currentPriceRange = RangeValues(0, _maxPrice);
@@ -181,8 +181,8 @@ class _SearchListPageState extends State<SearchListPage> {
 
     if (!_isInitialPriceRangeDefault) {
       tempFilteredRooms = tempFilteredRooms.where((room) {
-        return room.pricePerNight >= _currentPriceRange.start &&
-            room.pricePerNight <= _currentPriceRange.end;
+        return room.price >= _currentPriceRange.start &&
+            room.price <= _currentPriceRange.end;
       }).toList();
     }
 
@@ -191,13 +191,13 @@ class _SearchListPageState extends State<SearchListPage> {
         tempFilteredRooms.sort((a, b) => b.rating.compareTo(a.rating));
         break;
       case SortType.cheapest:
-        tempFilteredRooms.sort((a, b) => a.pricePerNight.compareTo(b.pricePerNight));
+        tempFilteredRooms.sort((a, b) => a.price.compareTo(b.price));
         break;
       case SortType.expensive:
-        tempFilteredRooms.sort((a, b) => b.pricePerNight.compareTo(a.pricePerNight));
+        tempFilteredRooms.sort((a, b) => b.price.compareTo(a.price));
         break;
       case SortType.discount:
-        tempFilteredRooms.sort((a, b) => b.discount.compareTo(a.discount));
+        tempFilteredRooms.sort((a, b) => b.discountPrice.compareTo(a.discountPrice));
         break;
       case SortType.none:
         break;
@@ -356,7 +356,7 @@ class _SearchListPageState extends State<SearchListPage> {
                     location: room.hotel.location,
                     rating: room.rating,
                     isFavorite: room.isFavorite,
-                    price: room.pricePerNight.toInt(),
+                    price: room.price.toInt(),
                     onTap: () {
                       // می‌توانید اینجا کاربر را به صفحه جزئیات هتل ببرید
                       // Navigator.push(context, MaterialPageRoute(builder: (context) => HotelDetailsPage(hotelId: room.hotel.id.toString())));
