@@ -43,13 +43,13 @@ class RoomCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Icon(Icons.people_alt_outlined,
-                        size: 16,
-                        color: colorScheme.onSurface.withOpacity(0.7)),
-                    const SizedBox(width: 4),
-                    Text('${room.capacity} نفر',
-                        style: theme.textTheme.bodyMedium),
-                    const SizedBox(width: 12),
+                    // Icon(Icons.people_alt_outlined,
+                    //     size: 16,
+                    //     color: colorScheme.onSurface.withOpacity(0.7)),
+                    // const SizedBox(width: 4),
+                    // Text('${room.capacity} نفر',
+                    //     style: theme.textTheme.bodyMedium),
+                    // const SizedBox(width: 12),
                     Icon(Icons.king_bed_outlined,
                         size: 16,
                         color: colorScheme.onSurface.withOpacity(0.7)),
@@ -66,7 +66,7 @@ class RoomCard extends StatelessWidget {
                       children: [
                         Text('هر شب', style: theme.textTheme.bodySmall),
                         Text(
-                          '${currencyFormat.format(room.pricePerNight)} تومان',
+                          '${currencyFormat.format(room.price)} تومان',
                           style: theme.textTheme.titleMedium?.copyWith(
                               color: colorScheme.primary,
                               fontWeight: FontWeight.bold),

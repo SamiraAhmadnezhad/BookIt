@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/custom_bottom_nav_bar.dart';
 import '../../../../pages/manger_pages/account_page/manager_account_page.dart';
-import '../../../../pages/manger_pages/hotel_info_page/screens/hotel_list_screen.dart';
+import '../../hotel_management/presentation/pages/hotel_list_screen.dart';
 
 class ManagerMainWrapper extends StatefulWidget {
   const ManagerMainWrapper({super.key});

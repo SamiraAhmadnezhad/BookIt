@@ -11,6 +11,7 @@ import 'package:bookit/features/guest/hotel_detail/presentation/widgets/room_car
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shamsi_date/shamsi_date.dart';
+
 import '../../../../../core/utils/custom_shamsi_date_picker.dart';
 import '../../../../../pages/guest_pages/reservation_detail_page/reservation_detail_page.dart';
 import '../../../../../pages/guest_pages/reservation_detail_page/reservation_api_service.dart';
@@ -48,6 +49,16 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
     });
   }
 
+  int roomCapacity(String roomType){
+    if (roomType=="Single"){
+      return 1;
+    }else if (roomType=="Double"){
+      return 2;
+    } else{
+      return 3;
+    }
+  }
+
   Future<void> _showBookingDateRangePicker(BuildContext context, Room room) async {
     Jalali? startDate;
     Jalali? endDate;
@@ -74,6 +85,7 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
 
     if (endDate == null || !mounted) return;
 
+
     if (_token == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('برای رزرو اتاق، ابتدا باید وارد شوید.'), backgroundColor: Colors.red),
@@ -95,6 +107,7 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
               Text("در حال قفل کردن اتاق..."),
             ],
           ),
+
         ),
       ),
     );
@@ -196,7 +209,7 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
-            child: _buildMainContent(),
+            child: _buildMainContent(isMobile: true),
           ),
         ),
       ],
@@ -215,7 +228,7 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(32, 16, 32, 32),
-                  child: _buildMainContent(),
+                  child: _buildMainContent(isMobile: false),
                 ),
               ),
             ],
@@ -242,25 +255,24 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
     );
   }
 
-  Widget _buildMainContent() {
+  Widget _buildMainContent({required bool isMobile}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (ResponsiveLayout.isDesktop(context))
-          _buildHeader()
-        else
-          const SizedBox.shrink(),
-        const SizedBox(height: 24),
-        _buildSection('درباره هتل', Text(widget.hotel.description)),
-        const SizedBox(height: 24),
-        _buildSection('امکانات', _buildAmenities()),
-        const SizedBox(height: 24),
-        if (!ResponsiveLayout.isDesktop(context)) _buildRoomsSection(),
-        const SizedBox(height: 24),
-        _buildSection('نظرات کاربران', _buildReviewsList()),
-        const SizedBox(height: 24),
-        _buildSection('نظر خود را ثبت کنید',
-            AddReviewForm(onSubmit: _handleReviewSubmission)),
+        if (!isMobile) _buildHeader(),
+        if (isMobile) const SizedBox.shrink() else const SizedBox(height: 24),
+        _buildSectionCard(
+            title: 'درباره هتل', content: Text(widget.hotel.description)),
+        const SizedBox(height: 16),
+        _buildSectionCard(title: 'امکانات', content: _buildAmenities()),
+        const SizedBox(height: 16),
+        if (isMobile) _buildRoomsSection(),
+        if (isMobile) const SizedBox(height: 16),
+        _buildSectionCard(title: 'نظرات کاربران', content: _buildReviewsList()),
+        const SizedBox(height: 16),
+        _buildSectionCard(
+            title: 'نظر خود را ثبت کنید',
+            content: AddReviewForm(onSubmit: _handleReviewSubmission)),
       ],
     );
   }
@@ -332,35 +344,42 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
     );
   }
 
-  Widget _buildSection(String title, Widget content) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: 16),
-        content,
-      ],
+  Widget _buildSectionCard({required String title, required Widget content}) {
+    return Card(
+      elevation: 2,
+      shadowColor: Colors.grey.withOpacity(0.1),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: Theme.of(context).textTheme.headlineSmall),
+            const Divider(height: 24),
+            content,
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildAmenities() {
-    return Wrap(
-      spacing: 8.0,
-      runSpacing: 8.0,
-      children: widget.hotel.amenities
-          .map((facility) => AmenityChip(facility: facility))
-          .toList(),
+    return SizedBox(
+      height: 90,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: widget.hotel.amenities.length,
+        itemBuilder: (context, index) =>
+            AmenityChip(facility: widget.hotel.amenities[index]),
+        separatorBuilder: (context, index) => const SizedBox(width: 12),
+      ),
     );
   }
 
   Widget _buildRoomsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('اتاق‌ها', style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: 16),
-        _buildRoomsList(),
-      ],
+    return _buildSectionCard(
+      title: 'اتاق‌ها',
+      content: _buildRoomsList(),
     );
   }
 
