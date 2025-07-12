@@ -21,18 +21,19 @@ class HotelReservationModel {
     required this.guestEmail,
   });
 
-  factory HotelReservationModel.fromJson(Map<String, dynamic> json) {
+  factory HotelReservationModel.fromJson(Map<String, dynamic> json, {String? parentHotelName, String? parentHotelLocation}) {
     final userJson = json['user'] as Map<String, dynamic>? ?? {};
+    final paymentJson = json['payments'] as Map<String, dynamic>? ?? {};
 
     return HotelReservationModel(
       id: json['id'] ?? 0,
-      hotelName: json['hotel_name'] ?? 'نام هتل نامشخص',
-      hotelLocation: json['hotel_location'] ?? 'آدرس نامشخص',
-      roomName: json['room_name'] ?? 'نام اتاق نامشخص',
+      hotelName: json['hotel_name'] ?? parentHotelName ?? 'نام هتل نامشخص',
+      hotelLocation: parentHotelLocation ?? 'آدرس نامشخص',
+      roomName: json['room_name'] ?? json['room_type'] ?? 'نام اتاق نامشخص',
       checkInDate: json['check_in_date'] ?? '',
       checkOutDate: json['check_out_date'] ?? '',
-      price: (json['price'] as num?)?.toDouble() ?? 0.0,
-      guestFullName: '${userJson['first_name'] ?? ''} ${userJson['last_name'] ?? ''}'.trim(),
+      price: (paymentJson['amount'] as num?)?.toDouble() ?? 0.0,
+      guestFullName: '${userJson['name'] ?? ''} ${userJson['last_name'] ?? ''}'.trim(),
       guestEmail: userJson['email'] ?? 'ایمیل نامشخص',
     );
   }

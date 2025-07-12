@@ -164,20 +164,38 @@ class _ManagerAccountPageState extends State<ManagerAccountPage> with SingleTick
 
       if (response.statusCode == 200) {
 
-        print('--- Reservations Response Body ---');
+        /*print('--- Reservations Response Body ---');
         print(utf8.decode(response.bodyBytes));
-        print('----------------------------------');
+        print('----------------------------------');*/
 
         final Map<String, dynamic> responseJson = jsonDecode(utf8.decode(response.bodyBytes));
-        final List<dynamic> reservationsList = responseJson['data'] ?? [];
+        final List<dynamic> hotelsList = responseJson['data'] ?? [];
+        final List<HotelReservationModel> allReservations = [];
+
+        for (var hotelJson in hotelsList) {
+          final String hotelName = hotelJson['name'] ?? 'نام هتل نامشخص';
+          final String hotelLocation = hotelJson['location'] ?? 'آدرس نامشخص';
+
+          final List<dynamic> reservationsInThisHotel = hotelJson['reservations'] ?? [];
+
+          for (var reservationJson in reservationsInThisHotel) {
+            allReservations.add(HotelReservationModel.fromJson(
+              reservationJson,
+              parentHotelName: hotelName,
+              parentHotelLocation: hotelLocation,
+            ));
+          }
+        }
 
         setState(() {
-          _hotelReservations = reservationsList.map((json) => HotelReservationModel.fromJson(json)).toList();
+          _hotelReservations = allReservations;
         });
+
       } else {
         throw Exception('Failed to load hotel reservations (Code: ${response.statusCode})');
       }
     } catch (e) {
+      print('Error fetching reservations: $e');
       _showErrorSnackBar('خطا در بارگذاری اطلاعات رزروها: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _isLoadingHotelReservations = false);

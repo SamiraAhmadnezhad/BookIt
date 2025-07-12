@@ -138,7 +138,7 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
               roomInfo: room.name,
               checkInDate: checkInDateTime,
               checkOutDate: checkOutDateTime,
-              totalPrice: room.pricePerNight,
+              totalPrice: room.price,
               numberOfAdults: room.capacity,
             ),
           ),

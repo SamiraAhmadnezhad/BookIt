@@ -19,7 +19,7 @@ class HotelReservationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormatter = intl.NumberFormat.currency(locale: 'fa_IR', symbol: 'تومان', decimalDigits: 0);
+    final currencyFormatter = intl.NumberFormat.currency(locale: 'fa_IR', symbol: 'تومان ', decimalDigits: 0);
     final theme = Theme.of(context);
 
     return Card(
@@ -43,20 +43,18 @@ class HotelReservationCard extends StatelessWidget {
             ),
             const Divider(height: 20),
 
-            // بخش جزئیات
             _buildDetailRow(Icons.person_outline, 'مهمان:', reservation.guestFullName),
             const SizedBox(height: 8),
             _buildDetailRow(Icons.email_outlined, 'ایمیل:', reservation.guestEmail),
             const SizedBox(height: 8),
             _buildDetailRow(Icons.location_on_outlined, 'مکان هتل:', reservation.hotelLocation),
             const SizedBox(height: 8),
-            _buildDetailRow(Icons.calendar_today_outlined, 'ورود:', reservation.checkInDate),
+            _buildDetailRow(Icons.calendar_today_outlined, 'تاریخ ورود:', reservation.checkInDate),
             const SizedBox(height: 8),
-            _buildDetailRow(Icons.calendar_today, 'خروج:', reservation.checkOutDate),
+            _buildDetailRow(Icons.calendar_today, 'تاریخ خروج:', reservation.checkOutDate),
 
             const Divider(height: 20),
 
-            // ردیف پایین کارت: قیمت
             _buildDetailRow(
               Icons.monetization_on_outlined,
               'مبلغ کل:',
