@@ -41,8 +41,7 @@ class Room {
       roomNumber: json['room_number']?.toString() ?? '',
       roomType: json['room_type'] ?? 'نامشخص',
       capacity: json['capacity'] ?? 2,
-      pricePerNight:
-      double.tryParse(json['price_per_night']?.toString() ?? '0.0') ?? 0.0,
+      pricePerNight: double.tryParse(json['price']?.toString() ?? '0.0') ?? 0.0,
       imageUrl: processUrl(json['image']),
       rating: (json['rate'] as num?)?.toDouble() ?? 0.0,
       discount:
