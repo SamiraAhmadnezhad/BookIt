@@ -49,6 +49,9 @@ dependencies:
   flutter_localization: ^0.3.3
   flutter_multi_formatter: ^2.13.7
 
+dependency_overrides:
+  intl: ^0.20.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
