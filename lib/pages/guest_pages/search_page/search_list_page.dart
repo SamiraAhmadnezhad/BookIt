@@ -51,7 +51,7 @@ class _SearchListPageState extends State<SearchListPage> {
     super.initState();
     final authService = Provider.of<AuthService>(context, listen: false);
     _apiService = SearchApiService(authService);
-    _token = authService.token; // توکن را یکبار در initState بگیرید
+    _token = authService.token;
 
     _searchController.addListener(_applyFiltersAndSort);
     _fetchSearchResults();

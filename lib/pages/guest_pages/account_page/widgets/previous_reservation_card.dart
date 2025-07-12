@@ -39,17 +39,6 @@ class PreviousReservationCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Text(
-                        reservation.hotelRating.toStringAsFixed(1),
-                        style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, color: kLightTextColor),
-                      ),
-                      const SizedBox(width: 6),
-                      Icon(Icons.thumb_up_alt, color: kAccentColor, size: 18),
-                    ],
-                  ),
                   const SizedBox(height: 16),
                   InkWell(
                     onTap: () => _onAddReviewPressed(context),
