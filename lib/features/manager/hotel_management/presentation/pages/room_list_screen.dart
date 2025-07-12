@@ -50,8 +50,11 @@ class _RoomListScreenState extends State<RoomListScreen> {
               onPressed: () => Navigator.of(ctx).pop(false),
               child: const Text('انصراف')),
           TextButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('حذف')),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error),
+            child: const Text('حذف'),
+          ),
         ],
       ),
     );
@@ -74,37 +77,61 @@ class _RoomListScreenState extends State<RoomListScreen> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('اتاقی یافت نشد.'));
+          if (snapshot.hasError) {
+            return Center(child: Text('خطا: ${snapshot.error}'));
+          }
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('اتاقی برای این هتل ثبت نشده است.'));
           }
           final rooms = snapshot.data!;
-          return GridView.builder(
-            padding: const EdgeInsets.all(16),
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 400.0,
-              childAspectRatio: 0.9,
-              mainAxisSpacing: 16.0,
-              crossAxisSpacing: 16.0,
+          return RefreshIndicator(
+            onRefresh: () async => _loadRooms(),
+            child: GridView.builder(
+              padding: const EdgeInsets.all(16),
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 400.0,
+                childAspectRatio: 0.9,
+                mainAxisSpacing: 16.0,
+                crossAxisSpacing: 16.0,
+              ),
+              itemCount: rooms.length,
+              itemBuilder: (context, index) {
+                final room = rooms[index];
+                return RoomCard(
+                  room: room,
+                  onEdit: () async {
+                    final result = await Navigator.push<bool>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AddRoomScreen(
+                          hotelId: widget.hotelId,
+                          room: room,
+                        ),
+                      ),
+                    );
+                    if (result == true) {
+                      _loadRooms();
+                    }
+                  },
+                  onDelete: () => _deleteRoom(room.id),
+                );
+              },
             ),
-            itemCount: rooms.length,
-            itemBuilder: (context, index) {
-              final room = rooms[index];
-              return RoomCard(
-                room: room,
-                onEdit: () {
-                },
-                onDelete: () => _deleteRoom(room.id),
-              );
-            },
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => AddRoomScreen(hotelId: widget.hotelId)));
+          final result = await Navigator.push<bool>(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AddRoomScreen(hotelId: widget.hotelId),
+            ),
+          );
           if (result == true) _loadRooms();
         },
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: const Text('افزودن اتاق'),
       ),
     );
   }

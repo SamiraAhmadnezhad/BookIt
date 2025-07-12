@@ -9,6 +9,7 @@ class HotelCard extends StatelessWidget {
   final VoidCallback onManageRooms;
   final VoidCallback onApplyDiscount;
   final VoidCallback onDeleteHotel;
+  final VoidCallback onDownloadLicense;
 
   const HotelCard({
     super.key,
@@ -17,6 +18,7 @@ class HotelCard extends StatelessWidget {
     required this.onManageRooms,
     required this.onApplyDiscount,
     required this.onDeleteHotel,
+    required this.onDownloadLicense,
   });
 
   @override
@@ -24,25 +26,61 @@ class HotelCard extends StatelessWidget {
     final theme = Theme.of(context);
     return Card(
       clipBehavior: Clip.antiAlias,
-      elevation: 2,
+      elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildImageHeader(),
+          _buildImageHeader(context),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(hotel.name, style: theme.textTheme.headlineSmall),
+                  Text(hotel.name, style: theme.textTheme.titleLarge),
                   const SizedBox(height: 8),
-                  Text(hotel.address, style: theme.textTheme.bodyLarge),
+                  Row(
+                    children: [
+                      Icon(Icons.star_rounded, color: Colors.amber, size: 20),
+                      const SizedBox(width: 4),
+                      Text(
+                        hotel.rating.toStringAsFixed(1),
+                        style: theme.textTheme.bodyMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(width: 2),
+                      Text(
+                        '(${hotel.reviewCount})',
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: Colors.grey.shade600),
+                      ),
+                      const Spacer(),
+                      Icon(Icons.location_on_outlined,
+                          color: Colors.grey.shade600, size: 18),
+                      const SizedBox(width: 4),
+                      Text(
+                        hotel.address,
+                        style: theme.textTheme.bodyMedium
+                            ?.copyWith(color: Colors.grey.shade700),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    hotel.description,
+                    style: theme.textTheme.bodyMedium
+                        ?.copyWith(color: Colors.grey.shade600),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  _buildFacilities(),
                   if (hotel.discountEndDate != null) ...[
                     const SizedBox(height: 8),
                     Text(
-                      'تخفیف تا: ${Jalali.fromDateTime(hotel.discountEndDate!).formatter.y+"/"+Jalali.fromDateTime(hotel.discountEndDate!).formatter.m+"/"+Jalali.fromDateTime(hotel.discountEndDate!).formatter.d}',
+                      'تخفیف تا: ${Jalali.fromDateTime(hotel.discountEndDate!).formatter.y}',
                       style: TextStyle(
                           color: theme.colorScheme.error,
                           fontWeight: FontWeight.bold),
@@ -53,26 +91,61 @@ class HotelCard extends StatelessWidget {
                 ],
               ),
             ),
-          )
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildImageHeader() {
+  Widget _buildImageHeader(BuildContext context) {
     return AspectRatio(
       aspectRatio: 16 / 9,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.network(hotel.imageUrl, fit: BoxFit.cover),
+          Image.network(
+            hotel.imageUrl,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) =>
+            const Icon(Icons.broken_image, size: 48),
+          ),
           if (hotel.discountPercent > 0)
-            Banner(
-              message: '${hotel.discountPercent.toInt()}%',
-              location: BannerLocation.topStart,
-              color: Colors.red,
+            Positioned(
+              top: 0,
+              left: 0,
+              child: Banner(
+                message: '${hotel.discountPercent.toInt()}% تخفیف',
+                location: BannerLocation.topStart,
+                color: Theme.of(context).colorScheme.error,
+                textStyle: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    color: Colors.white),
+              ),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFacilities() {
+    if (hotel.amenities.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return SizedBox(
+      height: 30,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: hotel.amenities.length,
+        itemBuilder: (context, index) {
+          final facility = hotel.amenities[index];
+          return Tooltip(
+            message: facility.userDisplayName,
+            child:
+            Icon(facility.iconData, color: Colors.grey.shade700, size: 20),
+          );
+        },
+        separatorBuilder: (context, index) => const SizedBox(width: 12),
       ),
     );
   }
@@ -98,20 +171,28 @@ class HotelCard extends StatelessWidget {
                         onPressed: () => Navigator.of(ctx).pop(false),
                         child: const Text('انصراف')),
                     TextButton(
-                        onPressed: () => Navigator.of(ctx).pop(true),
-                        child: const Text('حذف')),
+                      onPressed: () => Navigator.of(ctx).pop(true),
+                      style: TextButton.styleFrom(
+                          foregroundColor:
+                          Theme.of(context).colorScheme.error),
+                      child: const Text('حذف'),
+                    ),
                   ],
                 ),
               );
               if (confirm ?? false) {
                 onDeleteHotel();
               }
+            } else if (value == 'license') {
+              onDownloadLicense();
             }
           },
           itemBuilder: (context) => [
             const PopupMenuItem(value: 'edit', child: Text('ویرایش')),
+            const PopupMenuItem(value: 'license', child: Text('دانلود مجوز')),
             const PopupMenuItem(value: 'delete', child: Text('حذف')),
           ],
+          icon: const Icon(Icons.more_vert),
         ),
       ],
     );

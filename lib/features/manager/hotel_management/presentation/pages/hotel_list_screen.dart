@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:shamsi_date/shamsi_date.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../../core/utils/custom_shamsi_date_picker.dart';
 import '../../data/services/manager_api_service.dart';
@@ -35,23 +36,26 @@ class _HotelListScreenState extends State<HotelListScreen> {
 
   Future<void> _fetchHotelsFromBackend() async {
     if (_isLoading) return;
-    setState(() => _isLoading = true);
-
-    final authService = Provider.of<AuthService>(context, listen: false);
-    final String? token = authService.token;
-
-    if (token == null) {
-      setState(() => _errorMessage = 'توکن احراز هویت یافت نشد.');
-      return;
-    }
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
     try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final String? token = authService.token;
+
+      if (token == null) {
+        throw 'توکن احراز هویت یافت نشد.';
+      }
+
       final response = await http.get(
         Uri.parse('https://fbookit.darkube.app/hotel-api/hotel/'),
         headers: {'Authorization': 'Bearer $token'},
       );
 
       if (!mounted) return;
+      print(response.body);
 
       if (response.statusCode == 200) {
         final decodedData = jsonDecode(utf8.decode(response.bodyBytes));
@@ -60,12 +64,23 @@ class _HotelListScreenState extends State<HotelListScreen> {
             .toList();
         setState(() => _hotels = hotelListData);
       } else {
-        setState(() => _errorMessage = 'خطا در دریافت اطلاعات از سرور.');
+        throw 'خطا در دریافت اطلاعات. کد وضعیت: ${response.statusCode}';
       }
     } catch (e) {
-      setState(() => _errorMessage = 'خطا در ارتباط با سرور.');
+      setState(() => _errorMessage = e.toString());
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _downloadLicense(String url) async {
+    final uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('خطا در باز کردن لینک: $url')),
+        );
+      }
     }
   }
 
@@ -116,20 +131,21 @@ class _HotelListScreenState extends State<HotelListScreen> {
               ListTile(
                 title: Text(startDate == null
                     ? "تاریخ شروع"
-                    : startDate!.formatter.y+"/"+ startDate!.formatter.m+"/"+ startDate!.formatter.d),
+                    : startDate!.formatter.y+"/"+startDate!.formatter.m+"/"+startDate!.formatter.d),
                 onTap: () async {
                   final picked = await showCustomShamsiDatePickerDialog(
                       context,
                       initialDate: Jalali.now(),
                       firstDate: Jalali.now());
-                  if (picked != null)
+                  if (picked != null) {
                     setStateDialog(() => startDate = picked);
+                  }
                 },
               ),
               ListTile(
                 enabled: startDate != null,
                 title: Text(
-                    endDate == null ? "تاریخ پایان" : endDate!.formatter.y+"/"+ endDate!.formatter.m+"/"+ endDate!.formatter.d),
+                    endDate == null ? "تاریخ پایان" : endDate!.formatter.y+"/"+endDate!.formatter.m+"/"+endDate!.formatter.d),
                 onTap: () async {
                   if (startDate == null) return;
                   final picked = await showCustomShamsiDatePickerDialog(
@@ -196,35 +212,46 @@ class _HotelListScreenState extends State<HotelListScreen> {
 
   Widget _buildBody() {
     if (_isLoading) return const Center(child: CircularProgressIndicator());
-    if (_errorMessage != null) return Center(child: Text(_errorMessage!));
-    if (_hotels.isEmpty) return const Center(child: Text('هتلی یافت نشد.'));
+    if (_errorMessage != null) {
+      return Center(
+          child:
+          Text(_errorMessage!, style: TextStyle(color: Theme.of(context).colorScheme.error)));
+    }
+    if (_hotels.isEmpty) {
+      return const Center(child: Text('هتلی برای نمایش وجود ندارد.'));
+    }
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 420,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        childAspectRatio: 0.9,
+    return RefreshIndicator(
+      onRefresh: _fetchHotelsFromBackend,
+      child: GridView.builder(
+        padding: const EdgeInsets.all(16),
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 420,
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          childAspectRatio: 0.85,
+        ),
+        itemCount: _hotels.length,
+        itemBuilder: (context, index) {
+          final hotel = _hotels[index];
+          return HotelCard(
+            hotel: hotel,
+            onHotelUpdated: () async {
+              final result = await Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => AddHotelScreen(hotel: hotel)));
+              if (result == true) _fetchHotelsFromBackend();
+            },
+            onManageRooms: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => RoomListScreen(
+                        hotelId: hotel.id.toString(), hotelName: hotel.name))),
+            onApplyDiscount: () => _showDiscountDialog(hotel),
+            onDeleteHotel: () => _deleteHotel(hotel.id.toString()),
+            onDownloadLicense: () => _downloadLicense(hotel.licenseImageUrl),
+          );
+        },
       ),
-      itemCount: _hotels.length,
-      itemBuilder: (context, index) {
-        final hotel = _hotels[index];
-        return HotelCard(
-          hotel: hotel,
-          onHotelUpdated: () async {
-            final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => AddHotelScreen(hotel: hotel)));
-            if (result == true) _fetchHotelsFromBackend();
-          },
-          onManageRooms: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => RoomListScreen(
-                      hotelId: hotel.id.toString(), hotelName: hotel.name))),
-          onApplyDiscount: () => _showDiscountDialog(hotel),
-          onDeleteHotel: () => _deleteHotel(hotel.id.toString()),
-        );
-      },
     );
   }
 }

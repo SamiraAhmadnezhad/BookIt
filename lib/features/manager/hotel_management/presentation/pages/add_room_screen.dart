@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:bookit/core/models/room_model.dart';
 import 'package:bookit/features/auth/data/services/auth_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -8,9 +9,27 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'dart:typed_data';
 
+// --- پالت رنگی ---
+class AppColors {
+  static const Color primary = Color(0xFF542545);
+  static const Color primaryLight = Color(0x80542545);
+  static const Color primaryDark = Color(0xFF3D1B32);
+
+  static const Color grey = Colors.grey;
+  static const Color lightGrey = Color(0xFFF5F5F5);
+  static const Color formBackgroundGrey = Color(0xFFE0E0E0);
+  static const Color darkGrey = Color(0xFF616161);
+
+  static const Color white = Colors.white;
+  static const Color black = Colors.black;
+}
+// -----------------
+
 class AddRoomScreen extends StatefulWidget {
   final String hotelId;
-  const AddRoomScreen({super.key, required this.hotelId});
+  final Room? room;
+
+  const AddRoomScreen({super.key, required this.hotelId, this.room});
 
   @override
   State<AddRoomScreen> createState() => _AddRoomScreenState();
@@ -25,10 +44,25 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
 
   String? _selectedRoomType;
   bool _isLoading = false;
+  bool get _isEditing => widget.room != null;
 
   Uint8List? _selectedImageData;
   String? _imageName;
+  String? _existingImageUrl;
   final ImagePicker _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isEditing) {
+      final room = widget.room!;
+      _nameController.text = room.name;
+      _roomNumberController.text = room.roomNumber;
+      _priceController.text = room.price.toInt().toString();
+      _selectedRoomType = room.roomType;
+      _existingImageUrl = room.imageUrl;
+    }
+  }
 
   @override
   void dispose() {
@@ -46,145 +80,209 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
       setState(() {
         _selectedImageData = bytes;
         _imageName = pickedFile.name;
+        _existingImageUrl = null;
       });
     }
   }
 
   Future<void> _submitRoomData() async {
-    if (!_formKey.currentState!.validate() || _selectedImageData == null) {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+    if (!_isEditing && _selectedImageData == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('لطفاً تمام فیلدها را پر کرده و یک عکس انتخاب کنید.')),
+        const SnackBar(content: Text('انتخاب عکس برای اتاق جدید الزامی است.')),
       );
       return;
     }
+
     setState(() => _isLoading = true);
 
     final authService = Provider.of<AuthService>(context, listen: false);
     final token = authService.token;
     if (token == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('خطای احراز هویت. لطفاً دوباره وارد شوید.')),
-        );
-      }
       setState(() => _isLoading = false);
       return;
     }
 
-    try {
-      var request = http.MultipartRequest(
-          'POST', Uri.parse('https://fbookit.darkube.app/room-api/create/'));
-      request.headers['Authorization'] = 'Bearer $token';
+    final uri = Uri.parse(_isEditing
+        ? 'https://fbookit.darkube.app/room-api/room/${widget.room!.id}/'
+        : 'https://fbookit.darkube.app/room-api/create/');
 
-      request.fields.addAll({
-        'hotel': widget.hotelId,
-        'name': _nameController.text,
-        'room_type': _selectedRoomType!,
-        'price': _priceController.text,
-        'room_number': _roomNumberController.text,
-      });
+    var request = http.MultipartRequest(_isEditing ? 'PATCH' : 'POST', uri);
+    request.headers['Authorization'] = 'Bearer $token';
 
+    request.fields.addAll({
+      'hotel': widget.hotelId,
+      'name': _nameController.text,
+      'room_type': _selectedRoomType!,
+      'price': _priceController.text,
+      'room_number': _roomNumberController.text,
+    });
+
+    if (_selectedImageData != null) {
       request.files.add(http.MultipartFile.fromBytes(
         'image',
         _selectedImageData!,
         filename: _imageName ?? 'room_image.jpg',
         contentType: MediaType('image', 'jpeg'),
       ));
+    }
 
+    try {
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
 
-      if (response.statusCode == 201) {
-        if (mounted) {
-          Navigator.pop(context, true);
-        }
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (mounted) Navigator.pop(context, true);
       } else {
-        debugPrint('Failed to create room. Status code: ${response.statusCode}');
-        debugPrint('Response body: ${response.body}');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('خطا در ذخیره اتاق: ${response.body}')),
+            SnackBar(content: Text('خطا: ${response.body}')),
           );
         }
       }
     } catch (e) {
-      debugPrint('An error occurred: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('یک خطای پیش‌بینی نشده رخ داد: $e')),
+          SnackBar(content: Text('خطای شبکه: $e')),
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final inputDecorationTheme = InputDecoration(
+      border: const OutlineInputBorder(
+        borderSide: BorderSide(color: AppColors.formBackgroundGrey),
+        borderRadius: BorderRadius.all(Radius.circular(8)),
+      ),
+      enabledBorder: const OutlineInputBorder(
+        borderSide: BorderSide(color: AppColors.formBackgroundGrey),
+        borderRadius: BorderRadius.all(Radius.circular(8)),
+      ),
+      focusedBorder: const OutlineInputBorder(
+        borderSide: BorderSide(color: AppColors.primary, width: 1.5),
+        borderRadius: BorderRadius.all(Radius.circular(8)),
+      ),
+      labelStyle: const TextStyle(color: AppColors.darkGrey),
+    );
+
     return Scaffold(
-      appBar: AppBar(title: const Text('افزودن اتاق جدید')),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'نام اتاق'),
-                validator: (value) =>
-                value == null || value.isEmpty ? 'نام اتاق الزامی است' : null,
-              ),
-              const SizedBox(height: 16),
-              _buildDropdown(),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _roomNumberController,
-                decoration: const InputDecoration(labelText: 'شماره اتاق'),
-                keyboardType: TextInputType.number,
-                validator: (value) => value == null || value.isEmpty
-                    ? 'شماره اتاق الزامی است'
-                    : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _priceController,
-                decoration: const InputDecoration(labelText: 'قیمت هر شب'),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'قیمت الزامی است';
-                  }
-                  if (int.tryParse(value) == null) {
-                    return 'لطفاً یک عدد معتبر وارد کنید';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              _buildImagePicker(),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+      backgroundColor: AppColors.lightGrey,
+      appBar: AppBar(
+          title: Text(_isEditing ? 'ویرایش اتاق' : 'افزودن اتاق جدید',
+              style: const TextStyle(color: AppColors.white)),
+          backgroundColor: AppColors.primary,
+          iconTheme: const IconThemeData(color: AppColors.white)),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 700),
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              child: Card(
+                elevation: 0,
+                color: AppColors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                onPressed: _isLoading ? null : _submitRoomData,
-                child: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('ذخیره اتاق'),
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text('اطلاعات اتاق',
+                          style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primaryDark)),
+                      const SizedBox(height: 24),
+                      TextFormField(
+                        controller: _nameController,
+                        decoration:
+                        inputDecorationTheme.copyWith(labelText: 'نام اتاق'),
+                        validator: (value) => value == null || value.isEmpty
+                            ? 'نام اتاق الزامی است'
+                            : null,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildDropdown(inputDecorationTheme),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _roomNumberController,
+                              decoration: inputDecorationTheme.copyWith(
+                                  labelText: 'شماره اتاق'),
+                              keyboardType: TextInputType.number,
+                              validator: (value) => value == null || value.isEmpty
+                                  ? 'شماره اتاق الزامی است'
+                                  : null,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _priceController,
+                              decoration: inputDecorationTheme.copyWith(
+                                  labelText: 'قیمت هر شب'),
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'قیمت الزامی است';
+                                }
+                                if (int.tryParse(value) == null) {
+                                  return 'عدد معتبر وارد کنید';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      _buildImagePicker(),
+                      const SizedBox(height: 32),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: _isLoading ? null : _submitRoomData,
+                        child: _isLoading
+                            ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                              color: AppColors.white),
+                        )
+                            : Text(
+                          _isEditing ? 'ذخیره تغییرات' : 'ذخیره اتاق',
+                          style: const TextStyle(
+                              fontSize: 16, color: AppColors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildDropdown() {
+  Widget _buildDropdown(InputDecoration baseDecoration) {
     final Map<String, String> roomTypes = {
       'یک تخته': 'Single',
       'دو تخته': 'Double',
@@ -193,10 +291,7 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
     return DropdownButtonFormField<String>(
       value: _selectedRoomType,
       hint: const Text('نوع اتاق را انتخاب کنید'),
-      decoration: const InputDecoration(
-        border: OutlineInputBorder(),
-        labelText: 'نوع اتاق *',
-      ),
+      decoration: baseDecoration.copyWith(labelText: 'نوع اتاق *'),
       items: roomTypes.entries.map((entry) {
         return DropdownMenuItem(value: entry.value, child: Text(entry.key));
       }).toList(),
@@ -210,24 +305,48 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        const Text('عکس اتاق',
+            style: TextStyle(
+                color: AppColors.darkGrey,
+                fontSize: 16,
+                fontWeight: FontWeight.w500)),
+        const SizedBox(height: 12),
         Container(
-          height: 150,
+          height: 200,
           width: double.infinity,
+          clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey),
-            borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: AppColors.formBackgroundGrey),
+              borderRadius: BorderRadius.circular(12)),
+          child: (_selectedImageData != null)
+              ? Image.memory(_selectedImageData!, fit: BoxFit.cover)
+              : (_existingImageUrl != null)
+              ? Image.network(_existingImageUrl!, fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => const Center(
+                  child: Icon(Icons.broken_image_outlined,
+                      color: AppColors.grey)))
+              : Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Icons.image_search,
+                    size: 48, color: AppColors.grey),
+                SizedBox(height: 8),
+                Text('عکسی انتخاب نشده',
+                    style: TextStyle(color: AppColors.darkGrey)),
+              ],
+            ),
           ),
-          child: _selectedImageData != null
-              ? ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: Image.memory(_selectedImageData!, fit: BoxFit.cover),
-          )
-              : const Center(child: Text('عکسی انتخاب نشده است')),
         ),
         const SizedBox(height: 8),
         OutlinedButton.icon(
-          icon: const Icon(Icons.image),
+          icon: const Icon(Icons.upload_outlined, size: 20),
           onPressed: _pickImage,
+          style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              side: const BorderSide(color: AppColors.primary),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8))),
           label: const Text('انتخاب عکس'),
         )
       ],

@@ -19,7 +19,8 @@ class RoomCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final priceFormat = NumberFormat("#,###", "fa_IR");
-    final hasDiscount = room.discountPrice > 0 && room.discountPrice < room.price;
+    final hasDiscount =
+        room.discountPrice > 0 && room.discountPrice < room.price;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -31,12 +32,13 @@ class RoomCard extends StatelessWidget {
           AspectRatio(
             aspectRatio: 16 / 9,
             child: Image.network(
-              room.imageUrl ?? 'https://placehold.co/600x400/EEE/31343C/png?text=Room',
+              room.imageUrl ??
+                  'https://placehold.co/600x400/EEE/31343C/png?text=Room',
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
-                color: colorScheme.surface,
+                color: colorScheme.surfaceVariant,
                 child: Icon(Icons.broken_image_outlined,
-                    color: colorScheme.onSurface.withOpacity(0.3)),
+                    color: colorScheme.onSurfaceVariant.withOpacity(0.5)),
               ),
             ),
           ),
@@ -56,9 +58,10 @@ class RoomCard extends StatelessWidget {
                   Text('نوع: ${room.roomType} - شماره: ${room.roomNumber}',
                       style: theme.textTheme.bodySmall),
                   const Spacer(),
-                  const Divider(height: 16),
+                  const Divider(height: 16, thickness: 0.5),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,13 +71,15 @@ class RoomCard extends StatelessWidget {
                               '${priceFormat.format(room.price)} تومان',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 decoration: TextDecoration.lineThrough,
-                                color: Colors.grey,
+                                color: Colors.grey.shade600,
                               ),
                             ),
                           Text(
                             '${priceFormat.format(hasDiscount ? room.discountPrice : room.price)} تومان',
                             style: theme.textTheme.titleMedium?.copyWith(
-                              color: hasDiscount ? Colors.red.shade700 : colorScheme.primary,
+                              color: hasDiscount
+                                  ? colorScheme.error
+                                  : colorScheme.primary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -86,13 +91,13 @@ class RoomCard extends StatelessWidget {
                           IconButton(
                             onPressed: onEdit,
                             icon: Icon(Icons.edit_outlined,
-                                color: Colors.blue.shade700, size: 22),
+                                color: Colors.blue.shade800, size: 22),
                             tooltip: 'ویرایش اتاق',
                           ),
                           IconButton(
                             onPressed: onDelete,
                             icon: Icon(Icons.delete_outline,
-                                color: Colors.red.shade700, size: 22),
+                                color: colorScheme.error, size: 22),
                             tooltip: 'حذف اتاق',
                           ),
                         ],
