@@ -1,5 +1,3 @@
-// lib/pages/manger_pages/widgets/hotel_card.dart
-
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/models/facility_enum.dart';
@@ -9,125 +7,144 @@ class HotelCard extends StatelessWidget {
   final Hotel hotel;
   final VoidCallback onHotelUpdated;
   final VoidCallback onManageRooms;
+  final VoidCallback onApplyDiscount;
 
   const HotelCard({
     super.key,
     required this.hotel,
     required this.onHotelUpdated,
     required this.onManageRooms,
+    required this.onApplyDiscount,
   });
+
+  static const Color _primaryColor = Color(0xFF542545);
+  static const Color _accentColor = Color(0xFF7E3F6B);
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF542545);
-    const accentColor = Color(0xFF7E3F6B);
-
     return Card(
-      elevation: 4.0,
-      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+      elevation: 3.0,
+      shadowColor: Colors.black.withOpacity(0.1),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16.0),
+        side: BorderSide(color: Colors.grey.shade200, width: 1),
+      ),
       clipBehavior: Clip.antiAlias,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildImageHeader(context, primaryColor),
-          _buildInfoSection(context, accentColor),
-          if (hotel.amenities.isNotEmpty) _buildAmenitiesSection(context),
-          const Divider(height: 1, indent: 16, endIndent: 16),
-          _buildActionButtons(context, primaryColor),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildImageHeader(BuildContext context, Color primaryColor) {
-    return Stack(
-      children: [
-        SizedBox(
-          height: 200,
-          width: double.infinity,
-          child: (hotel.imageUrl.isNotEmpty)
-              ? Image.network(
-            hotel.imageUrl,
-            fit: BoxFit.cover,
-            loadingBuilder: (context, child, progress) =>
-            progress == null ? child : Center(child: CircularProgressIndicator(color: primaryColor)),
-            errorBuilder: (context, error, stackTrace) =>
-            const Icon(Icons.hotel_class_outlined, size: 80, color: Colors.grey),
-          )
-              : Container(
-            color: Colors.grey[200],
-            child: const Icon(Icons.hotel_class_outlined, size: 80, color: Colors.grey),
-          ),
-        ),
-        Positioned.fill(
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.black.withOpacity(0.6), Colors.transparent],
-                begin: Alignment.bottomCenter,
-                end: Alignment.center,
+          _buildImageHeader(context),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildInfoSection(context),
+                          if (hotel.amenities.isNotEmpty) _buildAmenitiesSection(context),
+                          _buildDescriptionSection(context),
+                        ],
+                      ),
+                    ),
+                  ),
+                  _buildActionButtons(context),
+                ],
               ),
             ),
           ),
-        ),
-        Positioned(
-          bottom: 16.0,
-          right: 16.0,
-          left: 16.0,
-          child: Text(
-            hotel.name,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              shadows: [const Shadow(blurRadius: 2.0, color: Colors.black54)],
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildInfoSection(BuildContext context, Color accentColor) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
+  Widget _buildImageHeader(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: Stack(
+        fit: StackFit.expand,
         children: [
-          Expanded(
-            child: Row(
-              children: [
-                Icon(Icons.location_on_outlined, color: theme.hintColor, size: 18),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    hotel.address,
-                    style: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodySmall?.color),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+          if (hotel.imageUrl.isNotEmpty)
+            Image.network(
+              hotel.imageUrl,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, progress) =>
+              progress == null ? child : const Center(child: CircularProgressIndicator(color: _primaryColor)),
+              errorBuilder: (context, error, stackTrace) =>
+                  Container(color: Colors.grey[200], child: Icon(Icons.broken_image_outlined, size: 60, color: Colors.grey[400])),
+            )
+          else
+            Container(color: Colors.grey[200], child: Icon(Icons.hotel_class_outlined, size: 80, color: Colors.grey[400])),
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.black.withOpacity(0.7), Colors.transparent],
+                  stops: const [0.0, 0.6],
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
                 ),
-              ],
+              ),
             ),
           ),
+          Positioned(
+            bottom: 16.0,
+            right: 16.0,
+            left: 16.0,
+            child: Text(
+              hotel.name,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Vazirmatn',
+                shadows: [Shadow(blurRadius: 4.0, color: Colors.black54, offset: Offset(0, 1))],
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoSection(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(Icons.location_on_outlined, color: Colors.grey[600], size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              hotel.address,
+              style: TextStyle(color: Colors.grey[800], fontFamily: 'Vazirmatn', fontSize: 13),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ),
+          const SizedBox(width: 16),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
             decoration: BoxDecoration(
-              color: accentColor.withOpacity(0.15),
+              color: _accentColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(20.0),
             ),
             child: Row(
-              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   hotel.rating.toStringAsFixed(1),
-                  style: theme.textTheme.bodyMedium?.copyWith(color: accentColor, fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: _accentColor, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn', fontSize: 14),
                 ),
                 const SizedBox(width: 4),
-                Icon(Icons.star_rounded, color: accentColor, size: 18),
+                const Icon(Icons.star_rounded, color: _accentColor, size: 18),
               ],
             ),
           ),
@@ -136,119 +153,109 @@ class HotelCard extends StatelessWidget {
     );
   }
 
-  // ====================== شروع اصلاحیه اصلی ======================
   Widget _buildAmenitiesSection(BuildContext context) {
-    final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      padding: const EdgeInsets.only(bottom: 12.0),
       child: Wrap(
-        spacing: 12.0,
-        runSpacing: 8.0,
-        children: hotel.amenities.take(6).map((amenity) {
-          // 1. از مدل Amenity که فقط name دارد، Facility enum را پیدا می‌کنیم.
+        spacing: 16.0,
+        runSpacing: 10.0,
+        children: hotel.amenities.take(4).map((amenity) {
           final facilityEnum = FacilityParsing.fromApiValue(amenity.name);
-
-          // 2. از facilityEnum برای دریافت آیکون و نام فارسی استفاده می‌کنیم.
           return Tooltip(
             message: facilityEnum.userDisplayName,
-            child: Icon(facilityEnum.iconData, color: theme.iconTheme.color?.withOpacity(0.7), size: 22),
+            child: Icon(facilityEnum.iconData, color: Colors.grey[600], size: 22),
           );
         }).toList(),
       ),
     );
   }
-  // ======================= پایان اصلاحیه اصلی =======================
 
-  Widget _buildActionButtons(BuildContext context, Color primaryColor) {
+  Widget _buildDescriptionSection(BuildContext context) {
+    if (hotel.description.isEmpty) return const SizedBox.shrink();
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          TextButton(
-            child: Text('اطلاعات بیشتر', style: TextStyle(fontWeight: FontWeight.w600, color: primaryColor)),
-            onPressed: () => _showDetailsDialog(context, primaryColor),
-          ),
-          TextButton(
-            child: Text('ویرایش', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
-            onPressed: onHotelUpdated,
-          ),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.meeting_room_outlined, size: 20, color: Colors.white),
-            label: const Text('مدیریت اتاق‌ها'),
-            onPressed: onManageRooms,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryColor,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-            ),
-          ),
-        ],
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Text(
+        hotel.description,
+        maxLines: 4,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.grey[700], height: 1.7),
       ),
     );
   }
 
-  void _showDetailsDialog(BuildContext context, Color primaryColor) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text(hotel.name, style: TextStyle(fontWeight: FontWeight.bold, color: primaryColor)),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                _buildDetailRow(context, Icons.description_outlined, 'توضیحات:', hotel.description),
-                const Divider(height: 24),
-                _buildDetailRow(context, Icons.account_balance_wallet_outlined, 'شماره شبا:', hotel.iban, isLtr: true),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            if (hotel.licenseImageUrl.isNotEmpty)
-              TextButton.icon(
-                icon: Icon(Icons.receipt_long_outlined, color: primaryColor),
-                label: Text('نمایش مجوز', style: TextStyle(color: primaryColor)),
-                onPressed: () => _launchURL(hotel.licenseImageUrl),
-              ),
-            TextButton(
-              child: Text('بستن', style: TextStyle(fontWeight: FontWeight.bold, color: primaryColor)),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildDetailRow(BuildContext context, IconData icon, String title, String value, {bool isLtr = false}) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildActionButtons(BuildContext context) {
+    return Row(
       children: [
-        Row(
-          children: [
-            Icon(icon, size: 20, color: theme.hintColor),
-            const SizedBox(width: 8),
-            Text(title, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
-          ],
+        Expanded(
+          child: Wrap(
+            spacing: 8.0,
+            runSpacing: 4.0,
+            children: [
+              ElevatedButton(
+                onPressed: onManageRooms,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _primaryColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                ),
+                child: const Text('اتاق‌ها', style: TextStyle(fontFamily: 'Vazirmatn')),
+              ),
+              OutlinedButton(
+                onPressed: onApplyDiscount,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _primaryColor,
+                  side: BorderSide(color: _primaryColor.withOpacity(0.5)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                ),
+                child: const Text('تخفیف', style: TextStyle(fontFamily: 'Vazirmatn')),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.grey.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            value,
-            textAlign: isLtr ? TextAlign.left : TextAlign.right,
-            textDirection: isLtr ? TextDirection.ltr : TextDirection.rtl,
-            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
-          ),
+        PopupMenuButton<String>(
+          onSelected: (value) {
+            if (value == 'edit') {
+              onHotelUpdated();
+            } else if (value == 'license') {
+              _launchURL(hotel.licenseImageUrl);
+            }
+          },
+          icon: Icon(Icons.more_vert, color: Colors.grey[700]),
+          itemBuilder: (BuildContext context) {
+            final items = <PopupMenuEntry<String>>[];
+            items.add(
+              const PopupMenuItem<String>(
+                value: 'edit',
+                child: Row(
+                  children: [
+                    Icon(Icons.edit_outlined, size: 20),
+                    SizedBox(width: 8),
+                    Text('ویرایش', style: TextStyle(fontFamily: 'Vazirmatn')),
+                  ],
+                ),
+              ),
+            );
+
+            if (hotel.licenseImageUrl.isNotEmpty) {
+              items.add(const PopupMenuDivider());
+              items.add(
+                PopupMenuItem<String>(
+                  value: 'license',
+                  child: const Row(
+                    children: [
+                      Icon(Icons.receipt_long_outlined, size: 20),
+                      SizedBox(width: 8),
+                      Text('نمایش مجوز', style: TextStyle(fontFamily: 'Vazirmatn')),
+                    ],
+                  ),
+                  onTap: () => _launchURL(hotel.licenseImageUrl),
+                ),
+              );
+            }
+            return items;
+          },
         ),
       ],
     );
@@ -257,7 +264,7 @@ class HotelCard extends StatelessWidget {
   Future<void> _launchURL(String url) async {
     final Uri uri = Uri.parse(url);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      print('Could not launch $url');
+      debugPrint('Could not launch $url');
     }
   }
 }
