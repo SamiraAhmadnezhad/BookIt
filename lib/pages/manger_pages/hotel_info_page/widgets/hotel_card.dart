@@ -1,7 +1,7 @@
+import 'package:bookit/core/models/facility_enum.dart';
+import 'package:bookit/core/models/hotel_model.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../../core/models/facility_enum.dart';
-import '../../../../core/models/hotel_model.dart';
 
 class HotelCard extends StatelessWidget {
   final Hotel hotel;
@@ -47,7 +47,8 @@ class HotelCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildInfoSection(context),
-                          if (hotel.amenities.isNotEmpty) _buildAmenitiesSection(context),
+                          if (hotel.amenities.isNotEmpty)
+                            _buildAmenitiesSection(context),
                           _buildDescriptionSection(context),
                         ],
                       ),
@@ -73,13 +74,20 @@ class HotelCard extends StatelessWidget {
             Image.network(
               hotel.imageUrl,
               fit: BoxFit.cover,
-              loadingBuilder: (context, child, progress) =>
-              progress == null ? child : const Center(child: CircularProgressIndicator(color: _primaryColor)),
-              errorBuilder: (context, error, stackTrace) =>
-                  Container(color: Colors.grey[200], child: Icon(Icons.broken_image_outlined, size: 60, color: Colors.grey[400])),
+              loadingBuilder: (context, child, progress) => progress == null
+                  ? child
+                  : const Center(
+                  child: CircularProgressIndicator(color: _primaryColor)),
+              errorBuilder: (context, error, stackTrace) => Container(
+                  color: Colors.grey[200],
+                  child: Icon(Icons.broken_image_outlined,
+                      size: 60, color: Colors.grey[400])),
             )
           else
-            Container(color: Colors.grey[200], child: Icon(Icons.hotel_class_outlined, size: 80, color: Colors.grey[400])),
+            Container(
+                color: Colors.grey[200],
+                child: Icon(Icons.hotel_class_outlined,
+                    size: 80, color: Colors.grey[400])),
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
@@ -103,12 +111,15 @@ class HotelCard extends StatelessWidget {
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 fontFamily: 'Vazirmatn',
-                shadows: [Shadow(blurRadius: 4.0, color: Colors.black54, offset: Offset(0, 1))],
+                shadows: [
+                  Shadow(blurRadius: 4.0, color: Colors.black54, offset: Offset(0, 1))
+                ],
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ),
+          if (hotel.discountPercent > 0) _buildDiscountBanner(),
         ],
       ),
     );
@@ -125,14 +136,18 @@ class HotelCard extends StatelessWidget {
           Expanded(
             child: Text(
               hotel.address,
-              style: TextStyle(color: Colors.grey[800], fontFamily: 'Vazirmatn', fontSize: 13),
+              style: TextStyle(
+                  color: Colors.grey[800],
+                  fontFamily: 'Vazirmatn',
+                  fontSize: 13),
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
             ),
           ),
           const SizedBox(width: 16),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
+            padding:
+            const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
             decoration: BoxDecoration(
               color: _accentColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(20.0),
@@ -141,7 +156,11 @@ class HotelCard extends StatelessWidget {
               children: [
                 Text(
                   hotel.rating.toStringAsFixed(1),
-                  style: const TextStyle(color: _accentColor, fontWeight: FontWeight.bold, fontFamily: 'Vazirmatn', fontSize: 14),
+                  style: const TextStyle(
+                      color: _accentColor,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 14),
                 ),
                 const SizedBox(width: 4),
                 const Icon(Icons.star_rounded, color: _accentColor, size: 18),
@@ -160,10 +179,10 @@ class HotelCard extends StatelessWidget {
         spacing: 16.0,
         runSpacing: 10.0,
         children: hotel.amenities.take(4).map((amenity) {
-          final facilityEnum = FacilityParsing.fromApiValue(amenity.name);
           return Tooltip(
-            message: facilityEnum.userDisplayName,
-            child: Icon(facilityEnum.iconData, color: Colors.grey[600], size: 22),
+            message: amenity.userDisplayName,
+            child:
+            Icon(amenity.iconData, color: Colors.grey[600], size: 22),
           );
         }).toList(),
       ),
@@ -179,7 +198,8 @@ class HotelCard extends StatelessWidget {
         hotel.description,
         maxLines: 4,
         overflow: TextOverflow.ellipsis,
-        style: TextStyle(fontFamily: 'Vazirmatn', color: Colors.grey[700], height: 1.7),
+        style: TextStyle(
+            fontFamily: 'Vazirmatn', color: Colors.grey[700], height: 1.7),
       ),
     );
   }
@@ -198,18 +218,22 @@ class HotelCard extends StatelessWidget {
                   backgroundColor: _primaryColor,
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0)),
                 ),
-                child: const Text('اتاق‌ها', style: TextStyle(fontFamily: 'Vazirmatn')),
+                child: const Text('اتاق‌ها',
+                    style: TextStyle(fontFamily: 'Vazirmatn')),
               ),
               OutlinedButton(
                 onPressed: onApplyDiscount,
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _primaryColor,
                   side: BorderSide(color: _primaryColor.withOpacity(0.5)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0)),
                 ),
-                child: const Text('تخفیف', style: TextStyle(fontFamily: 'Vazirmatn')),
+                child: const Text('تخفیف',
+                    style: TextStyle(fontFamily: 'Vazirmatn')),
               ),
             ],
           ),
@@ -247,7 +271,8 @@ class HotelCard extends StatelessWidget {
                     children: [
                       Icon(Icons.receipt_long_outlined, size: 20),
                       SizedBox(width: 8),
-                      Text('نمایش مجوز', style: TextStyle(fontFamily: 'Vazirmatn')),
+                      Text('نمایش مجوز',
+                          style: TextStyle(fontFamily: 'Vazirmatn')),
                     ],
                   ),
                   onTap: () => _launchURL(hotel.licenseImageUrl),
@@ -261,10 +286,54 @@ class HotelCard extends StatelessWidget {
     );
   }
 
+  Widget _buildDiscountBanner() {
+    return Positioned(
+      top: 0,
+      left: 0,
+      child: ClipPath(
+        clipper: _DiscountBannerClipper(),
+        child: Container(
+          width: 90,
+          height: 90,
+          color: _primaryColor.withOpacity(0.9),
+          child: Align(
+            alignment: const Alignment(-0.5, -0.5),
+            child: Transform.rotate(
+              angle: -45 * 3.14159 / 180,
+              child: Text(
+                '${hotel.discountPercent.toInt()}%',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  fontFamily: 'Vazirmatn',
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _launchURL(String url) async {
     final Uri uri = Uri.parse(url);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       debugPrint('Could not launch $url');
     }
   }
+}
+
+class _DiscountBannerClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.lineTo(size.width, 0);
+    path.lineTo(0, size.height);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
