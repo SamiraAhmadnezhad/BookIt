@@ -146,10 +146,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       _buildHotelList(hotelsByCity),
                       const SizedBox(height: 32),
                       SectionHeader(
-                          title: 'هتل‌های لوکس با قیمت جیب‌دوست',
+                          title: 'هتل‌های جیب‌دوست',
                           viewAllText: 'مشاهده همه',
                           onViewAllPressed: () => _navigateToHotelList(
-                              'پیشنهادهای شگفت‌انگیز', discountedHotels)),
+                              'هتل‌های جیب‌دوستز', discountedHotels)),
                       const SizedBox(height: 16),
                       _buildHotelList(discountedHotels),
                       const SizedBox(height: 32),
@@ -157,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           title: 'ستاره‌های اقامت',
                           viewAllText: 'مشاهده همه',
                           onViewAllPressed: () =>
-                              _navigateToHotelList('محبوب‌ترین‌ها', topRatedHotels)),
+                              _navigateToHotelList('ستاره‌های اقامت', topRatedHotels)),
                       const SizedBox(height: 16),
                       _buildHotelList(topRatedHotels),
                       const SizedBox(height: 32),

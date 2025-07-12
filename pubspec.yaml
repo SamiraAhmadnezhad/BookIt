@@ -47,6 +47,7 @@ dependencies:
   flutter_staggered_animations: ^1.1.1
   fl_chart: ^1.0.0
   flutter_localization: ^0.3.3
+  flutter_multi_formatter: ^2.13.7
 
 dev_dependencies:
   flutter_test:
