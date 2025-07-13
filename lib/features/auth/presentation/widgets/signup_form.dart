@@ -2,7 +2,6 @@ import 'package:bookit/features/auth/presentation/widgets/custom_button.dart';
 import 'package:bookit/features/auth/presentation/widgets/custom_text_field.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-
 import '../../../terms_and_conditions_page.dart';
 
 enum UserType { guest, manager }
@@ -55,15 +54,15 @@ class _SignupFormState extends State<SignupForm> {
     }
 
     if (_formKey.currentState!.validate()) {
+      // UPDATED
       final data = {
         'email': _emailController.text.trim(),
         'name': _nameController.text.trim(),
         'last_name': _lastNameController.text.trim(),
         'password': _passwordController.text,
+        'password2': _confirmPasswordController.text, // Always sent
         if (widget.userType == UserType.manager)
           'national_code': _nationalIdController.text.trim(),
-        if (widget.userType == UserType.guest)
-          'password2': _confirmPasswordController.text,
         if (widget.userType == UserType.guest) 'role': 'Customer',
       };
       widget.onContinue(data);
@@ -104,8 +103,7 @@ class _SignupFormState extends State<SignupForm> {
                   controller: _nationalIdController,
                   labelText: 'کد ملی',
                   keyboardType: TextInputType.number,
-                  enableVisibilityToggle: true,
-                  validator: (v) => v!.isEmpty ? 'کد ملی الزامی است' : null),
+                  validator: (v) => v!.isEmpty ? 'کد ملی الزامی است' : null), // Removed visibility toggle as it's not a password
               const SizedBox(height: 16),
             ],
             CustomTextField(

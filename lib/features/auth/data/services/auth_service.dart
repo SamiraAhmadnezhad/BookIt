@@ -34,7 +34,6 @@ class AuthService with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-
     try {
       final response = await http.post(
         Uri.parse(url),
@@ -96,8 +95,14 @@ class AuthService with ChangeNotifier {
     return await _performAuthRequest(url, data);
   }
 
-  Future<String?> verifyOtp(String email, String otp) async {
-    return await _performAuthRequest(ApiConstants.verifyEmail, {'email': email, 'verification_code': otp});
+  // UPDATED
+  Future<String?> verifyOtp(String email, String otp, bool isManager) async {
+    final role = isManager ? 'manager' : 'guest';
+    return await _performAuthRequest(
+      ApiConstants.verifyEmail,
+      {'email': email, 'verification_code': otp},
+      successRole: role,
+    );
   }
 
   Future<String?> resendOtp(String email) async {

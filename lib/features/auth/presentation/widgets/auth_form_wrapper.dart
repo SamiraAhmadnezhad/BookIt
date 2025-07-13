@@ -18,6 +18,7 @@ class AuthFormWrapper extends StatefulWidget {
 class _AuthFormWrapperState extends State<AuthFormWrapper> {
   AuthScreen _currentScreen = AuthScreen.login;
   String _emailForOtp = '';
+  UserType? _userTypeForOtp; // ADDED: To remember user type for OTP verification
 
   void _showSnackBar(String message, {bool isError = true}) {
     if (!mounted) return;
@@ -30,17 +31,16 @@ class _AuthFormWrapperState extends State<AuthFormWrapper> {
   }
 
   void _handleLogin(String email, String password, bool isManager) async {
-    print("salam");
     final authService = context.read<AuthService>();
     final error = await authService.login(email, password, isManager);
     if (!mounted) return;
-    if (error == null) {
-      _showSnackBar('ورود با موفقیت انجام شد.', isError: false);
-    } else {
+    if (error != null) {
       _showSnackBar(error);
     }
+    // No need for success snackbar, AuthWrapper will handle navigation
   }
 
+  // UPDATED
   void _handleSignup(Map<String, String> data, UserType userType) async {
     final authService = context.read<AuthService>();
     final error = await authService.register(data, userType == UserType.manager);
@@ -48,6 +48,7 @@ class _AuthFormWrapperState extends State<AuthFormWrapper> {
     if (error == null) {
       setState(() {
         _emailForOtp = data['email']!;
+        _userTypeForOtp = userType; // Store user type
         _currentScreen = AuthScreen.otp;
       });
       _showSnackBar('کد تایید به ایمیل شما ارسال شد.', isError: false);
@@ -56,16 +57,17 @@ class _AuthFormWrapperState extends State<AuthFormWrapper> {
     }
   }
 
+  // UPDATED
   void _handleOtpSubmit(String otp) async {
+    if (_userTypeForOtp == null) return; // Should not happen
     final authService = context.read<AuthService>();
-    final error = await authService.verifyOtp(_emailForOtp, otp);
+    final error = await authService.verifyOtp(
+        _emailForOtp, otp, _userTypeForOtp == UserType.manager);
     if (!mounted) return;
-    if (error == null) {
-      _showSnackBar('ثبت‌نام با موفقیت انجام شد. لطفا وارد شوید.', isError: false);
-      setState(() => _currentScreen = AuthScreen.login);
-    } else {
+    if (error != null) {
       _showSnackBar(error);
     }
+    // On success, AuthWrapper will navigate automatically because auth state changes.
   }
 
   void _handleResendOtp() async {
