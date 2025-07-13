@@ -1,7 +1,9 @@
-
 import 'package:bookit/features/auth/presentation/widgets/custom_button.dart';
 import 'package:bookit/features/auth/presentation/widgets/custom_text_field.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+
+import '../../../terms_and_conditions_page.dart';
 
 enum UserType { guest, manager }
 
@@ -120,16 +122,44 @@ class _SignupFormState extends State<SignupForm> {
                 isPassword: true,
                 enableVisibilityToggle: true,
                 validator: (v) {
-                  if (v != _passwordController.text)
+                  if (v != _passwordController.text) {
                     return 'رمزهای عبور یکسان نیستند';
+                  }
                   return null;
                 }),
             const SizedBox(height: 24),
             CheckboxListTile(
               value: _termsAccepted,
               onChanged: (value) => setState(() => _termsAccepted = value!),
-              title: Text('قوانین و مقررات را می‌پذیرم',
-                  style: theme.textTheme.bodySmall),
+              title: RichText(
+                text: TextSpan(
+                  style: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodySmall?.color),
+                  children: [
+                    const TextSpan(text: 'با '),
+                    TextSpan(
+                      text: 'قوانین و مقررات',
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                        decoration: TextDecoration.underline,
+                        decorationColor:
+                        theme.colorScheme.primary.withOpacity(0.5),
+                      ),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                              const TermsAndConditionsPage(),
+                            ),
+                          );
+                        },
+                    ),
+                    const TextSpan(text: ' موافقم.'),
+                  ],
+                ),
+              ),
               controlAffinity: ListTileControlAffinity.trailing,
               activeColor: theme.colorScheme.primary,
             ),

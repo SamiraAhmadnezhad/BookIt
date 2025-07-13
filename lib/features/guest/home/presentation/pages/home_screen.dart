@@ -79,22 +79,24 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _navigateToHotelList(String title, List<Hotel> hotels) {
-    Navigator.push(
+  void _navigateToHotelList(String title, List<Hotel> hotels) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => HotelListScreen(title: title, hotels: hotels),
       ),
     );
+    _loadData();
   }
 
-  void _navigateToHotelDetail(Hotel hotel) {
-    Navigator.push(
+  void _navigateToHotelDetail(Hotel hotel) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => HotelDetailScreen(hotel: hotel),
       ),
     );
+    _loadData();
   }
 
   @override
@@ -152,15 +154,15 @@ class _HomeScreenState extends State<HomeScreen> {
                           title: 'هتل‌های جیب‌دوست',
                           viewAllText: 'مشاهده همه',
                           onViewAllPressed: () => _navigateToHotelList(
-                              'هتل‌های جیب‌دوستز', discountedHotels)),
+                              'هتل‌های جیب‌دوست', discountedHotels)),
                       const SizedBox(height: 16),
                       _buildHotelList(discountedHotels),
                       const SizedBox(height: 32),
                       SectionHeader(
                           title: 'ستاره‌های اقامت',
                           viewAllText: 'مشاهده همه',
-                          onViewAllPressed: () =>
-                              _navigateToHotelList('ستاره‌های اقامت', topRatedHotels)),
+                          onViewAllPressed: () => _navigateToHotelList(
+                              'ستاره‌های اقامت', topRatedHotels)),
                       const SizedBox(height: 16),
                       _buildHotelList(topRatedHotels),
                       const SizedBox(height: 32),

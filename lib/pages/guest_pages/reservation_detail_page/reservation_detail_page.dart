@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:provider/provider.dart';
 import 'package:bookit/features/auth/data/services/auth_service.dart';
+import 'package:shamsi_date/shamsi_date.dart';
+import '../../../features/terms_and_conditions_page.dart';
 import '../payment_screen/payment_screen.dart';
 import 'reservation_api_service.dart';
 
@@ -258,8 +261,8 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
                 right: 16,
                 child: Center(
                   child: Container(
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.9),
                         borderRadius: BorderRadius.circular(20),
@@ -339,8 +342,14 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
   }
 
   Widget _buildReservationDetailsCard(ThemeData theme) {
-    final intl.DateFormat longPersianDateFormat =
-    intl.DateFormat('EEEE، d MMMM', 'fa_IR');
+    final Jalali checkInJalali = Jalali.fromDateTime(widget.checkInDate);
+    final String formattedCheckIn =
+        '${checkInJalali.formatter.wN} ${checkInJalali.formatter.d} ${checkInJalali.formatter.mN}';
+
+    final Jalali checkOutJalali = Jalali.fromDateTime(widget.checkOutDate);
+    final String formattedCheckOut =
+        '${checkOutJalali.formatter.wN} ${checkOutJalali.formatter.d} ${checkOutJalali.formatter.mN}';
+
     final int numberOfNights =
         widget.checkOutDate.difference(widget.checkInDate).inDays;
 
@@ -352,10 +361,10 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
               style: theme.textTheme.titleMedium
                   ?.copyWith(fontWeight: FontWeight.bold)),
           const Divider(height: 24),
-          _buildDetailRow(theme, Icons.calendar_today_outlined, 'تاریخ ورود',
-              longPersianDateFormat.format(widget.checkInDate)),
-          _buildDetailRow(theme, Icons.calendar_today, 'تاریخ خروج',
-              longPersianDateFormat.format(widget.checkOutDate)),
+          _buildDetailRow(
+              theme, Icons.calendar_today_outlined, 'تاریخ ورود', formattedCheckIn),
+          _buildDetailRow(
+              theme, Icons.calendar_today, 'تاریخ خروج', formattedCheckOut),
           _buildDetailRow(theme, Icons.king_bed_outlined, 'اتاق',
               '${widget.roomInfo} ($numberOfNights شب)'),
           _buildDetailRow(theme, Icons.people_alt_outlined, 'تعداد مسافران',
@@ -525,12 +534,32 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
                               () => _termsAndConditionsAccepted = value ?? false))),
               const SizedBox(width: 8),
               Expanded(
-                  child: InkWell(
-                      onTap: () => setState(() =>
-                      _termsAndConditionsAccepted = !_termsAndConditionsAccepted),
-                      child: Text(
-                          'قوانین و مقررات رزرو هتل را مطالعه کرده و می‌پذیرم.',
-                          style: theme.textTheme.bodySmall))),
+                child: RichText(
+                  text: TextSpan(
+                    style: theme.textTheme.bodySmall,
+                    children: [
+                      const TextSpan(text: 'با '),
+                      TextSpan(
+                        text: 'قوانین و مقررات',
+                        style: TextStyle(
+                          color: theme.colorScheme.primary,
+                          decoration: TextDecoration.underline,
+                        ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const TermsAndConditionsPage(),
+                              ),
+                            );
+                          },
+                      ),
+                      const TextSpan(text: ' رزرو هتل موافقم.'),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ],
@@ -549,8 +578,8 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
             onChanged: _updatePaymentMethod,
             contentPadding: EdgeInsets.zero),
         RadioListTile<PaymentMethod>(
-            title:
-            const Text('پرداخت آنلاین (تمام مبلغ)', style: TextStyle(fontSize: 14)),
+            title: const Text('پرداخت آنلاین (تمام مبلغ)',
+                style: TextStyle(fontSize: 14)),
             value: PaymentMethod.online,
             groupValue: _paymentMethod,
             onChanged: _updatePaymentMethod,
@@ -618,27 +647,6 @@ class _ReservationDetailPageState extends State<ReservationDetailPage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _LoadingDialog extends StatelessWidget {
-  const _LoadingDialog();
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(width: 20),
-            Text("در حال ثبت رزرو...", style: Theme.of(context).textTheme.bodyLarge),
-          ],
-        ),
       ),
     );
   }

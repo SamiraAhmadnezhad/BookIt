@@ -1,22 +1,47 @@
+import 'package:bookit/core/models/hotel_model.dart';
+import 'package:bookit/features/guest/hotel_detail/presentation/pages/hotel_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shamsi_date/shamsi_date.dart';
 import '../models/reservation_model.dart';
 import '../../../../core/theme/app_colors.dart';
-
 
 class PreviousReservationCard extends StatelessWidget {
   final ReservationModel reservation;
 
-  const PreviousReservationCard({Key? key, required this.reservation}) : super(key: key);
+  const PreviousReservationCard({Key? key, required this.reservation})
+      : super(key: key);
 
   void _onAddReviewPressed(BuildContext context) {
-    // TODO: پیاده‌سازی ناوبری به صفحه ثبت نظر
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('رفتن به صفحه ثبت نظر برای هتل با شناسه: ${reservation.hotelId}')),
+    final hotelForReview = Hotel(
+      id: reservation.hotelId,
+      name: reservation.hotelName,
+      imageUrl: reservation.hotelImageUrl,
+      address: '',
+      description: '',
+      rating: 0.0,
+      reviewCount: 0,
+      amenities: [],
+      iban: '',
+      licenseImageUrl: '',
+      status: '',
+      discountPercent: 0,
+      totalRooms: 0,
+      isFavorite: false,
     );
+
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HotelDetailScreen(
+            hotel: hotelForReview,
+            showReviewForm: true,
+          ),
+        ));
   }
 
-  Widget _buildDetailRow(BuildContext context, {required IconData icon, required String text}) {
+  Widget _buildDetailRow(BuildContext context,
+      {required IconData icon, required String text}) {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 6.0),
@@ -27,7 +52,8 @@ class PreviousReservationCard extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.primaryDark),
+              style:
+              theme.textTheme.bodyMedium?.copyWith(color: AppColors.primaryDark),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -40,10 +66,14 @@ class PreviousReservationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final String checkIn = reservation.checkInDate;
-    final String checkOut = reservation.checkOutDate;
+    final Jalali checkInJalali = Jalali.fromDateTime(DateTime.parse(reservation.checkInDate));
+    final String formattedCheckIn = checkInJalali.formatter.y+"/"+checkInJalali.formatter.m+"/"+checkInJalali.formatter.d;
 
-    final String formattedPrice = NumberFormat('#,###', 'fa_IR').format(reservation.amount);
+    final Jalali checkOutJalali = Jalali.fromDateTime(DateTime.parse(reservation.checkOutDate));
+    final String formattedCheckOut = checkOutJalali.formatter.y+"/"+checkOutJalali.formatter.m+"/"+checkOutJalali.formatter.d;
+
+    final String formattedPrice =
+    NumberFormat('#,###', 'fa_IR').format(reservation.amount);
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -56,26 +86,28 @@ class PreviousReservationCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // بخش اطلاعات
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     reservation.hotelName,
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87),
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 12),
-
-                  _buildDetailRow(context, icon: Icons.king_bed_outlined, text: reservation.roomInfo ),
-                  _buildDetailRow(context, icon: Icons.login_outlined, text: 'ورود: $checkIn'),
-                  _buildDetailRow(context, icon: Icons.logout_outlined, text: 'خروج: $checkOut'),
-                  _buildDetailRow(context, icon: Icons.wallet_travel_outlined, text: 'قیمت کل: $formattedPrice تومان'),
-
+                  _buildDetailRow(context,
+                      icon: Icons.king_bed_outlined, text: reservation.roomInfo),
+                  _buildDetailRow(context,
+                      icon: Icons.login_outlined, text: 'ورود: $formattedCheckIn'),
+                  _buildDetailRow(context,
+                      icon: Icons.logout_outlined, text: 'خروج: $formattedCheckOut'),
+                  _buildDetailRow(context,
+                      icon: Icons.wallet_travel_outlined,
+                      text: 'قیمت کل: $formattedPrice تومان'),
                   const SizedBox(height: 12),
-
                   InkWell(
                     onTap: () => _onAddReviewPressed(context),
                     borderRadius: BorderRadius.circular(8),
@@ -84,11 +116,14 @@ class PreviousReservationCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.star, color: AppColors.primaryDark, size: 22),
+                          const Icon(Icons.star,
+                              color: AppColors.primaryDark, size: 22),
                           const SizedBox(width: 8),
                           Text(
                             'ثبت نظر و امتیازدهی',
-                            style: theme.textTheme.titleSmall?.copyWith(color: AppColors.primaryDark, fontWeight: FontWeight.bold),
+                            style: theme.textTheme.titleSmall?.copyWith(
+                                color: AppColors.primaryDark,
+                                fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -109,7 +144,8 @@ class PreviousReservationCard extends StatelessWidget {
                   width: 120,
                   height: 150,
                   color: AppColors.formBackgroundGrey,
-                  child: const Icon(Icons.broken_image_outlined, color: AppColors.lightGrey),
+                  child: const Icon(Icons.broken_image_outlined,
+                      color: AppColors.lightGrey),
                 ),
               ),
             ),

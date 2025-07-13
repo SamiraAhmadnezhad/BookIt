@@ -91,7 +91,7 @@ class RoomCard extends StatelessWidget {
                           IconButton(
                             onPressed: onEdit,
                             icon: Icon(Icons.edit_outlined,
-                                color: Colors.blue.shade800, size: 22),
+                                color: Color(0xFF542545), size: 22),
                             tooltip: 'ویرایش اتاق',
                           ),
                           IconButton(
