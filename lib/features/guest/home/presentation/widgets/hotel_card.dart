@@ -76,6 +76,30 @@ class HotelCard extends StatelessWidget {
               ),
             ),
           ),
+          if (hotel.discountPercent > 0)
+            Positioned(
+              top: 12,
+              left: 0,
+              child: Container(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: colorScheme.error.withOpacity(0.95),
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(20),
+                    bottomRight: Radius.circular(20),
+                  ),
+                ),
+                child: Text(
+                  '${hotel.discountPercent.toInt()}% تخفیف',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -91,7 +115,7 @@ class HotelCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildNameAndStars(theme),
+            _buildNameAndDiscountInfo(theme),
             _buildAmenitiesSection(theme),
             _buildBottomActions(theme),
           ],
@@ -100,7 +124,49 @@ class HotelCard extends StatelessWidget {
     );
   }
 
-  Widget _buildNameAndStars(ThemeData theme) {
+  Widget _buildDiscountCountdown(ThemeData theme) {
+    if (hotel.discountEndDate == null) return const SizedBox.shrink();
+
+    final now = DateTime.now();
+    final remaining = hotel.discountEndDate!.difference(now);
+
+    if (remaining.isNegative) return _buildStarRating(theme.colorScheme);
+
+    String remainingText;
+    final daysLeft = remaining.inDays;
+
+    if (daysLeft > 0) {
+      remainingText = 'فقط ${daysLeft} روز مانده';
+    } else {
+      final hoursLeft = remaining.inHours;
+      if (hoursLeft > 0) {
+        remainingText = 'فقط ${hoursLeft} ساعت مانده';
+      } else {
+        remainingText = 'فرصت محدود';
+      }
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.timer_outlined, color: theme.colorScheme.error, size: 20),
+        const SizedBox(width: 4),
+        Text(
+          remainingText,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.error,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNameAndDiscountInfo(ThemeData theme) {
+    final bool hasActiveDiscount = hotel.discountPercent > 0 &&
+        hotel.discountEndDate != null &&
+        hotel.discountEndDate!.isAfter(DateTime.now());
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,7 +181,9 @@ class HotelCard extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 16),
-        _buildStarRating(theme.colorScheme),
+        hasActiveDiscount
+            ? _buildDiscountCountdown(theme)
+            : _buildStarRating(theme.colorScheme),
       ],
     );
   }
@@ -198,7 +266,6 @@ class HotelCard extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-
         Icon(icon, color: colorScheme.primary, size: 22),
         const SizedBox(width: 6),
         Text(text,
