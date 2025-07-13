@@ -91,7 +91,7 @@ class HotelCard extends StatelessWidget {
                       if (hotel.discountEndDate != null) ...[
                         const SizedBox(height: 8),
                         Text(
-                          'تخفیف تا: ${Jalali.fromDateTime(hotel.discountEndDate!).formatter.y}',
+                          'تخفیف تا: ${Jalali.fromDateTime(hotel.discountEndDate!).formatter.y+"/"+Jalali.fromDateTime(hotel.discountEndDate!).formatter.m+"/"+Jalali.fromDateTime(hotel.discountEndDate!).formatter.d}',
                           style: TextStyle(
                               color: theme.colorScheme.error,
                               fontWeight: FontWeight.bold,

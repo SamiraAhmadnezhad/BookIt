@@ -130,7 +130,7 @@ class _HotelListScreenState extends State<HotelListScreen> {
               ListTile(
                 title: Text(startDate == null
                     ? "تاریخ شروع"
-                    : startDate!.formatter.y),
+                    : startDate!.formatter.y+"/"+startDate!.formatter.m+"/"+startDate!.formatter.d),
                 onTap: () async {
                   final picked = await showCustomShamsiDatePickerDialog(
                       context,
@@ -144,7 +144,7 @@ class _HotelListScreenState extends State<HotelListScreen> {
               ListTile(
                 enabled: startDate != null,
                 title:
-                Text(endDate == null ? "تاریخ پایان" : endDate!.formatter.y),
+                Text(endDate == null ? "تاریخ پایان" : endDate!.formatter.y+"/"+endDate!.formatter.m+"/"+endDate!.formatter.d),
                 onTap: () async {
                   if (startDate == null) return;
                   final picked = await showCustomShamsiDatePickerDialog(
