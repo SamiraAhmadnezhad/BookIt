@@ -1,5 +1,6 @@
 import 'package:bookit/core/models/review_model.dart';
 import 'package:flutter/material.dart';
+import 'package:shamsi_date/shamsi_date.dart';
 
 class ReviewCard extends StatelessWidget {
   final Review review;
@@ -44,6 +45,16 @@ class ReviewCard extends StatelessWidget {
   }
 
   Widget _buildHeader(ThemeData theme) {
+    final DateTime? createdAtDate = DateTime.tryParse(review.createdAt);
+    String formattedDate;
+
+    if (createdAtDate != null) {
+      final jalaliDate = Jalali.fromDateTime(createdAtDate);
+      formattedDate = jalaliDate.formatter.y+"/"+jalaliDate.formatter.m+"/"+jalaliDate.formatter.d;
+    } else {
+      formattedDate = review.createdAt;
+    }
+
     return Row(
       children: [
         CircleAvatar(
@@ -57,7 +68,7 @@ class ReviewCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(review.userName, style: theme.textTheme.titleSmall),
-              Text(review.createdAt, style: theme.textTheme.bodySmall),
+              Text(formattedDate, style: theme.textTheme.bodySmall),
             ],
           ),
         ),
