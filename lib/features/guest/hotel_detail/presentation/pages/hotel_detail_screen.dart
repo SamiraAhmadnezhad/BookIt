@@ -59,6 +59,15 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
     }
   }
 
+  double totalPrice(double price, double discount_price,DateTime checkIn,DateTime checkOut){
+    if (discount_price>0){
+      return discount_price * (checkOut.day-checkIn.day);
+    }else {
+      return price* (checkOut.day-checkIn.day);
+    }
+
+  }
+
   Future<void> _showBookingDateRangePicker(BuildContext context, Room room) async {
     Jalali? startDate;
     Jalali? endDate;
@@ -138,8 +147,8 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
               roomInfo: room.name,
               checkInDate: checkInDateTime,
               checkOutDate: checkOutDateTime,
-              totalPrice: room.price,
-              numberOfAdults: room.capacity,
+              totalPrice: totalPrice(room.price,room.discountPrice,checkInDateTime,checkOutDateTime),
+              numberOfAdults: roomCapacity(room.roomType),
             ),
           ),
         );

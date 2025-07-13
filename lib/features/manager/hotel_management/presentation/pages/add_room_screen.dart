@@ -106,19 +106,30 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
     }
 
     final uri = Uri.parse(_isEditing
-        ? 'https://fbookit.darkube.app/room-api/room/${widget.room!.id}/'
+        ? 'https://fbookit.darkube.app/room-api/room/'
         : 'https://fbookit.darkube.app/room-api/create/');
 
     var request = http.MultipartRequest(_isEditing ? 'PATCH' : 'POST', uri);
     request.headers['Authorization'] = 'Bearer $token';
 
+    if (_isEditing){
     request.fields.addAll({
+      'room_id' : widget.room!.id,
       'hotel': widget.hotelId,
       'name': _nameController.text,
       'room_type': _selectedRoomType!,
       'price': _priceController.text,
       'room_number': _roomNumberController.text,
     });
+    } else{
+      request.fields.addAll({
+        'hotel': widget.hotelId,
+        'name': _nameController.text,
+        'room_type': _selectedRoomType!,
+        'price': _priceController.text,
+        'room_number': _roomNumberController.text,
+      });
+    }
 
     if (_selectedImageData != null) {
       request.files.add(http.MultipartFile.fromBytes(
