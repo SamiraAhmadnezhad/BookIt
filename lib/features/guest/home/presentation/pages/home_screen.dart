@@ -101,7 +101,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: RefreshIndicator(
-        onRefresh: () async => _loadData(),
+        onRefresh: () async {
+          _loadData();
+          await _allDataFuture;
+        },
         child: CustomScrollView(
           slivers: [
             _buildAppBar(context),
