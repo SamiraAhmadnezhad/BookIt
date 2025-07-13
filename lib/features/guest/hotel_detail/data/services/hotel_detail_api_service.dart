@@ -18,23 +18,31 @@ class HotelDetailApiService {
     debugPrint('--- [API Request] Fetching Rooms ---');
     debugPrint('URL: $uri');
 
-    final response = await http.get(uri, headers: headers);
+    try {
+      final response = await http.get(uri, headers: headers);
+      debugPrint('Response Status: ${response.statusCode}');
 
-    debugPrint('Response Status: ${response.statusCode}');
-
-    if (response.statusCode == 200) {
-      final decodedBody = json.decode(utf8.decode(response.bodyBytes));
-      if (decodedBody is Map<String, dynamic> &&
-          decodedBody.containsKey('data')) {
-        final data = decodedBody['data'] as List;
-        debugPrint('Rooms fetched successfully: ${data.length} rooms');
-        return data.map((json) => Room.fromJson(json)).toList();
+      if (response.statusCode == 200) {
+        final decodedBody = json.decode(utf8.decode(response.bodyBytes));
+        if (decodedBody is Map<String, dynamic> &&
+            decodedBody.containsKey('data')) {
+          final data = decodedBody['data'] as List;
+          debugPrint('Rooms fetched successfully: ${data.length} rooms');
+          return data.map((json) => Room.fromJson(json)).toList();
+        } else {
+          debugPrint('Invalid response format: "data" key not found.');
+          return []; // Return empty list on invalid format
+        }
       } else {
-        throw Exception('Invalid response format: "data" key not found.');
+        // For 404 or any other error status, return an empty list
+        debugPrint(
+            'Failed to load rooms. Status: ${response.statusCode}, Body: ${response.body}');
+        return [];
       }
-    } else {
-      debugPrint('Failed to load rooms. Body: ${response.body}');
-      throw Exception('Failed to load rooms');
+    } catch (e) {
+      // For network exceptions, etc., also return an empty list
+      debugPrint('An exception occurred while fetching rooms: $e');
+      return [];
     }
   }
 

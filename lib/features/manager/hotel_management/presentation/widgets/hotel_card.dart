@@ -281,7 +281,7 @@ class HotelCard extends StatelessWidget {
           },
           itemBuilder: (context) => [
             const PopupMenuItem(value: 'rooms', child: Text('مدیریت اتاق‌ها')),
-            const PopupMenuItem(value: 'discount', child: Text('اعمال تخفیf')),
+            const PopupMenuItem(value: 'discount', child: Text('اعمال تخفیف')),
             const PopupMenuItem(value: 'edit', child: Text('ویرایش هتل')),
             const PopupMenuItem(value: 'license', child: Text('دانلود مجوز')),
             const PopupMenuDivider(),

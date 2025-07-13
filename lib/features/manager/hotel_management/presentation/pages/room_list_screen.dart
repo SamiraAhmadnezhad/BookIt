@@ -78,6 +78,9 @@ class _RoomListScreenState extends State<RoomListScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
+            if (snapshot.error.toString().contains('404')) {
+              return const Center(child: Text('هتلی یافت نشد.'));
+            }
             return Center(child: Text('خطا: ${snapshot.error}'));
           }
           if (!snapshot.hasData || snapshot.data!.isEmpty) {

@@ -18,7 +18,13 @@ import '../../../../../pages/guest_pages/reservation_detail_page/reservation_api
 
 class HotelDetailScreen extends StatefulWidget {
   final Hotel hotel;
-  const HotelDetailScreen({super.key, required this.hotel});
+  final bool showReviewForm;
+
+  const HotelDetailScreen({
+    super.key,
+    required this.hotel,
+    this.showReviewForm = false,
+  });
 
   @override
   State<HotelDetailScreen> createState() => _HotelDetailScreenState();
@@ -49,23 +55,26 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
     });
   }
 
-  int roomCapacity(String roomType){
-    if (roomType=="Single"){
+  int roomCapacity(String roomType) {
+    if (roomType == "Single") {
       return 1;
-    }else if (roomType=="Double"){
+    } else if (roomType == "Double") {
       return 2;
-    } else{
+    } else {
       return 3;
     }
   }
 
-  double totalPrice(double price, double discount_price,DateTime checkIn,DateTime checkOut){
-    if (discount_price>0){
-      return discount_price * (checkOut.day-checkIn.day);
-    }else {
-      return price* (checkOut.day-checkIn.day);
-    }
+  double totalPrice(
+      double price, double discount_price, DateTime checkIn, DateTime checkOut) {
+    int nights = checkOut.difference(checkIn).inDays;
+    if (nights <= 0) nights = 1;
 
+    if (discount_price > 0) {
+      return discount_price * nights;
+    } else {
+      return price * nights;
+    }
   }
 
   Future<void> _showBookingDateRangePicker(BuildContext context, Room room) async {
@@ -94,10 +103,11 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
 
     if (endDate == null || !mounted) return;
 
-
     if (_token == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('برای رزرو اتاق، ابتدا باید وارد شوید.'), backgroundColor: Colors.red),
+        const SnackBar(
+            content: Text('برای رزرو اتاق، ابتدا باید وارد شوید.'),
+            backgroundColor: Colors.red),
       );
       return;
     }
@@ -107,7 +117,7 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
       barrierDismissible: false,
       builder: (context) => const Dialog(
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: EdgeInsets.all(20.0),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -116,7 +126,6 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
               Text("در حال قفل کردن اتاق..."),
             ],
           ),
-
         ),
       ),
     );
@@ -129,7 +138,7 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
     if (mounted) Navigator.pop(context);
 
     if (isLocked) {
-      try{
+      try {
         final checkInDateTime = startDate.toDateTime();
         final checkOutDateTime = endDate.toDateTime();
 
@@ -147,7 +156,8 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
               roomInfo: room.name,
               checkInDate: checkInDateTime,
               checkOutDate: checkOutDateTime,
-              totalPrice: totalPrice(room.price,room.discountPrice,checkInDateTime,checkOutDateTime),
+              totalPrice: totalPrice(room.price, room.discountPrice,
+                  checkInDateTime, checkOutDateTime),
               numberOfAdults: roomCapacity(room.roomType),
             ),
           ),
@@ -163,7 +173,8 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("خطا: این اتاق در حال حاضر توسط شخص دیگری رزرو شده یا در دسترس نیست."),
+          content: Text(
+              "خطا: این اتاق در حال حاضر توسط شخص دیگری رزرو شده یا در دسترس نیست."),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -194,8 +205,7 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('خطا در ثبت نظر: $e'),
-              backgroundColor: Colors.red),
+              content: Text('خطا در ثبت نظر: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -217,8 +227,14 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
         _buildSliverAppBar(),
         SliverToBoxAdapter(
           child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+            child: _buildHeader(),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
             padding: const EdgeInsets.all(16.0),
-            child: _buildMainContent(isMobile: true),
+            child: _buildMainContent(),
           ),
         ),
       ],
@@ -234,10 +250,15 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
           child: Column(
             children: [
               _buildDesktopHeader(),
+              Padding(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                child: _buildHeader(),
+              ),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(32, 16, 32, 32),
-                  child: _buildMainContent(isMobile: false),
+                  padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
+                  child: _buildMainContent(),
                 ),
               ),
             ],
@@ -264,12 +285,11 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
     );
   }
 
-  Widget _buildMainContent({required bool isMobile}) {
+  Widget _buildMainContent() {
+    final isMobile = !ResponsiveLayout.isDesktop(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (!isMobile) _buildHeader(),
-        if (isMobile) const SizedBox.shrink() else const SizedBox(height: 24),
         _buildSectionCard(
             title: 'درباره هتل', content: Text(widget.hotel.description)),
         const SizedBox(height: 16),
@@ -278,42 +298,41 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
         if (isMobile) _buildRoomsSection(),
         if (isMobile) const SizedBox(height: 16),
         _buildSectionCard(title: 'نظرات کاربران', content: _buildReviewsList()),
-        const SizedBox(height: 16),
-        _buildSectionCard(
+        if (widget.showReviewForm) ...[
+          const SizedBox(height: 16),
+          _buildSectionCard(
             title: 'نظر خود را ثبت کنید',
-            content: AddReviewForm(onSubmit: _handleReviewSubmission)),
+            content: AddReviewForm(onSubmit: _handleReviewSubmission),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildImageWithOverlay() {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.network(
+          widget.hotel.imageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) =>
+              Container(color: Theme.of(context).colorScheme.surface),
+        ),
+        Container(color: Colors.black.withOpacity(0.3)),
+        Positioned(
+          top: 16,
+          left: 16,
+          child: _buildRatingBadge(Theme.of(context).colorScheme),
+        ),
       ],
     );
   }
 
   Widget _buildDesktopHeader() {
     return SizedBox(
-      height: 200,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.network(
-            widget.hotel.imageUrl,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) =>
-                Container(color: Theme.of(context).colorScheme.surface),
-          ),
-          Container(color: Colors.black.withOpacity(0.3)),
-          Align(
-            alignment: Alignment.topLeft,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: CircleAvatar(
-                backgroundColor: Colors.black.withOpacity(0.5),
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ),
-            ),
-          )
-        ],
-      ),
+      height: 250,
+      child: _buildImageWithOverlay(),
     );
   }
 
@@ -322,12 +341,20 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
       stretch: true,
       pinned: true,
       expandedHeight: 250,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      leading: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: CircleAvatar(
+          backgroundColor: Colors.black.withOpacity(0.4),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new,
+                color: Colors.white, size: 20),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+      ),
       flexibleSpace: FlexibleSpaceBar(
-        title: Text(widget.hotel.name,
-            style: const TextStyle(
-                shadows: [Shadow(blurRadius: 8, color: Colors.black54)])),
-        centerTitle: true,
-        background: _buildDesktopHeader(),
+        background: _buildImageWithOverlay(),
       ),
     );
   }
@@ -337,19 +364,44 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.hotel.name, style: theme.textTheme.displaySmall),
-        const SizedBox(height: 8),
+        Text(widget.hotel.name, style: theme.textTheme.headlineLarge),
+        const SizedBox(height: 12),
         Row(
           children: [
             Icon(Icons.location_on_outlined,
-                size: 16, color: theme.colorScheme.onSurface.withOpacity(0.7)),
-            const SizedBox(width: 4),
+                size: 18, color: theme.colorScheme.onSurface.withOpacity(0.7)),
+            const SizedBox(width: 8),
             Expanded(
-                child:
-                Text(widget.hotel.address, style: theme.textTheme.bodyLarge)),
+                child: Text(widget.hotel.address,
+                    style: theme.textTheme.bodyLarge)),
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildRatingBadge(ColorScheme colorScheme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.star_rounded, color: Color(0xFF542545), size: 18),
+          const SizedBox(width: 6),
+          Text(
+            widget.hotel.rating.toStringAsFixed(1),
+            style: const TextStyle(
+              color: Color(0xFF542545),
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -359,11 +411,11 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
       shadowColor: Colors.grey.withOpacity(0.1),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: Theme.of(context).textTheme.headlineSmall),
+            Text(title, style: Theme.of(context).textTheme.titleLarge),
             const Divider(height: 24),
             content,
           ],
@@ -373,6 +425,9 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
   }
 
   Widget _buildAmenities() {
+    if (widget.hotel.amenities.isEmpty) {
+      return const Center(child: Text("امکاناتی ثبت نشده است."));
+    }
     return SizedBox(
       height: 90,
       child: ListView.separated(
@@ -399,11 +454,12 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (snapshot.hasError) {
-          return Center(child: Text('خطا: ${snapshot.error}'));
-        }
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('اتاقی برای رزرو موجود نیست.'));
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 24.0),
+                child: Text('اتاقی برای رزرو موجود نیست.'),
+              ));
         }
         final rooms = snapshot.data!;
 
@@ -449,11 +505,12 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (snapshot.hasError) {
-          return Center(child: Text('خطا: ${snapshot.error}'));
-        }
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('نظری برای این هتل ثبت نشده است.'));
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 24.0),
+                child: Text('نظری برای این هتل ثبت نشده است.'),
+              ));
         }
         final reviews = snapshot.data!;
         return SizedBox(
