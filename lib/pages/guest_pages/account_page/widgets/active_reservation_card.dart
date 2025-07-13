@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shamsi_date/shamsi_date.dart';
 import '../models/reservation_model.dart';
-import '../user_account_page.dart'; // برای دسترسی به ثابت‌های رنگ
+import '../user_account_page.dart';
 
 class ActiveReservationCard extends StatelessWidget {
   final ReservationModel reservation;
@@ -10,6 +11,13 @@ class ActiveReservationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    final Jalali checkInJalali = Jalali.fromDateTime(DateTime.parse(reservation.checkInDate));
+    final String formattedCheckIn = checkInJalali.formatter.y+"/"+checkInJalali.formatter.m+"/"+checkInJalali.formatter.d;
+
+    final Jalali checkOutJalali = Jalali.fromDateTime(DateTime.parse(reservation.checkOutDate));
+    final String formattedCheckOut = checkOutJalali.formatter.y+"/"+checkOutJalali.formatter.m+"/"+checkOutJalali.formatter.d;
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -31,7 +39,7 @@ class ActiveReservationCard extends StatelessWidget {
                     height: 80,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stack) =>
-                        Container(color: kPageBackground, width: 80, height: 80, child: Icon(Icons.hotel, color: kLightTextColor)),
+                        Container(color: kPageBackground, width: 80, height: 80, child: const Icon(Icons.hotel, color: kLightTextColor)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -60,9 +68,9 @@ class ActiveReservationCard extends StatelessWidget {
               ],
             ),
             const Divider(height: 24),
-            _buildDetailRow(Icons.calendar_today_outlined, 'تاریخ ورود:', reservation.checkInDate),
+            _buildDetailRow(Icons.calendar_today_outlined, 'تاریخ ورود:', formattedCheckIn),
             const SizedBox(height: 8),
-            _buildDetailRow(Icons.calendar_today, 'تاریخ خروج:', reservation.checkOutDate),
+            _buildDetailRow(Icons.calendar_today, 'تاریخ خروج:', formattedCheckOut),
           ],
         ),
       ),
@@ -102,7 +110,7 @@ class ActiveReservationCard extends StatelessWidget {
       children: [
         Icon(icon, size: 16, color: kAccentColor),
         const SizedBox(width: 8),
-        Text(label, style: TextStyle(color: kLightTextColor, fontSize: 14)),
+        Text(label, style: const TextStyle(color: kLightTextColor, fontSize: 14)),
         const SizedBox(width: 4),
         Expanded(
           child: Text(

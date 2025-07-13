@@ -225,12 +225,13 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
     return CustomScrollView(
       slivers: [
         _buildSliverAppBar(),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
-            child: _buildHeader(),
+        if (!widget.showReviewForm)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+              child: _buildHeader(),
+            ),
           ),
-        ),
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -250,37 +251,40 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
           child: Column(
             children: [
               _buildDesktopHeader(),
-              Padding(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-                child: _buildHeader(),
-              ),
+              if (!widget.showReviewForm)
+                Padding(
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                  child: _buildHeader(),
+                ),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
+                  padding: EdgeInsets.fromLTRB(
+                      32, widget.showReviewForm ? 32 : 0, 32, 32),
                   child: _buildMainContent(),
                 ),
               ),
             ],
           ),
         ),
-        Expanded(
-          flex: 2,
-          child: Container(
-            color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Text('اتاق‌های موجود',
-                      style: Theme.of(context).textTheme.headlineSmall),
-                ),
-                Expanded(child: _buildRoomsList(isScrollable: true)),
-              ],
+        if (!widget.showReviewForm)
+          Expanded(
+            flex: 2,
+            child: Container(
+              color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Text('اتاق‌های موجود',
+                        style: Theme.of(context).textTheme.headlineSmall),
+                  ),
+                  Expanded(child: _buildRoomsList(isScrollable: true)),
+                ],
+              ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -290,13 +294,15 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionCard(
-            title: 'درباره هتل', content: Text(widget.hotel.description)),
-        const SizedBox(height: 16),
-        _buildSectionCard(title: 'امکانات', content: _buildAmenities()),
-        const SizedBox(height: 16),
-        if (isMobile) _buildRoomsSection(),
-        if (isMobile) const SizedBox(height: 16),
+        if (!widget.showReviewForm) ...[
+          _buildSectionCard(
+              title: 'درباره هتل', content: Text(widget.hotel.description)),
+          const SizedBox(height: 16),
+          _buildSectionCard(title: 'امکانات', content: _buildAmenities()),
+          const SizedBox(height: 16),
+          if (isMobile) _buildRoomsSection(),
+          if (isMobile) const SizedBox(height: 16),
+        ],
         _buildSectionCard(title: 'نظرات کاربران', content: _buildReviewsList()),
         if (widget.showReviewForm) ...[
           const SizedBox(height: 16),
