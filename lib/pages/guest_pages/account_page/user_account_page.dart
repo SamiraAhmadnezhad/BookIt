@@ -1,19 +1,20 @@
 // lib/pages/profile_pages/user_account_page.dart
 
 import 'dart:convert';
+import 'package:bookit/core/models/hotel_model.dart';
+import 'package:bookit/features/auth/data/services/auth_service.dart';
+import 'package:bookit/features/auth/presentation/pages/authentication_screen.dart';
+import 'package:bookit/features/guest/home/data/services/hotel_api_service.dart';
+import 'package:bookit/features/guest/hotel_detail/presentation/pages/hotel_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-import '../../../features/auth/data/services/auth_service.dart';
-import '../../../features/guest/home/presentation/widgets/hotel_card.dart';
 import 'edit_profile_page.dart';
-import '../../../features/auth/presentation/pages/authentication_screen.dart';
-import 'models/user_profile_model.dart';
 import 'models/reservation_model.dart';
+import 'models/user_profile_model.dart';
 import 'widgets/active_reservation_card.dart';
+import 'widgets/favorite_hotel_list_card.dart'; // ایمپورت کارت جدید
 import 'widgets/previous_reservation_card.dart';
-import 'package:bookit/core/models/hotel_model.dart';
-import 'package:bookit/features/guest/hotel_detail/presentation/pages/hotel_detail_screen.dart';
 
 const Color kPrimaryColor = Color(0xFF542545);
 const Color kAccentColor = Color(0xFF7E3F6B);
@@ -29,13 +30,13 @@ class UserAccountPage extends StatefulWidget {
   State<UserAccountPage> createState() => _UserAccountPageState();
 }
 
-class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProviderStateMixin {
+class _UserAccountPageState extends State<UserAccountPage>
+    with SingleTickerProviderStateMixin {
   String _selectedTab = 'علاقه‌مندی‌ها';
   TabController? _tabController;
 
   UserProfileModel? _userProfile;
   List<Hotel> _favoriteHotels = [];
-  List<ReservationModel> _allBookings = [];
   List<ReservationModel> _currentBookings = [];
   List<ReservationModel> _previousBookings = [];
 
@@ -44,18 +45,27 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
   bool _isLoadingCurrentBookings = false;
   bool _isLoadingPreviousBookings = false;
 
-  final List<String> _tabs = const ['علاقه‌مندی‌ها', 'لیست رزروها', 'رزروهای قبلی'];
+  late final HomeApiService _homeApiService;
+
+  final List<String> _tabs = const [
+    'علاقه‌مندی‌ها',
+    'لیست رزروها',
+    'رزروهای قبلی'
+  ];
 
   @override
   void initState() {
     super.initState();
+    final authService = Provider.of<AuthService>(context, listen: false);
+    _homeApiService = HomeApiService(authService);
     _tabController = TabController(length: _tabs.length, vsync: this);
     _tabController!.addListener(_handleTabSelection);
     _fetchDataForPage();
   }
 
   void _handleTabSelection() {
-    if (_tabController!.indexIsChanging || _selectedTab == _tabs[_tabController!.index]) return;
+    if (_tabController!.indexIsChanging ||
+        _selectedTab == _tabs[_tabController!.index]) return;
     if (mounted) {
       setState(() {
         _selectedTab = _tabs[_tabController!.index];
@@ -78,12 +88,14 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
 
   Future<void> _fetchDataForSelectedTab() async {
     if (!mounted) return;
-    if (_selectedTab == 'علاقه‌مندی‌ها') {
-      await _fetchFavoriteHotels();
-    } else if (_selectedTab == 'لیست رزروها' || _selectedTab == 'رزروهای قبلی') {
-      if (_allBookings.isEmpty) {
+    switch (_selectedTab) {
+      case 'علاقه‌مندی‌ها':
+        await _fetchFavoriteHotels();
+        break;
+      case 'لیست رزروها':
+      case 'رزروهای قبلی':
         await _fetchReservations();
-      }
+        break;
     }
   }
 
@@ -112,7 +124,8 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
           _userProfile = UserProfileModel.fromJson(data);
         });
       } else {
-        throw Exception('Failed to load profile (Code: ${response.statusCode})');
+        throw Exception(
+            'Failed to load profile (Code: ${response.statusCode})');
       }
     } catch (e) {
       _showErrorSnackBar('خطا در بارگذاری پروفایل: ${e.toString()}');
@@ -139,22 +152,26 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
         headers: {'Authorization': 'Bearer $token'},
       );
 
-      /*print('--- Favorites Response Body ---');
-      print(utf8.decode(response.bodyBytes));
-      print('----------------------------------');*/
-
       if (!mounted) return;
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> responseJson = jsonDecode(utf8.decode(response.bodyBytes));
+        final Map<String, dynamic> responseJson =
+        jsonDecode(utf8.decode(response.bodyBytes));
         final List<dynamic> dataList = responseJson['data'];
-        final List<Hotel> hotels = dataList.map((json) => Hotel.fromJson(json as Map<String, dynamic>)).toList();
+        final List<Hotel> hotels = dataList
+            .map((json) => Hotel.fromJson(json as Map<String, dynamic>))
+            .toList();
+
+        for (var hotel in hotels) {
+          hotel.isFavorite = true;
+        }
 
         setState(() {
           _favoriteHotels = hotels;
         });
       } else {
-        throw Exception('Failed to load favorites (Code: ${response.statusCode})');
+        throw Exception(
+            'Failed to load favorites (Code: ${response.statusCode})');
       }
     } catch (e) {
       _showErrorSnackBar('خطا در بارگذاری علاقه‌مندی‌ها: ${e.toString()}');
@@ -194,23 +211,21 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
 
       if (!mounted) return;
       if (response.statusCode == 200) {
-
-        /*print('--- Reservations Response Body ---');
-        print(utf8.decode(response.bodyBytes));
-        print('----------------------------------');*/
-
-        final Map<String, dynamic> responseJson = jsonDecode(utf8.decode(response.bodyBytes));
+        final Map<String, dynamic> responseJson =
+        jsonDecode(utf8.decode(response.bodyBytes));
 
         final Map<String, dynamic> dataObject = responseJson['data'];
 
         final List<dynamic> futureList = dataObject['future'] ?? [];
-        _currentBookings = futureList.map((json) => ReservationModel.fromJson(json)).toList();
+        _currentBookings =
+            futureList.map((json) => ReservationModel.fromJson(json)).toList();
 
         final List<dynamic> pastList = dataObject['past'] ?? [];
-        _previousBookings = pastList.map((json) => ReservationModel.fromJson(json)).toList();
-
+        _previousBookings =
+            pastList.map((json) => ReservationModel.fromJson(json)).toList();
       } else {
-        throw Exception('Failed to load reservations (Code: ${response.statusCode})');
+        throw Exception(
+            'Failed to load reservations (Code: ${response.statusCode})');
       }
     } catch (e) {
       _showErrorSnackBar('خطا در بارگذاری رزروها: ${e.toString()}');
@@ -259,7 +274,30 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
       MaterialPageRoute(
         builder: (context) => HotelDetailScreen(hotel: hotel),
       ),
-    );
+    ).then((_) => _fetchFavoriteHotels());
+  }
+
+  Future<void> _toggleFavoriteStatus(Hotel hotel) async {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    if (authService.token == null) {
+      _showErrorSnackBar('برای این کار باید وارد شوید.');
+      return;
+    }
+
+    final originalStatus = hotel.isFavorite;
+    setState(() {
+      _favoriteHotels.removeWhere((h) => h.id == hotel.id);
+    });
+
+    bool success = await _homeApiService.removeFavorite(hotel.id);
+
+    if (!success && mounted) {
+      setState(() {
+        hotel.isFavorite = originalStatus;
+        _favoriteHotels.add(hotel);
+      });
+      _showErrorSnackBar('خطا در حذف از علاقه‌مندی‌ها.');
+    }
   }
 
   @override
@@ -280,8 +318,8 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
               'حساب کاربری',
-              style: theme.textTheme.titleLarge?.copyWith(
-                  color: kPrimaryColor, fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleLarge
+                  ?.copyWith(color: kPrimaryColor, fontWeight: FontWeight.bold),
             ),
           ),
           actions: [
@@ -308,9 +346,11 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
                     labelColor: kPrimaryColor,
                     unselectedLabelColor: kLightTextColor,
                     indicatorWeight: 2.5,
-                    labelStyle: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                    labelStyle: theme.textTheme.titleSmall
+                        ?.copyWith(fontWeight: FontWeight.bold),
                     unselectedLabelStyle: theme.textTheme.titleSmall,
-                    tabs: _tabs.map((String name) => Tab(text: name)).toList(),
+                    tabs:
+                    _tabs.map((String name) => Tab(text: name)).toList(),
                   ),
                   kCardBackground,
                 ),
@@ -346,12 +386,14 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
           CircleAvatar(
             radius: 45,
             backgroundColor: kPrimaryColor.withOpacity(0.1),
-            child: Icon(Icons.person_outline, size: 50, color: kPrimaryColor.withOpacity(0.8)),
+            child: Icon(Icons.person_outline,
+                size: 50, color: kPrimaryColor.withOpacity(0.8)),
           ),
           const SizedBox(height: 16),
           Text(
             '${_userProfile?.name ?? ''} ${_userProfile?.lastName ?? ''}',
-            style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87),
+            style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold, color: Colors.black87),
           ),
           const SizedBox(height: 6),
           if (_userProfile?.email.isNotEmpty ?? false)
@@ -360,10 +402,12 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
               children: [
                 Text(
                   _userProfile!.email,
-                  style: theme.textTheme.bodyMedium?.copyWith(color: kLightTextColor),
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(color: kLightTextColor),
                 ),
                 const SizedBox(width: 6),
-                Icon(Icons.verified_user_outlined, color: Colors.green[600], size: 16)
+                Icon(Icons.verified_user_outlined,
+                    color: Colors.green[600], size: 16)
               ],
             ),
           const SizedBox(height: 20),
@@ -374,9 +418,12 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
             style: ElevatedButton.styleFrom(
               backgroundColor: kPrimaryColor,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              textStyle: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 24, vertical: 10),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              textStyle: theme.textTheme.labelLarge
+                  ?.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -387,28 +434,25 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
   Widget _buildSelectedTabContent(String tabName) {
     if (tabName == 'علاقه‌مندی‌ها') {
       if (_isLoadingFavorites) return _buildLoadingIndicator();
-      if (_favoriteHotels.isEmpty) return _buildEmptyState('موردی در علاقه‌مندی‌ها یافت نشد.');
+      if (_favoriteHotels.isEmpty)
+        return _buildEmptyState('موردی در علاقه‌مندی‌ها یافت نشد.');
 
-      return GridView.builder(
-        padding: const EdgeInsets.all(16.0),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16.0,
-          mainAxisSpacing: 16.0,
-          childAspectRatio: 0.8,
-        ),
+      return ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
         itemCount: _favoriteHotels.length,
         itemBuilder: (context, index) {
           final hotel = _favoriteHotels[index];
-          return HotelCard(
+          return FavoriteHotelListCard(
             hotel: hotel,
             onTap: () => _navigateToHotelDetail(hotel),
+            onFavoritePressed: () => _toggleFavoriteStatus(hotel),
           );
         },
       );
     } else if (tabName == 'لیست رزروها') {
       if (_isLoadingCurrentBookings) return _buildLoadingIndicator();
-      if (_currentBookings.isEmpty) return _buildEmptyState('هیچ رزرو فعالی ندارید.');
+      if (_currentBookings.isEmpty)
+        return _buildEmptyState('هیچ رزرو فعالی ندارید.');
       return ListView.builder(
         padding: const EdgeInsets.only(top: 8, bottom: 8),
         itemCount: _currentBookings.length,
@@ -418,12 +462,14 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
       );
     } else if (tabName == 'رزروهای قبلی') {
       if (_isLoadingPreviousBookings) return _buildLoadingIndicator();
-      if (_previousBookings.isEmpty) return _buildEmptyState('هیچ رزرو قبلی یافت نشد.');
+      if (_previousBookings.isEmpty)
+        return _buildEmptyState('هیچ رزرو قبلی یافت نشد.');
       return ListView.builder(
         padding: const EdgeInsets.only(top: 8, bottom: 8),
         itemCount: _previousBookings.length,
         itemBuilder: (context, index) {
-          return PreviousReservationCard(reservation: _previousBookings[index]);
+          return PreviousReservationCard(
+              reservation: _previousBookings[index]);
         },
       );
     }
@@ -443,7 +489,7 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
             padding: const EdgeInsets.all(30.0),
             child: Text(message,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: kLightTextColor))));
+                style: const TextStyle(fontSize: 16, color: kLightTextColor))));
   }
 }
 
@@ -458,12 +504,14 @@ class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => tabBar.preferredSize.height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(color: backgroundColor, child: tabBar);
   }
 
   @override
   bool shouldRebuild(_SliverTabBarDelegate oldDelegate) {
-    return tabBar != oldDelegate.tabBar || backgroundColor != oldDelegate.backgroundColor;
+    return tabBar != oldDelegate.tabBar ||
+        backgroundColor != oldDelegate.backgroundColor;
   }
 }
