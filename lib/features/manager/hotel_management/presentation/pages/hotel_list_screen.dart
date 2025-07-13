@@ -244,11 +244,11 @@ class _HotelListScreenState extends State<HotelListScreen> {
 
               return GridView.builder(
                 padding: const EdgeInsets.all(16),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: crossAxisCount,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
-                  childAspectRatio: childAspectRatio,
+                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 400.0,
+                  childAspectRatio: 0.8,
+                  mainAxisSpacing: 16.0,
+                  crossAxisSpacing: 16.0,
                 ),
                 itemCount: _hotels.length,
                 itemBuilder: (context, index) {
