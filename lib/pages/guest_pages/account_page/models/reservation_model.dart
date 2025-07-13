@@ -32,9 +32,7 @@ class ReservationModel {
   }
 
   factory ReservationModel.fromJson(Map<String, dynamic> json) {
-    // دسترسی به آبجکت تودرتوی room_details
     final roomDetails = json['room_details'] as Map<String, dynamic>? ?? {};
-    // دسترسی به آبجکت تودرتوی hotel که داخل room_details است
     final hotelDetails = roomDetails['hotel'] as Map<String, dynamic>? ?? {};
 
     return ReservationModel(
@@ -42,18 +40,15 @@ class ReservationModel {
       hotelId: hotelDetails['id'] ?? 0,
       hotelName: hotelDetails['name'] ?? 'نام هتل نامشخص',
 
-      // ترکیب نوع و شماره اتاق برای roomInfo
       roomInfo: '${roomDetails['room_type'] ?? 'اتاق'} شماره ${roomDetails['room_number'] ?? ''}'.trim(),
 
       checkInDate: json['check_in_date'] ?? '',
       checkOutDate: json['check_out_date'] ?? '',
 
-      // قیمت از داخل roomDetails خوانده می‌شود و از رشته به عدد تبدیل می‌شود
       amount: double.tryParse(roomDetails['price']?.toString() ?? '0.0') ?? 0.0,
 
       status: json['status'] ?? 'نامشخص',
 
-      // ساخت URL کامل برای تصویر هتل
       hotelImageUrl: _buildImageUrl(hotelDetails['image']),
 
     );

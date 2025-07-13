@@ -32,9 +32,9 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
 
   UserProfileModel? _userProfile;
   List<dynamic> _favoriteHotels = []; // Placeholder
-  List<ReservationModel> _allBookings = []; // <-- لیستی برای همه رزروها
-  List<ReservationModel> _currentBookings = []; // <-- لیست جدید
-  List<ReservationModel> _previousBookings = []; // <-- لیست جدید
+  List<ReservationModel> _allBookings = [];
+  List<ReservationModel> _currentBookings = [];
+  List<ReservationModel> _previousBookings = [];
 
   bool _isLoadingProfile = true;
   bool _isLoadingFavorites = true;
