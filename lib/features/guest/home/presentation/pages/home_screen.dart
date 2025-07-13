@@ -115,10 +115,6 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _favoriteStatusMap[hotel.id] = currentStatus;
       });
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('خطا در بروزرسانی علاقه‌مندی‌ها.'),
-        backgroundColor: Colors.red,
-      ));
     }
   }
 
