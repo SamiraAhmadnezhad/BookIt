@@ -37,6 +37,9 @@ class _HomeScreenState extends State<HomeScreen> {
     'https://picsum.photos/seed/banner3/800/400'
   ];
 
+  // منبع حقیقت واحد برای وضعیت علاقه‌مندی‌ها
+  final Map<int, bool> _favoriteStatusMap = {};
+
   @override
   void initState() {
     super.initState();
@@ -47,12 +50,76 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _loadData() {
     setState(() {
-      _allDataFuture = Future.wait([
-        _apiService.fetchHotelsByLocation(_selectedCity),
-        _apiService.fetchHotelsWithDiscount(),
-        _apiService.fetchTopRatedHotels(),
-      ]);
+      _allDataFuture = _fetchAndProcessHotels();
     });
+  }
+
+  Future<List<List<Hotel>>> _fetchAndProcessHotels() async {
+    final results = await Future.wait([
+      _apiService.fetchHotelsByLocation(_selectedCity),
+      _apiService.fetchHotelsWithDiscount(),
+      _apiService.fetchTopRatedHotels(),
+    ]);
+
+    final authService = Provider.of<AuthService>(context, listen: false);
+    if (authService.token != null) {
+      final allUniqueHotels = <int, Hotel>{};
+      for (var hotelList in results) {
+        for (var hotel in hotelList) {
+          allUniqueHotels[hotel.id] = hotel;
+        }
+      }
+
+      final favoriteChecks = allUniqueHotels.values.map((hotel) {
+        return _apiService.isHotelFavorite(hotel.id).then((isFav) {
+          _favoriteStatusMap[hotel.id] = isFav;
+        });
+      }).toList();
+
+      await Future.wait(favoriteChecks);
+    }
+
+    if (mounted) {
+      setState(() {});
+    }
+
+    return results;
+  }
+
+  Future<void> _toggleFavoriteStatus(Hotel hotel) async {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    if (authService.token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('برای افزودن به علاقه‌مندی‌ها باید وارد شوید.'),
+        backgroundColor: Colors.red,
+      ));
+      return;
+    }
+
+    final currentStatus = _favoriteStatusMap[hotel.id] ?? false;
+
+    // بروزرسانی فوری UI
+    setState(() {
+      _favoriteStatusMap[hotel.id] = !currentStatus;
+    });
+
+    bool success;
+    if (currentStatus) { // اگر قبلا true بوده، الان باید حذف شود
+      success = await _apiService.removeFavorite(hotel.id);
+    } else { // اگر قبلا false بوده، الان باید اضافه شود
+      success = await _apiService.addFavorite(hotel.id);
+    }
+
+    // اگر عملیات ناموفق بود، UI را به حالت قبل برگردان
+    if (!success && mounted) {
+      setState(() {
+        _favoriteStatusMap[hotel.id] = currentStatus;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('خطا در بروزرسانی علاقه‌مندی‌ها.'),
+        backgroundColor: Colors.red,
+      ));
+    }
   }
 
   void _onCityChanged(String newCity) {
@@ -103,10 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: RefreshIndicator(
-        onRefresh: () async {
-          _loadData();
-          await _allDataFuture;
-        },
+        onRefresh: () async => _loadData(),
         child: CustomScrollView(
           slivers: [
             _buildAppBar(context),
@@ -244,11 +308,16 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         itemCount: hotels.length,
         itemBuilder: (context, index) {
+          final hotel = hotels[index];
+          // وضعیت علاقه‌مندی را از Map بخوان
+          hotel.isFavorite = _favoriteStatusMap[hotel.id] ?? false;
+
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: HotelCard(
-              hotel: hotels[index],
-              onTap: () => _navigateToHotelDetail(hotels[index]),
+              hotel: hotel,
+              onTap: () => _navigateToHotelDetail(hotel),
+              onFavoritePressed: () => _toggleFavoriteStatus(hotel),
             ),
           );
         },

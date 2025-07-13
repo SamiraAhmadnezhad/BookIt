@@ -16,7 +16,7 @@ class Hotel {
   final DateTime? discountStartDate;
   final DateTime? discountEndDate;
   final int totalRooms;
-  final bool isFavorite;
+  bool isFavorite;
 
   Hotel({
     required this.id,

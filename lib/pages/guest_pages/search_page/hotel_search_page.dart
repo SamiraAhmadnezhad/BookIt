@@ -1,4 +1,4 @@
-// فایل: lib/pages/guest_pages/search_page/hotel_search_page.dart
+// lib/pages/guest_pages/search_page/hotel_search_page.dart
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // برای فرمت کردن تاریخ
@@ -24,7 +24,7 @@ class HotelSearchPage extends StatefulWidget {
 }
 
 class _HotelSearchPageState extends State<HotelSearchPage> {
-  String _selectedCity = "تهران"; // یک شهر پیش‌فرض برای راحتی
+  String _selectedCity = "تهران";
   Jalali? _checkInDateShamsi;
   Jalali? _checkOutDateShamsi;
   String _selectedRoomType = 'Double';
@@ -218,66 +218,63 @@ class _HotelSearchPageState extends State<HotelSearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final horizontalPadding = screenWidth * 0.05 > 20 ? screenWidth * 0.05 : 20.0;
-
     return Scaffold(
       backgroundColor: _pageBackgroundColor,
       appBar: AppBar(
-        title: const Text('جستجو رزرو هتل', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 19)),
+        title: const Text('جستجو رزرو هتل', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 19,color: Colors.black)),
         backgroundColor: _pageBackgroundColor, elevation: 0.5, centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildTextFieldContainer(label: 'نام شهر', valueText: _selectedCity, onTap: _showCitySelectionModal, icon: Icons.location_city_outlined),
-              const SizedBox(height: 18),
-              _buildTextFieldContainer(label: 'تاریخ ورود', valueText: _formatShamsiDateToString(_checkInDateShamsi), onTap: () => _selectDateWithCustomPicker(context, true), icon: Icons.calendar_today_outlined),
-              const SizedBox(height: 18),
-              _buildTextFieldContainer(label: 'تاریخ خروج', valueText: _formatShamsiDateToString(_checkOutDateShamsi), onTap: () => _selectDateWithCustomPicker(context, false), icon: Icons.calendar_today_outlined),
-              const SizedBox(height: 20),
-              _buildRoomTypeSelector(),
-              const SizedBox(height: 25.0),
-              Center(child: Text(_calculateNights() > 0 ? 'به مدت ${_calculateNights()} شب' : 'به مدت ---- شب', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 15, color: Colors.grey.shade700, fontWeight: FontWeight.w600))),
-              const SizedBox(height: 30),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: _primaryColor, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                  onPressed: () {
-                    if (_selectedCity.isEmpty) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('لطفا شهر را انتخاب کنید.', textAlign: TextAlign.right, style: TextStyle(fontFamily: 'Vazirmatn')))); return; }
-                    if (_checkInDateShamsi == null) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('لطفا تاریخ ورود را انتخاب کنید.', textAlign: TextAlign.right, style: TextStyle(fontFamily: 'Vazirmatn')))); return; }
-                    if (_checkOutDateShamsi == null) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('لطفا تاریخ خروج را انتخاب کنید.', textAlign: TextAlign.right, style: TextStyle(fontFamily: 'Vazirmatn')))); return; }
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildTextFieldContainer(label: 'نام شهر', valueText: _selectedCity, onTap: _showCitySelectionModal, icon: Icons.location_city_outlined),
+                  const SizedBox(height: 18),
+                  _buildTextFieldContainer(label: 'تاریخ ورود', valueText: _formatShamsiDateToString(_checkInDateShamsi), onTap: () => _selectDateWithCustomPicker(context, true), icon: Icons.calendar_today_outlined),
+                  const SizedBox(height: 18),
+                  _buildTextFieldContainer(label: 'تاریخ خروج', valueText: _formatShamsiDateToString(_checkOutDateShamsi), onTap: () => _selectDateWithCustomPicker(context, false), icon: Icons.calendar_today_outlined),
+                  const SizedBox(height: 20),
+                  _buildRoomTypeSelector(),
+                  const SizedBox(height: 25.0),
+                  Center(child: Text(_calculateNights() > 0 ? 'به مدت ${_calculateNights()} شب' : 'به مدت ---- شب', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 15, color: Colors.grey.shade700, fontWeight: FontWeight.w600))),
+                  const SizedBox(height: 30),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: _primaryColor, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                      onPressed: () {
+                        if (_selectedCity.isEmpty) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('لطفا شهر را انتخاب کنید.', textAlign: TextAlign.right, style: TextStyle(fontFamily: 'Vazirmatn')))); return; }
+                        if (_checkInDateShamsi == null) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('لطفا تاریخ ورود را انتخاب کنید.', textAlign: TextAlign.right, style: TextStyle(fontFamily: 'Vazirmatn')))); return; }
+                        if (_checkOutDateShamsi == null) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('لطفا تاریخ خروج را انتخاب کنید.', textAlign: TextAlign.right, style: TextStyle(fontFamily: 'Vazirmatn')))); return; }
 
-                    // *** بخش کلیدی: ساخت پارامترها و ناوبری ***
+                        final DateFormat formatter = DateFormat('yyyy-MM-dd');
+                        final String checkInDateStr = formatter.format(_checkInDateShamsi!.toDateTime());
+                        final String checkOutDateStr = formatter.format(_checkOutDateShamsi!.toDateTime());
 
-                    // 1. فرمت کردن تاریخ‌ها به فرمت "YYYY-MM-DD"
-                    final DateFormat formatter = DateFormat('yyyy-MM-dd');
-                    final String checkInDateStr = formatter.format(_checkInDateShamsi!.toDateTime());
-                    final String checkOutDateStr = formatter.format(_checkOutDateShamsi!.toDateTime());
+                        final searchParams = SearchParams(
+                          city: _selectedCity,
+                          checkInDate: checkInDateStr,
+                          checkOutDate: checkOutDateStr,
+                          roomType: _selectedRoomType,
+                        );
 
-                    // 2. ساختن آبجکت پارامترهای جستجو
-                    final searchParams = SearchParams(
-                      city: _selectedCity,
-                      checkInDate: checkInDateStr,
-                      checkOutDate: checkOutDateStr,
-                      roomType: _selectedRoomType,
-                    );
-
-                    // 3. ناوبری به صفحه نتایج و پاس دادن پارامترها
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => SearchListPage(searchParams: searchParams)),
-                    );
-                  },
-                  child: const Text('جستجو و رزرو هتل', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-                ),
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => SearchListPage(searchParams: searchParams)),
+                        );
+                      },
+                      child: const Text('جستجو و رزرو هتل', style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
               ),
-              const SizedBox(height: 20),
-            ],
+            ),
           ),
         ),
       ),
