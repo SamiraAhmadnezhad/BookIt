@@ -43,6 +43,13 @@ class RoomCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Row(
                   children: [
+                    // Icon(Icons.people_alt_outlined,
+                    //     size: 16,
+                    //     color: colorScheme.onSurface.withOpacity(0.7)),
+                    // const SizedBox(width: 4),
+                    // Text('${room.capacity} نفر',
+                    //     style: theme.textTheme.bodyMedium),
+                    // const SizedBox(width: 12),
                     Icon(Icons.king_bed_outlined,
                         size: 16,
                         color: colorScheme.onSurface.withOpacity(0.7)),
@@ -54,21 +61,34 @@ class RoomCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    if (room.discountPrice<=0)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${currencyFormat.format(room.price)} تومان',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.grey,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    if (room.discountPrice>0)
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('هر شب', style: theme.textTheme.bodySmall),
-                        Text(
-                          '${currencyFormat.format(room.price)} تومان',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                              color: colorScheme.primary,
-                              fontWeight: FontWeight.bold),
-                        ),
-                        Text('هر شب', style: theme.textTheme.bodySmall),
+                          Text(
+                            '${currencyFormat.format(room.price)} تومان',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.grey,
+                              decoration: TextDecoration.lineThrough,
+                            ),
+                          ),
                         Text(
                           '${currencyFormat.format(room.discountPrice)} تومان',
                           style: theme.textTheme.titleMedium?.copyWith(
-                              color: colorScheme.primary,
+                              color: Colors.red.shade700,
                               fontWeight: FontWeight.bold),
                         ),
                       ],
