@@ -9,7 +9,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'dart:typed_data';
 
-// --- پالت رنگی ---
 class AppColors {
   static const Color primary = Color(0xFF542545);
   static const Color primaryLight = Color(0x80542545);
@@ -23,7 +22,6 @@ class AppColors {
   static const Color white = Colors.white;
   static const Color black = Colors.black;
 }
-// -----------------
 
 class AddRoomScreen extends StatefulWidget {
   final String hotelId;

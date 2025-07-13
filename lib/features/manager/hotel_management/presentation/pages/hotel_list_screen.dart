@@ -55,7 +55,6 @@ class _HotelListScreenState extends State<HotelListScreen> {
       );
 
       if (!mounted) return;
-      print(response.body);
 
       if (response.statusCode == 200) {
         final decodedData = jsonDecode(utf8.decode(response.bodyBytes));
@@ -131,7 +130,7 @@ class _HotelListScreenState extends State<HotelListScreen> {
               ListTile(
                 title: Text(startDate == null
                     ? "تاریخ شروع"
-                    : startDate!.formatter.y+"/"+startDate!.formatter.m+"/"+startDate!.formatter.d),
+                    : startDate!.formatter.y),
                 onTap: () async {
                   final picked = await showCustomShamsiDatePickerDialog(
                       context,
@@ -144,8 +143,8 @@ class _HotelListScreenState extends State<HotelListScreen> {
               ),
               ListTile(
                 enabled: startDate != null,
-                title: Text(
-                    endDate == null ? "تاریخ پایان" : endDate!.formatter.y+"/"+endDate!.formatter.m+"/"+endDate!.formatter.d),
+                title:
+                Text(endDate == null ? "تاریخ پایان" : endDate!.formatter.y),
                 onTap: () async {
                   if (startDate == null) return;
                   final picked = await showCustomShamsiDatePickerDialog(
@@ -201,7 +200,8 @@ class _HotelListScreenState extends State<HotelListScreen> {
       body: _buildBody(),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => const AddHotelScreen()));
+          final result = await Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const AddHotelScreen()));
           if (result == true) _fetchHotelsFromBackend();
         },
         label: const Text('افزودن هتل'),
@@ -214,8 +214,8 @@ class _HotelListScreenState extends State<HotelListScreen> {
     if (_isLoading) return const Center(child: CircularProgressIndicator());
     if (_errorMessage != null) {
       return Center(
-          child:
-          Text(_errorMessage!, style: TextStyle(color: Theme.of(context).colorScheme.error)));
+          child: Text(_errorMessage!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error)));
     }
     if (_hotels.isEmpty) {
       return const Center(child: Text('هتلی برای نمایش وجود ندارد.'));
@@ -223,34 +223,61 @@ class _HotelListScreenState extends State<HotelListScreen> {
 
     return RefreshIndicator(
       onRefresh: _fetchHotelsFromBackend,
-      child: GridView.builder(
-        padding: const EdgeInsets.all(16),
-        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 420,
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
-          childAspectRatio: 0.85,
-        ),
-        itemCount: _hotels.length,
-        itemBuilder: (context, index) {
-          final hotel = _hotels[index];
-          return HotelCard(
-            hotel: hotel,
-            onHotelUpdated: () async {
-              final result = await Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => AddHotelScreen(hotel: hotel)));
-              if (result == true) _fetchHotelsFromBackend();
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1400),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              int crossAxisCount;
+              double childAspectRatio;
+
+              if (constraints.maxWidth > 1200) {
+                crossAxisCount = 3;
+                childAspectRatio = 4 / 5;
+              } else if (constraints.maxWidth > 700) {
+                crossAxisCount = 2;
+                childAspectRatio = 4 / 5;
+              } else {
+                crossAxisCount = 1;
+                childAspectRatio = 5 / 6;
+              }
+
+              return GridView.builder(
+                padding: const EdgeInsets.all(16),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 16,
+                  childAspectRatio: childAspectRatio,
+                ),
+                itemCount: _hotels.length,
+                itemBuilder: (context, index) {
+                  final hotel = _hotels[index];
+                  return HotelCard(
+                    hotel: hotel,
+                    onHotelUpdated: () async {
+                      final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => AddHotelScreen(hotel: hotel)));
+                      if (result == true) _fetchHotelsFromBackend();
+                    },
+                    onManageRooms: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => RoomListScreen(
+                                hotelId: hotel.id.toString(),
+                                hotelName: hotel.name))),
+                    onApplyDiscount: () => _showDiscountDialog(hotel),
+                    onDeleteHotel: () => _deleteHotel(hotel.id.toString()),
+                    onDownloadLicense: () =>
+                        _downloadLicense(hotel.licenseImageUrl),
+                  );
+                },
+              );
             },
-            onManageRooms: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => RoomListScreen(
-                        hotelId: hotel.id.toString(), hotelName: hotel.name))),
-            onApplyDiscount: () => _showDiscountDialog(hotel),
-            onDeleteHotel: () => _deleteHotel(hotel.id.toString()),
-            onDownloadLicense: () => _downloadLicense(hotel.licenseImageUrl),
-          );
-        },
+          ),
+        ),
       ),
     );
   }

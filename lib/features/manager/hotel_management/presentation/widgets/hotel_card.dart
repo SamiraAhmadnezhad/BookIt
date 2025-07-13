@@ -37,56 +37,69 @@ class HotelCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(hotel.name, style: theme.textTheme.titleLarge),
-                  const SizedBox(height: 8),
-                  Row(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.star_rounded, color: Colors.amber, size: 20),
-                      const SizedBox(width: 4),
-                      Text(
-                        hotel.rating.toStringAsFixed(1),
-                        style: theme.textTheme.bodyMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
+                      Text(hotel.name,
+                          style: theme.textTheme.titleLarge,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(Icons.star_rounded,
+                              color: Colors.amber, size: 20),
+                          const SizedBox(width: 4),
+                          Text(
+                            hotel.rating.toStringAsFixed(1),
+                            style: theme.textTheme.bodyMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            '(${hotel.reviewCount})',
+                            style: theme.textTheme.bodySmall
+                                ?.copyWith(color: Colors.grey.shade600),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.location_on_outlined,
+                              color: Colors.grey, size: 16),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              hotel.address,
+                              style: theme.textTheme.bodySmall
+                                  ?.copyWith(color: Colors.grey.shade700),
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.start,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 2),
+                      const SizedBox(height: 8),
                       Text(
-                        '(${hotel.reviewCount})',
-                        style: theme.textTheme.bodySmall
+                        hotel.description,
+                        style: theme.textTheme.bodyMedium
                             ?.copyWith(color: Colors.grey.shade600),
-                      ),
-                      const Spacer(),
-                      Icon(Icons.location_on_outlined,
-                          color: Colors.grey.shade600, size: 18),
-                      const SizedBox(width: 4),
-                      Text(
-                        hotel.address,
-                        style: theme.textTheme.bodyMedium
-                            ?.copyWith(color: Colors.grey.shade700),
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      const SizedBox(height: 8),
+                      _buildFacilities(),
+                      if (hotel.discountEndDate != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          'تخفیف تا: ${Jalali.fromDateTime(hotel.discountEndDate!).formatter.y}',
+                          style: TextStyle(
+                              color: theme.colorScheme.error,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12),
+                        ),
+                      ],
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    hotel.description,
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(color: Colors.grey.shade600),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  _buildFacilities(),
-                  if (hotel.discountEndDate != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      'تخفیف تا: ${Jalali.fromDateTime(hotel.discountEndDate!).formatter.y}',
-                      style: TextStyle(
-                          color: theme.colorScheme.error,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                  const Spacer(),
                   _buildActionButtons(context),
                 ],
               ),
@@ -111,16 +124,33 @@ class HotelCard extends StatelessWidget {
           ),
           if (hotel.discountPercent > 0)
             Positioned(
-              top: 0,
+              top: 12,
               left: 0,
-              child: Banner(
-                message: '${hotel.discountPercent.toInt()}% تخفیف',
-                location: BannerLocation.topStart,
-                color: Theme.of(context).colorScheme.error,
-                textStyle: const TextStyle(
+              child: Container(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.error,
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(8),
+                    bottomRight: Radius.circular(8),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.25),
+                      blurRadius: 5,
+                      offset: const Offset(1, 1),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  '${hotel.discountPercent.toInt()}% تخفیف',
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
-                    color: Colors.white),
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
         ],
@@ -130,10 +160,10 @@ class HotelCard extends StatelessWidget {
 
   Widget _buildFacilities() {
     if (hotel.amenities.isEmpty) {
-      return const SizedBox.shrink();
+      return const SizedBox(height: 24);
     }
     return SizedBox(
-      height: 30,
+      height: 24,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: hotel.amenities.length,
@@ -141,8 +171,8 @@ class HotelCard extends StatelessWidget {
           final facility = hotel.amenities[index];
           return Tooltip(
             message: facility.userDisplayName,
-            child:
-            Icon(facility.iconData, color: Colors.grey.shade700, size: 20),
+            child: Icon(facility.iconData,
+                color: Colors.grey.shade700, size: 20),
           );
         },
         separatorBuilder: (context, index) => const SizedBox(width: 12),
