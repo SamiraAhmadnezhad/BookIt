@@ -6,7 +6,15 @@ class HotelCard extends StatelessWidget {
   final Hotel hotel;
   final VoidCallback onTap;
 
-  const HotelCard({super.key, required this.hotel, required this.onTap});
+  // متد جدید برای مدیریت کلیک روی دکمه علاقه‌مندی
+  final VoidCallback onFavoritePressed;
+
+  const HotelCard({
+    super.key,
+    required this.hotel,
+    required this.onTap,
+    required this.onFavoritePressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +32,7 @@ class HotelCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildImageSection(Theme.of(context).colorScheme),
+              _buildImageSection(context),
               _buildInfoSection(Theme.of(context)),
             ],
           ),
@@ -33,7 +41,11 @@ class HotelCard extends StatelessWidget {
     );
   }
 
-  Widget _buildImageSection(ColorScheme colorScheme) {
+  Widget _buildImageSection(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final primaryColor = colorScheme.primary;
+    final isFavorite = hotel.isFavorite;
+
     return Expanded(
       flex: 5,
       child: Stack(
@@ -62,12 +74,12 @@ class HotelCard extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.thumb_up_alt_rounded,
-                      color: colorScheme.primary, size: 16),
+                      color: primaryColor, size: 16),
                   const SizedBox(width: 6),
                   Text(
                     hotel.rating.toStringAsFixed(1),
                     style: TextStyle(
-                      color: colorScheme.primary,
+                      color: primaryColor,
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
@@ -76,9 +88,33 @@ class HotelCard extends StatelessWidget {
               ),
             ),
           ),
+          // --- دکمه علاقه‌مندی ---
+          Positioned(
+            top: 8,
+            left: 8,
+            child: Material(
+              color: Colors.transparent,
+              child: IconButton(
+                icon: Icon(
+                  isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                  color: isFavorite ? Colors.red.shade400 : Colors.white,
+                  size: 28,
+                  shadows: const [
+                    Shadow(color: Colors.black54, blurRadius: 4)
+                  ],
+                ),
+                onPressed: () {
+                  // TODO: پیاده‌سازی منطق افزودن/حذف از علاقه‌مندی‌ها
+                  onFavoritePressed();
+                },
+                tooltip: isFavorite ? 'حذف از علاقه‌مندی' : 'افزودن به علاقه‌مندی',
+              ),
+            ),
+          ),
+          // ------------------------
           if (hotel.discountPercent > 0)
             Positioned(
-              top: 12,
+              top: 60, // کمی پایین‌تر آورده شد تا با دکمه قلب تداخل نداشته باشد
               left: 0,
               child: Container(
                 padding:
