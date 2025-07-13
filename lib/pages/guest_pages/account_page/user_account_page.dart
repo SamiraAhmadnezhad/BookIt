@@ -139,9 +139,9 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
         headers: {'Authorization': 'Bearer $token'},
       );
 
-      print('--- Favorites Response Body ---');
+      /*print('--- Favorites Response Body ---');
       print(utf8.decode(response.bodyBytes));
-      print('----------------------------------');
+      print('----------------------------------');*/
 
       if (!mounted) return;
 
@@ -195,9 +195,9 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
       if (!mounted) return;
       if (response.statusCode == 200) {
 
-        print('--- Reservations Response Body ---');
+        /*print('--- Reservations Response Body ---');
         print(utf8.decode(response.bodyBytes));
-        print('----------------------------------');
+        print('----------------------------------');*/
 
         final Map<String, dynamic> responseJson = jsonDecode(utf8.decode(response.bodyBytes));
 
