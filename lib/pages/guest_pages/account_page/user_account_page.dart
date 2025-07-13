@@ -5,12 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../../../features/auth/data/services/auth_service.dart';
+import '../../../features/guest/home/presentation/widgets/hotel_card.dart';
 import 'edit_profile_page.dart';
 import '../../../features/auth/presentation/pages/authentication_screen.dart';
 import 'models/user_profile_model.dart';
 import 'models/reservation_model.dart';
 import 'widgets/active_reservation_card.dart';
 import 'widgets/previous_reservation_card.dart';
+import 'package:bookit/core/models/hotel_model.dart';
+import 'package:bookit/features/guest/hotel_detail/presentation/pages/hotel_detail_screen.dart';
 
 const Color kPrimaryColor = Color(0xFF542545);
 const Color kAccentColor = Color(0xFF7E3F6B);
@@ -31,7 +34,7 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
   TabController? _tabController;
 
   UserProfileModel? _userProfile;
-  List<dynamic> _favoriteHotels = []; // Placeholder
+  List<Hotel> _favoriteHotels = [];
   List<ReservationModel> _allBookings = [];
   List<ReservationModel> _currentBookings = [];
   List<ReservationModel> _previousBookings = [];
@@ -119,10 +122,45 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
   }
 
   Future<void> _fetchFavoriteHotels() async {
+    if (!mounted) return;
     setState(() => _isLoadingFavorites = true);
-    await Future.delayed(const Duration(seconds: 1));
-    _favoriteHotels = [];
-    if(mounted) setState(() => _isLoadingFavorites = false);
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final token = authService.token;
+
+    if (token == null) {
+      _showErrorSnackBar('برای مشاهده علاقه‌مندی‌ها، ابتدا وارد شوید.');
+      if (mounted) setState(() => _isLoadingFavorites = false);
+      return;
+    }
+
+    try {
+      final response = await http.get(
+        Uri.parse('https://fbookit.darkube.app/auth/favorites/list/'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      print('--- Favorites Response Body ---');
+      print(utf8.decode(response.bodyBytes));
+      print('----------------------------------');
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseJson = jsonDecode(utf8.decode(response.bodyBytes));
+        final List<dynamic> dataList = responseJson['data'];
+        final List<Hotel> hotels = dataList.map((json) => Hotel.fromJson(json as Map<String, dynamic>)).toList();
+
+        setState(() {
+          _favoriteHotels = hotels;
+        });
+      } else {
+        throw Exception('Failed to load favorites (Code: ${response.statusCode})');
+      }
+    } catch (e) {
+      _showErrorSnackBar('خطا در بارگذاری علاقه‌مندی‌ها: ${e.toString()}');
+    } finally {
+      if (mounted) setState(() => _isLoadingFavorites = false);
+    }
   }
 
   Future<void> _fetchReservations() async {
@@ -213,6 +251,15 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
         _fetchUserProfile();
       }
     });
+  }
+
+  void _navigateToHotelDetail(Hotel hotel) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HotelDetailScreen(hotel: hotel),
+      ),
+    );
   }
 
   @override
@@ -341,7 +388,24 @@ class _UserAccountPageState extends State<UserAccountPage> with SingleTickerProv
     if (tabName == 'علاقه‌مندی‌ها') {
       if (_isLoadingFavorites) return _buildLoadingIndicator();
       if (_favoriteHotels.isEmpty) return _buildEmptyState('موردی در علاقه‌مندی‌ها یافت نشد.');
-      return Container(); // Placeholder
+
+      return GridView.builder(
+        padding: const EdgeInsets.all(16.0),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 16.0,
+          mainAxisSpacing: 16.0,
+          childAspectRatio: 0.8,
+        ),
+        itemCount: _favoriteHotels.length,
+        itemBuilder: (context, index) {
+          final hotel = _favoriteHotels[index];
+          return HotelCard(
+            hotel: hotel,
+            onTap: () => _navigateToHotelDetail(hotel),
+          );
+        },
+      );
     } else if (tabName == 'لیست رزروها') {
       if (_isLoadingCurrentBookings) return _buildLoadingIndicator();
       if (_currentBookings.isEmpty) return _buildEmptyState('هیچ رزرو فعالی ندارید.');
