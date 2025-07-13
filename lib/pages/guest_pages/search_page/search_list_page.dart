@@ -57,6 +57,28 @@ class _SearchListPageState extends State<SearchListPage> {
     _fetchSearchResults();
   }
 
+  int roomCapacity(String roomType) {
+    if (roomType == "Single") {
+      return 1;
+    } else if (roomType == "Double") {
+      return 2;
+    } else {
+      return 3;
+    }
+  }
+
+  double totalPrice(
+      double price, double discount_price, DateTime checkIn, DateTime checkOut) {
+    int nights = checkOut.difference(checkIn).inDays;
+    if (nights <= 0) nights = 1;
+
+    if (discount_price > 0) {
+      return discount_price * nights;
+    } else {
+      return price * nights;
+    }
+  }
+
   Future<void> _fetchSearchResults() async {
     setState(() => _isLoading = true);
     try {
@@ -126,8 +148,9 @@ class _SearchListPageState extends State<SearchListPage> {
               roomInfo: room.name,
               checkInDate: checkIn,
               checkOutDate: checkOut,
-              totalPrice: room.price,
-              numberOfAdults: widget.searchParams.numberOfPassengers,
+              totalPrice: totalPrice(room.price, room.discountPrice,
+                  checkIn, checkOut),
+              numberOfAdults: roomCapacity(room.roomType),
             ),
           ),
         );
@@ -354,19 +377,9 @@ class _SearchListPageState extends State<SearchListPage> {
                     imageUrl: room.imageUrl ?? '',
                     name: "${room.hotel.name} - ${room.name}",
                     location: room.hotel.location,
-                    rating: room.rating,
-                    isFavorite: room.isFavorite,
                     price: room.price.toInt(),
-                    onTap: () {
-                      // می‌توانید اینجا کاربر را به صفحه جزئیات هتل ببرید
-                      // Navigator.push(context, MaterialPageRoute(builder: (context) => HotelDetailsPage(hotelId: room.hotel.id.toString())));
-                    },
-                    onFavoriteToggle: () {
-                      // منطق toggle favorite را اینجا پیاده‌سازی کنید
-                      // setState(() => room.isFavorite = !room.isFavorite);
-                    },
-                    // +++ 4. اتصال دکمه رزرو به متد جدید +++
                     onReserveTap: () => _handleRoomBooking(room),
+                    discount_price: room.discountPrice,
                   ),
                 );
               },
