@@ -33,9 +33,11 @@ The complete journey for a guest, from authentication to managing their bookings
 | **Search Page**<br/>_Finds rooms by city/date, with powerful sorting (price) and filtering (discounts)._ | `[GIF goes here]` | `[GIF goes here]` |
 | **Hotel Detail Page**<br/>_An immersive view of hotel specs, available rooms, and authentic guest reviews._ | `[GIF goes here]` | `[GIF goes here]` |
 | **Reservation Page**<br/>_A seamless, step-by-step flow to finalize the booking and complete a (simulated) payment._ | `[GIF goes here]` | `[GIF goes here]` |
-| **Profile Page**<br/>_Manage user info, favorites, view active/past bookings, and submit reviews. Includes a logout button._| `[GIF goes here]` | `[GIF goes here]` |
+| **Profile Page**<br/>_Manage user info, favorites, view active/past bookings, and submit reviews. Includes a logout button._| `[GIF goes here]` | `![guestprofile-ezgif com-optimize](https://github.com/user-attachments/assets/04474460-cfb2-429c-b0a9-d9369daa53c8)` |
 
 ---
+
+
 
 ### 👨‍💼 Hotel Manager Experience
 
@@ -73,7 +75,7 @@ To run this project locally, follow these steps:
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/your-username/bookit.git
+    git clone https://github.com/SamiraAhmadnezhad/BookIt.git
     cd bookit
     ```
 
@@ -91,5 +93,3 @@ To run this project locally, follow these steps:
     flutter run
     ```
 
----
-> **Note:** This is a portfolio project. All data is for demonstration purposes and no real transactions are processed.
