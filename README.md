@@ -1,4 +1,4 @@
-![hotelmanagment-ezgif com-optimize (1)](https://github.com/user-attachments/assets/fb691c00-bc0a-4242-8aa4-00379ff1b302)# Bookit - A Flutter Hotel Reservation
+# Bookit - A Flutter Hotel Reservation
 
 <p align="center">
   <strong>A comprehensive, multi-role hotel reservation app built to showcase advanced cross-platform development with Flutter for Web and Android.</strong>
@@ -47,8 +47,7 @@ A dedicated administrative panel for managers to control their properties and mo
 
 | Feature | Web Preview | Mobile Preview |
 | :--- | :---: | :---: |
-| **Hotel Management Page**<br/>_A complete CRUD dashboard to add/edit/delete hotels, rooms, and apply discounts._ | ![hotelmanagment-ezgif com-optimize (1)](https://github.com/user-attachments/assets/acbaecae-123c-40b3-922d-54d5a26fb968)
- | `[GIF goes here]` |
+| **Hotel Management Page**<br/>_A complete CRUD dashboard to add/edit/delete hotels, rooms, and apply discounts._ | ![hotelmanagment-ezgif com-optimize (1)](https://github.com/user-attachments/assets/acbaecae-123c-40b3-922d-54d5a26fb968) | `[GIF goes here]` |
 | **Reports Page**<br/>_Analytics dashboard with charts for sales/bookings and a comparison mode for two date ranges._ | ![report-ezgif com-optimize (1)](https://github.com/user-attachments/assets/451c7e3e-bd5d-44d7-8851-4ff2151b5870) | ![report-ezgif com-optimize](https://github.com/user-attachments/assets/5d767d9f-6cb6-437a-b532-ba580ed0187c) |
 | **Profile Page**<br/>_A centralized view of all reservations, plus profile editing and a secure logout option._ | ![managerprofile-ezgif com-optimize (1)](https://github.com/user-attachments/assets/492a8e77-2339-48c7-a0e2-0e8a6c91b2bb) | ![managerprofile-ezgif com-optimize](https://github.com/user-attachments/assets/e8154b1b-6806-4aad-9276-6dc3440c539a) |
 
