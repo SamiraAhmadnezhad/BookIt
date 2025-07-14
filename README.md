@@ -48,8 +48,7 @@ A dedicated administrative panel for managers to control their properties and mo
 | Feature | Web Preview | Mobile Preview |
 | :--- | :---: | :---: |
 | **Hotel Management Page**<br/>_A complete CRUD dashboard to add/edit/delete hotels, rooms, and apply discounts._ | `[GIF goes here]` | `[GIF goes here]` |
-| **Reports Page**<br/>_Analytics dashboard with charts for sales/bookings and a comparison mode for two date ranges._ | `[GIF goes here]` | ![report-ezgif com-optimize](https://github.com/user-attachments/assets/5d767d9f-6cb6-437a-b532-ba580ed0187c)
- |
+| **Reports Page**<br/>_Analytics dashboard with charts for sales/bookings and a comparison mode for two date ranges._ | `[GIF goes here]` | ![report-ezgif com-optimize](https://github.com/user-attachments/assets/5d767d9f-6cb6-437a-b532-ba580ed0187c) |
 | **Profile Page**<br/>_A centralized view of all reservations, plus profile editing and a secure logout option._ | `[GIF goes here]` | ![managerprofile-ezgif com-optimize](https://github.com/user-attachments/assets/e8154b1b-6806-4aad-9276-6dc3440c539a) |
 
 ---
